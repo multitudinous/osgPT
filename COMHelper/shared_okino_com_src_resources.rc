@@ -1,0 +1,111 @@
+/* Resource file for the common Okino COM client source files */
+
+/* !! NOTE: This file is 'included' into the main resource.rc file. Don't compile in this file directly. */
+
+#ifndef __RESOURCE_RC_INCLUDED
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include "shared_okino_com_src_resources.h"
+#endif
+
+// Include the type library from the Okino COM server source directory. If
+// you do not have this file then email support@okino.com
+// IDR_TYPELIBRARY  TYPELIB DISCARDABLE     "..\\..\\comsrv.tlb"
+
+GeometryImportStatusDialog DIALOG 34, 50, 124, 106
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | 0x4L 
+CAPTION "Geometry Import Status"
+{
+ PUSHBUTTON "&Cancel", IDD_GEOMIMPORT_CANCEL, 46, 90, 32, 12, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+ LTEXT "1000000", IDD_GEOMIMPORT_LINE_NUM, 79, 6, 40, 8, NOT WS_GROUP
+ LTEXT "00001", IDD_GEOMIMPORT_TOTAL_OBJECTS, 88, 18, 31, 8, SS_LEFT | WS_CHILD | WS_VISIBLE
+ LTEXT "Current File Offset:", IDD_GEOMIMPORT_LINE_NUM_TEXT, 13, 6, 63, 8
+ LTEXT "Total Objects Created:", IDD_GEOMIMPORT_TOTAL_OBJECTS_TEXT, 13, 18, 72, 8, WS_CHILD | WS_VISIBLE | WS_GROUP
+ CTEXT "Computing vertex normals based on the smoothing group numbers...", IDD_GEOMIMPORT_TEXT, 13, 44, 98, 26, SS_CENTER | WS_CHILD | WS_VISIBLE | WS_BORDER | WS_GROUP
+ CONTROL "", IDD_METER_CONTROL, "static", SS_WHITERECT | WS_CHILD | WS_VISIBLE | WS_BORDER, 13, 75, 98, 10
+ LTEXT "Total Polygons Read:", IDD_GEOMIMPORT_TOTAL_POLYS_TEXT, 13, 30, 71, 8
+ LTEXT "1000000", IDD_GEOMIMPORT_TOTAL_POLYS, 85, 30, 35, 8, NOT WS_GROUP
+}
+
+ExportAbortDialog DIALOG 37, 107, 223, 86
+STYLE DS_MODALFRAME | 0x4L | WS_POPUP | WS_CAPTION
+CAPTION "Geometry Export Status"
+{
+ LTEXT "Processing:", IDD_GEOMEXPORT_PROCESSING, 10, 7, 109, 8
+ CONTROL "Testing", IDD_GEOMEXPORT_HANDLETYPE, "EDIT", ES_AUTOHSCROLL | ES_READONLY | WS_BORDER | WS_GROUP | WS_TABSTOP, 9, 15, 110, 12
+ CONTROL "", IDD_METER_CONTROL, "static", SS_WHITERECT | WS_CHILD | WS_VISIBLE | WS_BORDER, 124, 15, 80, 12
+ CONTROL "This is a line of text", IDD_GEOMEXPORT_HANDLENAME, "EDIT", ES_CENTER | ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | WS_BORDER | WS_GROUP | WS_TABSTOP, 8, 30, 196, 33
+ PUSHBUTTON "Cancel", IDD_METER_CANCEL, 93, 68, 36, 13, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE
+}
+
+ServerProblemDialogBox DIALOG 142, 117, 298, 168
+STYLE 0x4L | WS_POPUP | WS_VISIBLE | WS_CAPTION
+CAPTION "Importer Server Not Responding"
+FONT 8, "MS Sans Serif"
+{
+ LTEXT "The COM server which performs the import conversion process is not responding.", -1, 20, 9, 258, 11
+ DEFPUSHBUTTON "&Retry Operation", IDC_SERVERFAULT_RETRY_OPERATION, 15, 29, 68, 14
+ LTEXT "Press 'Retry Operation' to attempt the operation again. This may work if the server was busy or out of synchronization.", -1, 94, 29, 188, 19
+ PUSHBUTTON "Restart &Server", IDC_SERVERFAULT_RESTART_SERVER, 15, 53, 68, 14
+ LTEXT "Press 'Restart Server' to stop and restart the server, then attempt the operation again.", -1, 94, 53, 170, 18
+ PUSHBUTTON "&Cancel Operation", IDC_SERVERFAULT_CANCEL_OPERATION, 15, 77, 68, 14
+ LTEXT "Press 'Cancel Operation' if you wish to abort the current operation and try again later.", -1, 94, 77, 177, 18
+ PUSHBUTTON "&Help", IDC_SERVERFAULT_HELP, 15, 101, 68, 14
+ LTEXT "Press 'Help' to get further information.", -1, 94, 101, 120, 8
+ CONTROL "", -1, "static", SS_BLACKFRAME | WS_CHILD | WS_VISIBLE, 15, 123, 270, 1
+ LTEXT "Last error reported:", -1, 15, 128, 63, 8
+ LTEXT "Text", IDC_SERVERFAULT_ERROR_MSG, 15, 139, 270, 19, WS_BORDER | WS_GROUP
+}
+
+BatchConversionOptionsDailog DIALOG 100, 14, 354, 338
+STYLE DS_MODALFRAME | 0x4L | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Select Export File Format and Options"
+FONT 8, "Helv"
+{
+ GROUPBOX "", -1, 18, 275, 271, 49, BS_GROUPBOX
+ AUTOCHECKBOX "Create Small Snapshot Rendering", IDD_BATCHCONVERT_RENDER_SNAPSHOT_ENABLE, 23, 273, 120, 12
+ LTEXT "Resolution:", -1, 31, 291, 38, 8
+ LTEXT "X:", -1, 72, 291, 6, 8
+ EDITTEXT IDD_BATCHCONVERT_RENDER_RES_X, 80, 289, 16, 12, WS_BORDER | WS_TABSTOP
+ LTEXT "Y:", -1, 100, 291, 7, 8
+ EDITTEXT IDD_BATCHCONVERT_RENDER_RES_Y, 108, 289, 16, 12, WS_BORDER | WS_TABSTOP
+ LTEXT "Scanline anti-aliasing:", -1, 139, 291, 70, 8
+ COMBOBOX IDD_BATCHCONVERT_RENDER_SCANLINE_AA_COMBO, 211, 289, 74, 102, CBS_DROPDOWNLIST | WS_TABSTOP
+ LTEXT "Render level:", -1, 31, 308, 44, 8
+ AUTORADIOBUTTON "Scanline", IDD_BATCHCONVERT_RENDERLEVEL_SCANLINE_RB, 79, 306, 40, 12
+ AUTORADIOBUTTON "Ray tracing", IDD_BATCHCONVERT_RENDERLEVEL_RAYTRACE_RB, 121, 306, 60, 12
+ LTEXT "File format:", -1, 199, 309, 36, 8
+ COMBOBOX IDD_BATCHCONVERT_RENDER_FILE_FORMAT_COMBO, 236, 307, 49, 85, CBS_DROPDOWNLIST | WS_TABSTOP
+ GROUPBOX "Common Options Used During Batch Conversion", -1, 10, 137, 288, 194, BS_GROUPBOX
+ AUTOCHECKBOX "Resize model to the viewport extents after import", IDD_BATCHCONVERT_RESIZEMODELTOEXTENTS, 23, 162, 168, 12
+ AUTOCHECKBOX "Add lights to scene if none after import", IDD_BATCHCONVERT_ADDLIGHTSTOSCENEIFNONE, 23, 176, 135, 12
+ AUTOCHECKBOX "Perform polygon processing on model before exporting", IDD_BATCHCONVERT_DOPOLYPROCESSING, 23, 190, 185, 12
+ PUSHBUTTON "Options >>", IDD_BATCHCONVERT_SHOW_POLYPROCESSING_OPTIONS, 238, 188, 50, 14
+ COMBOBOX IDD_BATCHCONVERT_EXPORT_TYPE_COMBO, 131, 70, 203, 160, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+ AUTOCHECKBOX "Compress children objects of grouping nodes to single object", IDD_BATCHCONVERT_COMPRESS_CHILDREN_ENA, 23, 204, 205, 12
+ PUSHBUTTON "Options >>", IDD_BATCHCONVERT_SHOW_COMPRESS_CHILDREN_OPTIONS, 238, 202, 50, 14
+ AUTOCHECKBOX "Enable hierarchy optimizer # 1", IDD_BATCHCONVERT_ENA_HIER_OPT1, 23, 218, 109, 12
+ AUTOCHECKBOX "Enable hierarchy optimizer # 2", IDD_BATCHCONVERT_ENA_HIER_OPT2, 137, 218, 108, 12
+ AUTOCHECKBOX "Perform polygon reduction on model before exporting", IDD_BATCHCONVERT_DOPOLYREDUCTION, 23, 231, 181, 12
+ PUSHBUTTON "Options >>", IDD_BATCHCONVERT_SHOW_POLYREDUCTION_OPTIONS, 238, 230, 50, 14
+ AUTOCHECKBOX "Apply global transform to exported geometry", IDD_BATCHCONVERT_APPLY_GLOBAL_XFORM_ENA, 23, 244, 159, 12
+ PUSHBUTTON "Options >>", IDD_BATCHCONVERT_SHOW_GLOBAL_XFORM_OPTIONS, 238, 245, 50, 14
+ AUTOCHECKBOX "Create backup files during export", IDD_BATCHCONVERT_CREATEBACKUPSDURINGEXPORT, 23, 258, 118, 12
+ GROUPBOX "Import Filename and Converter", -1, 10, 7, 333, 45, BS_GROUPBOX
+ LTEXT "Import filename:", -1, 20, 20, 60, 8
+ LTEXT "", IDD_BATCHCONVERT_INPUT_FILENAME, 104, 20, 126, 8
+ LTEXT "Import converter chosen:", -1, 20, 34, 80, 8
+ LTEXT "", IDD_BATCHCONVERT_INPUT_FILE_FORMAT, 104, 33, 127, 11, WS_BORDER | WS_GROUP
+ PUSHBUTTON "Show Import Converter Options", IDD_BATCHCONVERT_SHOW_IMPORT_OPTIONS, 235, 31, 103, 13
+ GROUPBOX "Export Converter", -1, 10, 57, 333, 74, BS_GROUPBOX
+ PUSHBUTTON "Show Export Converter Options", IDD_BATCHCONVERT_SHOWEXPORTEROPTIONS, 131, 87, 128, 13
+ LTEXT "Export directory:", -1, 20, 109, 54, 8
+ EDITTEXT IDD_BATCHCONVERT_EXPORT_DIRECTORY_EDIT, 75, 108, 110, 12, ES_READONLY | WS_BORDER | WS_TABSTOP
+ PUSHBUTTON "Browse", IDD_BATCHCONVERT_EXPORT_DIRECTORY_BROWSE, 189, 107, 39, 14
+ AUTOCHECKBOX "Lock import && export directory", IDD_BATCHCONVERT_LOCK_IMPORT_EXPORT_DIRS, 232, 108, 106, 12
+ PUSHBUTTON "Ok", IDOK, 306, 206, 38, 14
+ PUSHBUTTON "Cancel", IDCANCEL, 306, 223, 38, 14
+ LTEXT "Select desired export file format:", -1, 20, 73, 101, 8
+ AUTOCHECKBOX "Show conversion process in view ports (else, hide like in batch conversions)", IDD_BATCHCONVERT_PERFORM_CONVERSION_VISIBLE_IN_VIEWPORTS, 23, 148, 255, 12
+}
+
