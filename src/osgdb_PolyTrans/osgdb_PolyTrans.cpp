@@ -223,15 +223,15 @@ public:
 		if (readNodeResult.getNode() != NULL)
 		{
 			// Add occlusion query support to the model.
-			osg::ref_ptr<osgOQ::OcclusionQueryContext> oqc = new osgOQ::OcclusionQueryContext;
+			//osg::ref_ptr<osgOQ::OcclusionQueryContext> oqc = new osgOQ::OcclusionQueryContext;
             /* TBD
 			if (bufferSizeOption)
 				oqc->setBufferSize( bufferSize );
             */
 
-			osg::ref_ptr<osgOQ::OcclusionQueryRoot> oqr = new osgOQ::OcclusionQueryRoot( oqc.get() );
-			oqr->addChild( readNodeResult.getNode() );
-			readNodeResult = oqr.get();
+			//osg::ref_ptr<osgOQ::OcclusionQueryRoot> oqr = new osgOQ::OcclusionQueryRoot( oqc.get() );
+			//oqr->addChild( readNodeResult.getNode() );
+			//readNodeResult = oqr.get();
 		}
 
 		return readNodeResult;
