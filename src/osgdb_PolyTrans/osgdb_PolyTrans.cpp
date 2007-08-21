@@ -116,13 +116,22 @@ public:
             if (osgDB::equalCaseInsensitive( valueStr, ext ) )
                 return ReadResult::FILE_NOT_HANDLED;
         }
-        else
+        // handle default case
+        else if (osgDB::equalCaseInsensitive( "flt", ext ) )
         {
-            // handle default case
-            if (osgDB::equalCaseInsensitive( "flt", ext ) )
-                return ReadResult::FILE_NOT_HANDLED;
+            return ReadResult::FILE_NOT_HANDLED;
         }
-
+        // handle WaveFront files case
+        else if (osgDB::equalCaseInsensitive( "obj", ext ) )
+        {
+            return ReadResult::FILE_NOT_HANDLED;
+        }
+        // handle STL case
+        else if (osgDB::equalCaseInsensitive( "stl", ext ) )
+        {
+            return ReadResult::FILE_NOT_HANDLED;
+        }
+        
 		std::string fileName = osgDB::findDataFile( file, options );
         if (fileName.empty())
 		{
