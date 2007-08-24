@@ -341,7 +341,19 @@ std::string
 PolyTransComHelper::GetLowerCaseFullFileExtension( const std::string& aFileName )
 {
 	int firstDotIndex = (int)( aFileName.find_first_of( '.' ) );
-	
+    std::string tempExt( inFile.begin()+firstDotIndex+1, inFile.end() );
+    //See if the extension is only 1 char which would mean a ProE file
+    if( tempExt.size() == 1 )
+    {
+        //double check and make sure the extension is a digit
+        if( std::isdigit( tempExt.at( 0 ) ) )
+        {
+            //if so then grab the real index before the 3 space extension
+            firstDotIndex = 
+                (int)( inFile.find_last_of( '.', firstDotIndex - 1 ) );
+        }
+    }
+
 	std::string lowerCaseExtension = "";
 	for ( int i = firstDotIndex + 1; i < (int)( aFileName.size() ); i++ )
 	{
