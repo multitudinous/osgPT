@@ -6,6 +6,7 @@
 #include "COMHelper/PolyTransImporter.h"
 
 #include <fstream>
+#include <cctype>
 
 PolyTransComHelper::PolyTransComHelper() :
 	m_ConfigProperty_AppWindowName( "COMHelper_AppWindowName" ), //name that appears on titlebar of parent
@@ -341,7 +342,7 @@ std::string
 PolyTransComHelper::GetLowerCaseFullFileExtension( const std::string& aFileName )
 {
 	int firstDotIndex = (int)( aFileName.find_first_of( '.' ) );
-    std::string tempExt( inFile.begin()+firstDotIndex+1, inFile.end() );
+    std::string tempExt( aFileName.begin()+firstDotIndex+1, aFileName.end() );
     //See if the extension is only 1 char which would mean a ProE file
     if( tempExt.size() == 1 )
     {
@@ -350,7 +351,7 @@ PolyTransComHelper::GetLowerCaseFullFileExtension( const std::string& aFileName 
         {
             //if so then grab the real index before the 3 space extension
             firstDotIndex = 
-                (int)( inFile.find_last_of( '.', firstDotIndex - 1 ) );
+                (int)( aFileName.find_last_of( '.', firstDotIndex - 1 ) );
         }
     }
 

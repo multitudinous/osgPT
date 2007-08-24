@@ -99,7 +99,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)..\..\OpenSceneGraph\bin\win32"
+			OutputDirectory="$(SolutionDir)..\bin\win32"
 			IntermediateDirectory="Release"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
@@ -122,7 +122,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\include;..\..\..\..\OpenSceneGraph\include;..\..\..\..\OpenThreads\include"
+				AdditionalIncludeDirectories="&quot;$(OSGOQ_INC_DIR)&quot;;&quot;$(OSG_INC_DIR)&quot;;..\..\..\src"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;POLYTRANS_EXPORTS"
 				RuntimeLibrary="2"
 				RuntimeTypeInfo="true"
@@ -142,10 +142,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="osgUtil.lib osgDB.lib osg.lib comctl32.lib"
+				AdditionalDependencies="osgUtil.lib osgDB.lib osg.lib comctl32.lib osgOQ.lib"
 				OutputFile="$(OutDir)\$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\..\OpenSceneGraph\lib\win32;..\..\..\..\OpenThreads\lib\win32"
+				AdditionalLibraryDirectories="&quot;$(OSG_LIB_DIR)&quot;;&quot;$(OSGOQ_LIB_DIR)&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
