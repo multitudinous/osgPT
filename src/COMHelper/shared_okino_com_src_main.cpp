@@ -190,7 +190,11 @@ OkinoCommonComSource___AttachToCOMInterface(HWND parent_hwnd,
 	// This is TRUE if either of these programs have been run and their
 	// COM server's have been registered (which is done automatically)
 	if (!OkinoCommonComSource___IsTypeLibRegistered()) {
-		MessageBox(parent_hwnd, "The NuGraf or PolyTrans host programs have not been registered as COM/DCOM servers yet.\n\nPlease execute nugraf32.exe or pt32.exe at least once before executing this program.", "Fatal Error", MB_OK | MB_APPLMODAL);
+		//This is commented out because it a user does not have polytrans installed
+        //the dialog appears every time the osgPoltrans plugin is loaded which 
+        //can be annoying. If there is a way to tell at runtime other than this 
+        //method if polytrans is installed we could uncomment this dialog code.
+        //MessageBox(parent_hwnd, "The NuGraf or PolyTrans host programs have not been registered as COM/DCOM servers yet.\n\nPlease execute nugraf32.exe or pt32.exe at least once before executing this program.", "Fatal Error", MB_OK | MB_APPLMODAL);
 		CoUninitialize();
 		return FALSE;
 	}
