@@ -1,7 +1,7 @@
 SET( LIB_NAME osgdb_PolyTrans )
 
-SET( COMHELPER_SRC_DIR "${osgOQ_SOURCE_DIR}/src/COMHelper" )
-SET( COMHELPER_INC_DIR "${osgOQ_SOURCE_DIR}/include/COMHelper" )
+SET( COMHELPER_SRC_DIR "../COMHelper" )
+SET( COMHELPER_INC_DIR "../COMHelper" )
 
 
 SET( LIB_PUBLIC_HEADERS
@@ -18,7 +18,7 @@ SET( LIB_PUBLIC_HEADERS
 ADD_LIBRARY( ${LIB_NAME} MODULE
     ${LIB_PUBLIC_HEADERS}
     osgdb_PolyTrans.cpp
-    ${osgOQ_SOURCE_DIR}/src/osgOQ/ConfigFileReader.cpp
+    ConfigFileReader.cpp
     ${COMHELPER_SRC_DIR}/PolyTransComHelper.cpp
     ${COMHELPER_SRC_DIR}/PolyTransCOMSinkEvents.cpp
     ${COMHELPER_SRC_DIR}/PolyTransImporter.cpp

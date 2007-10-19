@@ -69,7 +69,7 @@ Example COMHelper_PolyTransINIFileName: c:\Windows\polytrans.ini
 #pragma once
 
 #include "stdafx.h"
-#include "osgOQ/ConfigFileReader.h"
+#include "../osgdb_PolyTrans/ConfigFileReader.h"
 #include <string>
 
 class PolyTransImporter;

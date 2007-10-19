@@ -1,182 +1,118 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="7.10"
 	Name="osgdb_PolyTrans"
-	ProjectGUID="{51083269-F8F5-49CC-BE59-CB8ED7E8059F}"
-	Keyword="Win32Proj"
-	>
+	ProjectGUID="{64749A1E-AD94-4A93-8E41-FB23065BE0CA}"
+	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
-			Name="Win32"
-		/>
+			Name="Win32"/>
 	</Platforms>
-	<ToolFiles>
-	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)..\bin\win32"
+			OutputDirectory="..\..\..\..\OpenSceneGraph\bin\win32"
 			IntermediateDirectory="Debug"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
+			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(OSGOQ_INC_DIR)&quot;;&quot;$(OSG_INC_DIR)&quot;;..\..\..\src"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;POLYTRANS_EXPORTS"
-				MinimalRebuild="true"
+				AdditionalIncludeDirectories="..\..\..\..\osgOQ\include;..\..\..\src;..\..\..\..\OpenSceneGraph\include;..\..\..\..\OpenThreads\include"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OSGDB_POLYTRANS_EXPORTS"
+				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				RuntimeTypeInfo="true"
+				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="4"
-			/>
+				Detect64BitPortabilityProblems="TRUE"
+				DebugInformationFormat="4"/>
 			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
+				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="osgUtild.lib osgDBd.lib osgd.lib comctl32.lib osgOQd.lib"
-				OutputFile="$(OutDir)\$(ProjectName)d.dll"
+				AdditionalDependencies="osgUtild.lib osgDBd.lib osgd.lib comctl32.lib"
+				OutputFile="$(OutDir)/osgdb_PolyTransd.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(OSG_LIB_DIR)&quot;;&quot;$(OSGOQ_LIB_DIR)&quot;"
-				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/$(ProjectName)d.pdb"
+				AdditionalLibraryDirectories="..\..\..\..\OpenSceneGraph\lib\win32"
+				GenerateDebugInformation="TRUE"
+				ProgramDatabaseFile="$(OutDir)/osgdb_PolyTrans.pdb"
 				SubSystem="2"
-				ImportLibrary=""
-				TargetMachine="1"
-			/>
+				ImportLibrary="$(OutDir)/osgdb_PolyTrans.lib"
+				TargetMachine="1"/>
 			<Tool
-				Name="VCALinkTool"
-			/>
+				Name="VCMIDLTool"/>
 			<Tool
-				Name="VCManifestTool"
-			/>
+				Name="VCPostBuildEventTool"/>
 			<Tool
-				Name="VCXDCMakeTool"
-			/>
+				Name="VCPreBuildEventTool"/>
 			<Tool
-				Name="VCBscMakeTool"
-			/>
+				Name="VCPreLinkEventTool"/>
 			<Tool
-				Name="VCFxCopTool"
-			/>
+				Name="VCResourceCompilerTool"/>
 			<Tool
-				Name="VCAppVerifierTool"
-			/>
+				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCWebDeploymentTool"
-			/>
+				Name="VCXMLDataGeneratorTool"/>
 			<Tool
-				Name="VCPostBuildEventTool"
-			/>
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)..\bin\win32"
+			OutputDirectory="Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
+			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;$(OSGOQ_INC_DIR)&quot;;&quot;$(OSG_INC_DIR)&quot;;..\..\..\src"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;POLYTRANS_EXPORTS"
+				AdditionalIncludeDirectories="..\..\..\..\osgOQ\include;..\..\..\src;..\..\..\..\OpenSceneGraph\include;..\..\..\..\OpenThreads\include"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;OSGDB_POLYTRANS_EXPORTS"
 				RuntimeLibrary="2"
-				RuntimeTypeInfo="true"
+				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
-			/>
+				Detect64BitPortabilityProblems="TRUE"
+				DebugInformationFormat="3"/>
 			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
+				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="osgUtil.lib osgDB.lib osg.lib comctl32.lib osgOQ.lib"
-				OutputFile="$(OutDir)\$(ProjectName).dll"
+				AdditionalDependencies="osgUtil.lib osgDB.lib osg.lib comctl32.lib"
+				OutputFile="$(OutDir)/osgdb_PolyTrans.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(OSG_LIB_DIR)&quot;;&quot;$(OSGOQ_LIB_DIR)&quot;"
-				GenerateDebugInformation="true"
+				AdditionalLibraryDirectories="..\..\..\..\OpenSceneGraph\lib\win32"
+				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				ImportLibrary=""
-				TargetMachine="1"
-			/>
+				ImportLibrary="$(OutDir)/osgdb_PolyTrans.lib"
+				TargetMachine="1"/>
 			<Tool
-				Name="VCALinkTool"
-			/>
+				Name="VCMIDLTool"/>
 			<Tool
-				Name="VCManifestTool"
-			/>
+				Name="VCPostBuildEventTool"/>
 			<Tool
-				Name="VCXDCMakeTool"
-			/>
+				Name="VCPreBuildEventTool"/>
 			<Tool
-				Name="VCBscMakeTool"
-			/>
+				Name="VCPreLinkEventTool"/>
 			<Tool
-				Name="VCFxCopTool"
-			/>
+				Name="VCResourceCompilerTool"/>
 			<Tool
-				Name="VCAppVerifierTool"
-			/>
+				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCWebDeploymentTool"
-			/>
+				Name="VCXMLDataGeneratorTool"/>
 			<Tool
-				Name="VCPostBuildEventTool"
-			/>
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -185,83 +121,73 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
-			>
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath="..\..\..\src\osgdb_PolyTrans\osgdb_PolyTrans.cpp"
-				>
+				RelativePath="..\..\..\src\osgdb_PolyTrans\ConfigFileReader.cpp">
 			</File>
 			<File
-				RelativePath="..\..\..\src\COMHelper\PolyTransComHelper.cpp"
-				>
+				RelativePath="..\..\..\src\osgdb_PolyTrans\osgdb_PolyTrans.cpp">
 			</File>
 			<File
-				RelativePath="..\..\..\src\COMHelper\PolyTransCOMSinkEvents.cpp"
-				>
+				RelativePath="..\..\..\src\COMHelper\PolyTransComHelper.cpp">
 			</File>
 			<File
-				RelativePath="..\..\..\src\COMHelper\PolyTransImporter.cpp"
-				>
+				RelativePath="..\..\..\src\COMHelper\PolyTransCOMSinkEvents.cpp">
 			</File>
 			<File
-				RelativePath="..\..\..\src\COMHelper\PolyTransOutput.cpp"
-				>
+				RelativePath="..\..\..\src\COMHelper\PolyTransImporter.cpp">
 			</File>
 			<File
-				RelativePath="..\..\..\src\COMHelper\PolyTransOutputConsole.cpp"
-				>
+				RelativePath="..\..\..\src\COMHelper\PolyTransOutput.cpp">
 			</File>
 			<File
-				RelativePath="..\..\..\src\COMHelper\shared_okino_com_src_batch.cpp"
-				>
+				RelativePath="..\..\..\src\COMHelper\PolyTransOutputConsole.cpp">
 			</File>
 			<File
-				RelativePath="..\..\..\src\COMHelper\shared_okino_com_src_main.cpp"
-				>
+				RelativePath="..\..\..\src\COMHelper\shared_okino_com_src_batch.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\src\COMHelper\shared_okino_com_src_main.cpp">
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
-			>
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath="..\..\..\src\COMHelper\PolyTransComHelper.h"
-				>
+				RelativePath="..\..\..\src\osgdb_PolyTrans\ConfigFileReader.h">
 			</File>
 			<File
-				RelativePath="..\..\..\src\COMHelper\PolyTransCOMSinkEvents.h"
-				>
+				RelativePath="..\..\..\src\COMHelper\PolyTransComHelper.h">
 			</File>
 			<File
-				RelativePath="..\..\..\src\COMHelper\PolyTransImporter.h"
-				>
+				RelativePath="..\..\..\src\COMHelper\PolyTransCOMSinkEvents.h">
 			</File>
 			<File
-				RelativePath="..\..\..\src\COMHelper\PolyTransOutput.h"
-				>
+				RelativePath="..\..\..\src\COMHelper\PolyTransImporter.h">
 			</File>
 			<File
-				RelativePath="..\..\..\src\COMHelper\PolyTransOutputConsole.h"
-				>
+				RelativePath="..\..\..\src\COMHelper\PolyTransOutput.h">
 			</File>
 			<File
-				RelativePath="..\..\..\src\COMHelper\shared_okino_com_src.h"
-				>
+				RelativePath="..\..\..\src\COMHelper\PolyTransOutputConsole.h">
 			</File>
 			<File
-				RelativePath="..\..\..\src\COMHelper\shared_okino_com_src_resources.h"
-				>
+				RelativePath="..\..\..\src\COMHelper\shared_okino_com_src.h">
+			</File>
+			<File
+				RelativePath="..\..\..\src\COMHelper\shared_okino_com_src_resources.h">
+			</File>
+			<File
+				RelativePath="..\..\..\src\COMHelper\stdafx.h">
 			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
-			>
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
 			<File
-				RelativePath="..\..\..\src\COMHelper\shared_okino_com_src_resources.rc"
-				>
+				RelativePath="..\..\..\src\COMHelper\shared_okino_com_src_resources.rc">
 			</File>
 		</Filter>
 	</Files>

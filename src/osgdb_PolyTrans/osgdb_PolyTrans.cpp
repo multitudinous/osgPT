@@ -6,7 +6,7 @@
 #include "osgOQ/OcclusionQueryRoot.h"
 
 #include "COMHelper/PolyTransComHelper.h"
-#include "osgOQ/ConfigFileReader.h"
+#include "ConfigFileReader.h"
 #include <string>
 #include <sstream>
 

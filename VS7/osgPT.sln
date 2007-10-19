@@ -1,0 +1,23 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "osgdb_PolyTrans", "src\osgdb_PolyTrans\osgdb_PolyTrans.vcproj", "{64749A1E-AD94-4A93-8E41-FB23065BE0CA}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectDependencies) = postSolution
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{64749A1E-AD94-4A93-8E41-FB23065BE0CA}.Debug.ActiveCfg = Debug|Win32
+		{64749A1E-AD94-4A93-8E41-FB23065BE0CA}.Debug.Build.0 = Debug|Win32
+		{64749A1E-AD94-4A93-8E41-FB23065BE0CA}.Release.ActiveCfg = Release|Win32
+		{64749A1E-AD94-4A93-8E41-FB23065BE0CA}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

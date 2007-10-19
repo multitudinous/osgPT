@@ -1,4 +1,4 @@
-#include "osgOQ/ConfigFileReader.h"
+#include "../osgdb_PolyTrans/ConfigFileReader.h"
 #include "COMHelper/shared_okino_com_src.h"
 #include "COMHelper/PolyTransCOMSinkEvents.h"
 #include "COMHelper/PolyTransOutputConsole.h"
