@@ -2,8 +2,6 @@
 #include <osgDB/Registry>
 #include <osgDB/FileNameUtils>
 #include <osgDB/FileUtils>
-#include "osgOQ/OcclusionQueryContext.h"
-#include "osgOQ/OcclusionQueryRoot.h"
 
 #include "COMHelper/PolyTransComHelper.h"
 #include "ConfigFileReader.h"
@@ -241,21 +239,6 @@ public:
 			// TODO: we might want to delete the new folder that may have been created by PolyTrans to
 			// put the .flt file in.
 			BOOL deleteSuccess = DeleteFile( intermediateFile.c_str() );
-		}
-
-
-		if (readNodeResult.getNode() != NULL)
-		{
-			// Add occlusion query support to the model.
-			//osg::ref_ptr<osgOQ::OcclusionQueryContext> oqc = new osgOQ::OcclusionQueryContext;
-            /* TBD
-			if (bufferSizeOption)
-				oqc->setBufferSize( bufferSize );
-            */
-
-			//osg::ref_ptr<osgOQ::OcclusionQueryRoot> oqr = new osgOQ::OcclusionQueryRoot( oqc.get() );
-			//oqr->addChild( readNodeResult.getNode() );
-			//readNodeResult = oqr.get();
 		}
 
 		return readNodeResult;

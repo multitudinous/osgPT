@@ -1,5 +1,5 @@
-#ifndef OSGOQ_POLYTRANSIMPORTER_H
-#define OSGOQ_POLYTRANSIMPORTER_H
+#ifndef __POLYTRANSIMPORTER_H__
+#define __POLYTRANSIMPORTER_H__
 
 #include <string>
 
@@ -30,4 +30,4 @@ private:
 };
 
 
-#endif //OSGOQ_POLYTRANSIMPORTER_H
+#endif // __POLYTRANSIMPORTER_H__
