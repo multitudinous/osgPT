@@ -16,6 +16,24 @@ class ReaderWriterPolyTrans : public osgDB::ReaderWriter
 public:
     virtual const char* className() const { return "PolyTrans Reader"; }
 
+    bool rejectsExtension( const std::string& extension ) const
+    {
+        // This function quickly rejects extensions that are known
+        //   to not be supported by PolyTrans. This avoids having to
+        //   launch PolyTrans via COM to find out the extension isn't
+        //   supported.
+
+        if (osgDB::equalCaseInsensitive( extension, "ttf" ) )
+            return true;
+        if (osgDB::equalCaseInsensitive( extension, "osg" ) )
+            return true;
+        if (osgDB::equalCaseInsensitive( extension, "osga" ) )
+            return true;
+        if (osgDB::equalCaseInsensitive( extension, "ive" ) )
+            return true;
+        return false;
+    }
+
     virtual bool acceptsExtension( const std::string& extension ) const
     {
 		// If we are already loading a file, DO NOT claim to support
@@ -23,7 +41,10 @@ public:
 		if (_loading)
 			return false;
 
-		PolyTransComHelper polyTransComHelper;
+        if (rejectsExtension( extension ) )
+            return false;
+
+        PolyTransComHelper polyTransComHelper;
 		if (!polyTransComHelper.AttachToPolyTransCom( NULL ))
 		{
 			osg::notify(osg::FATAL) << "osgdb_PolyTrans:: Failed to attach to PolyTrans via Okino COM interface." << std::endl;
@@ -46,7 +67,10 @@ public:
 		if (_loading)
 			return ReadResult::FILE_NOT_HANDLED;
 
-		// Look for a config file. The config file changes this plugin's
+        if (rejectsExtension( osgDB::getFileExtension( file ) ))
+            return false;
+
+        // Look for a config file. The config file changes this plugin's
 		//   default behavior. To use a config file, set the OSG_POLYTRANS_CONFIG_FILE
 		//   env var to the config file name.
 		ConfigFileReader configFileReader;

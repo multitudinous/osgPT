@@ -65,7 +65,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="Release"
+			OutputDirectory="..\..\..\..\OpenSceneGraph\bin\win32"
 			IntermediateDirectory="Release"
 			ConfigurationType="2"
 			CharacterSet="2">
