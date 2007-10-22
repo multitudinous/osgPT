@@ -1,4 +1,4 @@
-#include "../osgdb_PolyTrans/ConfigFileReader.h"
+#include <osgDB/FileNameUtils>
 #include "COMHelper/shared_okino_com_src.h"
 #include "COMHelper/PolyTransCOMSinkEvents.h"
 #include "COMHelper/PolyTransOutputConsole.h"
@@ -8,17 +8,10 @@
 #include <fstream>
 #include <cctype>
 
-PolyTransComHelper::PolyTransComHelper() :
-	m_ConfigProperty_AppWindowName( "COMHelper_AppWindowName" ), //name that appears on titlebar of parent
-	m_ConfigProperty_BaseIntermediateFileName( "COMHelper_BaseIntermediateFileName" ), //relative or absolute path, and filename
-	m_ConfigProperty_IntermediateFileType( "COMHelper_IntermediateFileType" ),
-	m_ConfigProperty_ShowExportOptions( "COMHelper_ShowExportOptions" ), // Y or N
-	m_ConfigProperty_ShowImportOptions( "COMHelper_ShowImportOptions" ), // Y or N
-	m_ConfigProperty_PolyTransINIFileName( "COMHelper_PolyTransINIFileName" ), //absolute path and filename
-	m_ConfigProperty_PolyTransImporter( "PolyTransImporter" ),
+PolyTransComHelper::PolyTransComHelper()
+:
 	m_ConfigValue_BaseIntermediateFileName( "" ),
-	m_ConfigValue_PolyTransIniFileNameAbsolute( "" ),
-	m_ConfigValue_IntermediateFileType( "" ),
+	m_ConfigValue_IntermediateFileType( "flt" ),
 	m_ShowExportOptionsWindow( true ),
 	m_ShowImportOptionsWindow( true )
 {
@@ -29,13 +22,6 @@ PolyTransComHelper::PolyTransComHelper() :
 
 PolyTransComHelper::~PolyTransComHelper(void)
 {
-	while ( m_ListOfPolyTransImporters.size() > 0 )
-	{
-		PolyTransImporter* lastImporter = m_ListOfPolyTransImporters.back();
-		delete lastImporter;
-
-		m_ListOfPolyTransImporters.pop_back();
-	}
 }
 
 
@@ -125,15 +111,17 @@ PolyTransComHelper::ImportModelIntoPolyTrans( const std::string& aFileNameAndPat
     std::string importerNameToUse = "";
 
 	//see if a mapping exists that was loaded from the config file
-	int numConfigImporters = static_cast< int >( m_ListOfPolyTransImporters.size() );
-	for ( int i = 0; i < numConfigImporters; i++ )
-	{
-		PolyTransImporter* importerInList = m_ListOfPolyTransImporters[ i ];
-		if ( importerInList->GetFileExtension() == fileExtension )
-		{
-			importerNameToUse = importerInList->GetImporterName();
-		}
-	}
+    PluginMap::const_iterator it = m_PolyTransImporters.begin();
+    while (it != m_PolyTransImporters.end())
+    {
+        std::string ext( (*it).first );
+        if (osgDB::equalCaseInsensitive( ext, fileExtension ) )
+        {
+            importerNameToUse = (*it).second;
+            break;
+        }
+        it++;
+    }
 
 	std::string importerGUID = "";
 	if ( importerNameToUse.size() > 0 )
@@ -195,7 +183,7 @@ bool
 PolyTransComHelper::ExportPolyTransModelToIntermediateFile()
 {
 	bool exportResult = false;
-	if ( ( m_ConfigValue_IntermediateFileType == "flt" ) || ( m_ConfigValue_IntermediateFileType == "" ) )
+	if ( m_ConfigValue_IntermediateFileType == "flt" )
 	{
 		exportResult = ExportPolyTransModelToOpenFlight();
 	}
@@ -365,87 +353,28 @@ PolyTransComHelper::GetLowerCaseFullFileExtension( const std::string& aFileName 
 }
 
 
-//By calling this function, PolyTransComHelper will extract from the config file properties
-// that are understood by this object.  If any are found, then the default values will be
-// replaced by the values in the file.  The parameter aConfigFileName must be an absolute
-// path and filename.
-void
-PolyTransComHelper::LoadOptionsFromConfigFile( ConfigFileReader& configFileReader )
-{
-	if (!configFileReader.valid())
-		return;
-
-	if ( configFileReader.HasProperty( m_ConfigProperty_AppWindowName ) )
-	{
-		m_AppWindowName = configFileReader.GetValue( m_ConfigProperty_AppWindowName );
-	}
-
-	if ( configFileReader.HasProperty( m_ConfigProperty_ShowImportOptions ) )
-	{
-		std::string showImportOptionsCode = configFileReader.GetValue( m_ConfigProperty_ShowImportOptions );
-		if ( showImportOptionsCode == "Y" )
-		{
-			m_ShowImportOptionsWindow = true;
-		}
-		else
-		{
-			m_ShowImportOptionsWindow = false;
-		}
-	}
-
-	if ( configFileReader.HasProperty( m_ConfigProperty_ShowExportOptions ) )
-	{
-		std::string showExportOptionsCode = configFileReader.GetValue( m_ConfigProperty_ShowExportOptions );
-		if ( showExportOptionsCode == "Y" )
-		{
-			m_ShowExportOptionsWindow = true;
-		}
-		else
-		{
-			m_ShowExportOptionsWindow = false;
-		}
-	}
-
-	if ( configFileReader.HasProperty( m_ConfigProperty_BaseIntermediateFileName ) )
-	{
-		m_ConfigValue_BaseIntermediateFileName = configFileReader.GetValue( m_ConfigProperty_BaseIntermediateFileName );
-	}
-
-	if ( configFileReader.HasProperty( m_ConfigProperty_PolyTransINIFileName ) )
-	{
-		m_ConfigValue_PolyTransIniFileNameAbsolute = configFileReader.GetValue( m_ConfigProperty_PolyTransINIFileName );
-	}
-
-	if ( configFileReader.HasProperty( m_ConfigProperty_IntermediateFileType ) )
-	{
-		m_ConfigValue_IntermediateFileType = configFileReader.GetValue( m_ConfigProperty_IntermediateFileType );
-	}
-	
-	if ( configFileReader.HasProperty( m_ConfigProperty_PolyTransImporter ) )
-	{
-		std::vector< std::string > listOfConfigValues;
-		configFileReader.GetValues( m_ConfigProperty_PolyTransImporter, listOfConfigValues );
-
-		int numImporters = static_cast< int >( listOfConfigValues.size() );
-		for ( int i = 0; i < numImporters; i++ )
-		{
-			std::string configValueInList = listOfConfigValues[ i ];
-
-			int firstBlank = static_cast< int >( configValueInList.find_first_of( ' ' ) );
-			std::string fileExtension = configValueInList.substr( 0, firstBlank );
-			std::string importerName = configValueInList.substr( firstBlank + 1 );
-
-			PolyTransImporter* newPolyTransImporter = new PolyTransImporter( fileExtension, importerName );
-			m_ListOfPolyTransImporters.push_back( newPolyTransImporter );
-		}
-	}
-}
-
-
 void
 PolyTransComHelper::SetShowImportOptionsWindow( bool showWindow )
 {
 	m_ShowImportOptionsWindow = showWindow;
+}
+
+void
+PolyTransComHelper::setPluginPreferences( const PluginMap& polyTransPluginPreferences )
+{
+    m_PolyTransImporters = polyTransPluginPreferences;
+}
+
+void
+PolyTransComHelper::setIntermediateFileNameExt( const std::string& ext )
+{
+    m_ConfigValue_IntermediateFileType = ext;
+}
+
+void
+PolyTransComHelper::setIntermediateFileNameBase( const std::string& base )
+{
+    m_ConfigValue_BaseIntermediateFileName = base;
 }
 
 
@@ -570,15 +499,8 @@ PolyTransComHelper::ComputeIntermediateFileNameAndPath( const std::string& srcFi
 		}
 	}
 
-	if ( m_ConfigValue_IntermediateFileType.size() > 0 )
-	{
-		intermediateFileNameAndPath += ".";
-		intermediateFileNameAndPath += m_ConfigValue_IntermediateFileType;
-	}
-	else
-	{
-		intermediateFileNameAndPath += ".flt";
-	}
+    intermediateFileNameAndPath += ".";
+    intermediateFileNameAndPath += m_ConfigValue_IntermediateFileType;
 
 	return intermediateFileNameAndPath;
 }

@@ -69,72 +69,67 @@ Example COMHelper_PolyTransINIFileName: c:\Windows\polytrans.ini
 #pragma once
 
 #include "stdafx.h"
-#include "../osgdb_PolyTrans/ConfigFileReader.h"
 #include <string>
+#include <map>
 
-class PolyTransImporter;
 
 
 class PolyTransComHelper
 {
-
 public:
+    typedef std::map<std::string,std::string> PluginMap;
 
-	//CONSTRUCTOR
-	PolyTransComHelper();
-
-
-	//DESTRUCTOR
-	~PolyTransComHelper(void);
+    //CONSTRUCTOR
+    PolyTransComHelper();
 
 
-	//ACCESSORS
-	void SetExportPath( std::string& exportPath );
-	void SetAppWindowName( const std::string& anAppWindowName );
-	void SetShowExportOptionsWindow( bool showWindow );
-	void SetShowImportOptionsWindow( bool showWindow );
-	std::string GetLowerCaseFullFileExtension( const std::string& aFileName );
-	std::string ComputeIntermediateFileNameAndPath( const std::string& srcFile="" ) const;
-	std::string ComputeGeneratedFileNameAndPath();
+    //DESTRUCTOR
+    ~PolyTransComHelper(void);
 
-	//UTILITIES
-	bool AttachToPolyTransCom( HINSTANCE anAppInstance );
-	void DetachFromPolyTransCOM();
-	bool ExportPolyTransModelToIntermediateFile();
-	bool ExportPolyTransModelToOpenFlight();
-	bool ExportPolyTransModelToWaveFront();
-	bool ImportModelIntoPolyTrans( const std::string& aFileNameAndPathToImport );
-	bool IsExtensionSupportedByImporters( const std::string& aFileExtNoDot );
-	void LoadOptionsFromConfigFile( ConfigFileReader& configFileReader );
-	bool ResetPolyTrans();
+
+    //ACCESSORS
+    void SetExportPath( std::string& exportPath );
+    void SetAppWindowName( const std::string& anAppWindowName );
+    void SetShowExportOptionsWindow( bool showWindow );
+    void SetShowImportOptionsWindow( bool showWindow );
+    void setPluginPreferences( const PluginMap& polyTransPluginPreferences );
+    void setIntermediateFileNameExt( const std::string& ext );
+    void setIntermediateFileNameBase( const std::string& base );
+    std::string GetLowerCaseFullFileExtension( const std::string& aFileName );
+    std::string ComputeIntermediateFileNameAndPath( const std::string& srcFile="" ) const;
+    std::string ComputeGeneratedFileNameAndPath();
+
+    //UTILITIES
+    bool AttachToPolyTransCom( HINSTANCE anAppInstance );
+    void DetachFromPolyTransCOM();
+    bool ExportPolyTransModelToIntermediateFile();
+    bool ExportPolyTransModelToOpenFlight();
+    bool ExportPolyTransModelToWaveFront();
+    bool ImportModelIntoPolyTrans( const std::string& aFileNameAndPathToImport );
+    bool IsExtensionSupportedByImporters( const std::string& aFileExtNoDot );
+    bool ResetPolyTrans();
 
 private:
+    //UTILITIES
+    int  FindPolyTransIniCreateNewFolderValue( const std::string& aPolyTransIniFileAndPath );
+    bool RegisterPolyTransComServer();
+    void SearchListOfExporters();
+    void SearchListOfImporters();
+    std::string GetGUIDForImporterName( const std::string& anImporterName );
+    bool IsExtensionInList( const std::string& aFileExtNoDot, const std::string& aListOfExtensions );
 
-	//UTILITIES
-	int  FindPolyTransIniCreateNewFolderValue( const std::string& aPolyTransIniFileAndPath );
-	bool RegisterPolyTransComServer();
-	void SearchListOfExporters();
-	void SearchListOfImporters();
-	std::string GetGUIDForImporterName( const std::string& anImporterName );
-	bool IsExtensionInList( const std::string& aFileExtNoDot, const std::string& aListOfExtensions );
 
+    //DATA MEMBERS
+    bool m_ShowImportOptionsWindow;
+    bool m_ShowExportOptionsWindow;
+    std::string m_AppWindowName;
+    std::string m_FileNameAndPathToImport;
+    std::string m_exportPath;
+    std::string m_ConfigValue_BaseIntermediateFileName;
+    std::string m_ConfigValue_IntermediateFileType;
+    const std::string m_ConfigProperty_BaseIntermediateFileName;
+    const std::string m_ConfigProperty_IntermediateFileType;
+    const std::string m_ConfigProperty_PolyTransINIFileName;
 
-	//DATA MEMBERS
-	bool m_ShowImportOptionsWindow;
-	bool m_ShowExportOptionsWindow;
-	std::string m_AppWindowName;
-	std::string m_FileNameAndPathToImport;
-	std::string m_exportPath;
-	std::string m_ConfigValue_BaseIntermediateFileName;
-	std::string m_ConfigValue_IntermediateFileType;
-	std::string m_ConfigValue_PolyTransIniFileNameAbsolute;
-	const std::string m_ConfigProperty_BaseIntermediateFileName;
-	const std::string m_ConfigProperty_IntermediateFileType;
-	const std::string m_ConfigProperty_ShowImportOptions;
-	const std::string m_ConfigProperty_ShowExportOptions;
-	const std::string m_ConfigProperty_AppWindowName;
-	const std::string m_ConfigProperty_PolyTransINIFileName;
-	const std::string m_ConfigProperty_PolyTransImporter;
-
-	std::vector< PolyTransImporter* > m_ListOfPolyTransImporters;
+    PluginMap m_PolyTransImporters;
 };

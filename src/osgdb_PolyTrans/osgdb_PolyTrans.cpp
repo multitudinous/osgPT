@@ -4,7 +4,7 @@
 #include <osgDB/FileUtils>
 
 #include "COMHelper/PolyTransComHelper.h"
-#include "ConfigFileReader.h"
+#include "OptionLoader.h"
 #include <string>
 #include <sstream>
 
@@ -12,23 +12,73 @@
 class ReaderWriterPolyTrans : public osgDB::ReaderWriter
 {
 public:
+    typedef std::list<std::string> ExtensionList;
+
     virtual const char* className() const { return "PolyTrans Reader"; }
 
-    bool rejectsExtension( const std::string& extension ) const
+    ReaderWriterPolyTrans()
+      : _intermediateFileNameExt( "flt" ),
+        _deleteIntermediateFile( false ),
+        _cachedLoad( true ),
+        _showImportOptions( true ),
+        _showExportOptions( true )
+    {
+        _rejectExtensions.push_back( "osga" );
+        _rejectExtensions.push_back( "osg" );
+        _rejectExtensions.push_back( "ive" );
+        _rejectExtensions.push_back( "ttf" );
+
+        // Find and load the PolyTrans config file.
+        //   An example config file with documentation is
+        //   located in the sibling data directory.
+		std::string envStr( "OSG_POLYTRANS_CONFIG_FILE" );
+		if (char* charPtr = getenv( envStr.c_str() ))
+		{
+			std::string fullName = osgDB::findDataFile( std::string( charPtr ) );
+			if (!fullName.empty())
+            {
+				osg::notify( osg::INFO ) << "osgdb_PolyTrans: Loading " << envStr << ": \"" << fullName << "\"." << std::endl;
+
+                OptionLoader baseOptions;
+                std::ifstream in( fullName.c_str() );
+                if (!baseOptions.load( in ))
+                    osg::notify( osg::WARN ) << "osgdb_PolyTrans: Some options failed to load from config file: \"" << fullName << "\"." << std::endl;
+                in.close();
+
+                baseOptions.getOption( _optionAppWindowName, _appWindowName );
+                baseOptions.getOption( _optionIntermediateFileNameBase, _intermediateFileNameBase );
+                baseOptions.getOption( _optionIntermediateFileNameExt, _intermediateFileNameExt );
+                baseOptions.getOption( _optionDeleteIntermediateFile, _deleteIntermediateFile );
+                baseOptions.getOption( _optionCachedLoad, _cachedLoad );
+                baseOptions.getOption( _optionShowImportOptions, _showImportOptions );
+                baseOptions.getOption( _optionShowExportOptions, _showExportOptions );
+
+                std::string tmpString;
+                baseOptions.getOption( _optionRejectExtensions, tmpString );
+                parseExtensionList( _rejectExtensions, tmpString );
+                baseOptions.getOption( _optionPolyTransPluginPreference, tmpString );
+                parsePluginMap( _polyTransPluginPreference, tmpString );
+            }
+            else
+				osg::notify(osg::WARN) << "osgdb_PolyTrans: Can't load " << envStr << ": \"" << fullName << "\"." << std::endl;
+		}
+    }
+
+
+    bool rejectsExtension( const std::string& extension, const ExtensionList& rejectList ) const
     {
         // This function quickly rejects extensions that are known
         //   to not be supported by PolyTrans. This avoids having to
         //   launch PolyTrans via COM to find out the extension isn't
         //   supported.
 
-        if (osgDB::equalCaseInsensitive( extension, "ttf" ) )
-            return true;
-        if (osgDB::equalCaseInsensitive( extension, "osg" ) )
-            return true;
-        if (osgDB::equalCaseInsensitive( extension, "osga" ) )
-            return true;
-        if (osgDB::equalCaseInsensitive( extension, "ive" ) )
-            return true;
+        ExtensionList::const_iterator it = rejectList.begin();
+        while (it != rejectList.end())
+        {
+            if (osgDB::equalCaseInsensitive( extension, *it ) )
+                return true;
+            it++;
+        }
         return false;
     }
 
@@ -39,7 +89,7 @@ public:
 		if (_loading)
 			return false;
 
-        if (rejectsExtension( extension ) )
+        if (rejectsExtension( extension, _rejectExtensions ) )
             return false;
 
         PolyTransComHelper polyTransComHelper;
@@ -65,49 +115,64 @@ public:
 		if (_loading)
 			return ReadResult::FILE_NOT_HANDLED;
 
-        if (rejectsExtension( osgDB::getFileExtension( file ) ))
-            return false;
 
-        // Look for a config file. The config file changes this plugin's
-		//   default behavior. To use a config file, set the OSG_POLYTRANS_CONFIG_FILE
-		//   env var to the config file name.
-		ConfigFileReader configFileReader;
-		{
-			std::string envStr( "OSG_POLYTRANS_CONFIG_FILE" );
-			char* charPtr = getenv( envStr.c_str() );
-			if (charPtr)
-			{
-				std::string configFile = std::string( charPtr );
-				std::string fullName = osgDB::findDataFile( configFile, options );
-				bool setSuccess( false );
-				if (!fullName.empty())
-					setSuccess = configFileReader.SetConfigFileName( fullName );
-				if (!setSuccess)
-					osg::notify(osg::INFO) << "osgdb_PolyTrans: Can't load " << envStr << ": \"" << fullName << "\"." << std::endl;
-			}
-		}
+        // Parse options string. This overrides any default settings
+        //   or settings in the config file.
+        // Option strings are semi-colon separated strings that otherwise
+        //   confom to the syntax rules in the example PolyTrans config file.
+        //   For example, a valid option string might be:
+        //     IntermediateFileNameExt obj;DeleteIntermediateFile true;CachedLoad false
+        OptionLoader overrides;
+        std::string allOptions = options->getOptionString();
+        while (!allOptions.empty())
+        {
+            std::string::size_type scIdx = allOptions.find_first_of( ";" );
+            const std::string singleOpt = allOptions.substr( 0, scIdx );
+            std::string remainder = allOptions.substr( scIdx+1 );
+            if (scIdx == allOptions.npos)
+                remainder.clear();
 
-        // TBD Eventually, parse options out of the Options and override
-        //   ConfigFile values. No options supported right now.
-#if 0
-        // Parse options
-		bool bufferSizeOption( false );
-		int bufferSize;
-        if (options) {
-            const std::string optStr = options->getOptionString();
-			// TBD really should just be able to send the option string to the
-			//   ConfigFileReader and let it parse the string and override
-			//   values. Will need to revamp CFR to add that functionality.
-			// Hm. Maybe need to pass option string to OQC...
-            if (optStr.find( "BufferSize" ) != std::string::npos)
-			{
-				bufferSizeOption = true;
-				bufferSize = findOption( "BufferSize", optStr );
-            }
+            std::istringstream istr( singleOpt );
+            if (!overrides.load( istr ))
+                osg::notify( osg::WARN ) << "osgdb_PolyTrans: Some options failed to load from osgDB::Options." << std::endl;
+            allOptions = remainder;
         }
-#endif
 
-		// Create the COMHelper object and configure it
+        std::string appWindowName( _appWindowName );
+        std::string intermediateFileNameBase( _intermediateFileNameBase );
+        std::string intermediateFileNameExt( _intermediateFileNameExt );
+        bool deleteIntermediateFile( _deleteIntermediateFile );
+        bool cachedLoad( _cachedLoad );
+        bool showImportOptions( _showImportOptions );
+        bool showExportOptions( _showExportOptions );
+        ExtensionList rejectExtensions( _rejectExtensions );
+        PolyTransComHelper::PluginMap polyTransPluginPreference( _polyTransPluginPreference );
+
+        overrides.getOption( _optionAppWindowName, appWindowName );
+        overrides.getOption( _optionIntermediateFileNameBase, intermediateFileNameBase );
+        overrides.getOption( _optionIntermediateFileNameExt, intermediateFileNameExt );
+        overrides.getOption( _optionDeleteIntermediateFile, deleteIntermediateFile );
+        overrides.getOption( _optionCachedLoad, cachedLoad );
+        overrides.getOption( _optionShowImportOptions, showImportOptions );
+        overrides.getOption( _optionShowExportOptions, showExportOptions );
+
+        std::string tmpString;
+        overrides.getOption( _optionRejectExtensions, tmpString );
+        parseExtensionList( rejectExtensions, tmpString );
+        overrides.getOption( _optionPolyTransPluginPreference, tmpString );
+        parsePluginMap( polyTransPluginPreference, tmpString );
+
+        // Also reject the intermediate file name extension, if specified.
+        if (!intermediateFileNameExt.empty())
+            rejectExtensions.push_back( intermediateFileNameExt );
+
+
+        // Reject any explicitly-rejected extensions.
+        if (rejectsExtension( osgDB::getFileExtension( file ), rejectExtensions ))
+            return ReadResult::FILE_NOT_HANDLED;
+
+        
+        // Create the COMHelper object and configure it
 		PolyTransComHelper polyTransComHelper;
 		if (!polyTransComHelper.AttachToPolyTransCom( NULL ))
 		{
@@ -115,10 +180,13 @@ public:
 			return ReadResult::FILE_NOT_HANDLED;
 		}
 
-		if (configFileReader.valid())
-		{
-			polyTransComHelper.LoadOptionsFromConfigFile( configFileReader );
-		}
+        if (!appWindowName.empty())
+            polyTransComHelper.SetAppWindowName( appWindowName );
+        polyTransComHelper.SetShowImportOptionsWindow( showImportOptions );
+        polyTransComHelper.SetShowExportOptionsWindow( showExportOptions );
+        polyTransComHelper.setPluginPreferences( polyTransPluginPreference );
+        polyTransComHelper.setIntermediateFileNameBase( intermediateFileNameBase );
+        polyTransComHelper.setIntermediateFileNameExt( intermediateFileNameExt );
 
 
 		// Get the extension and full path / file name 
@@ -126,34 +194,12 @@ public:
 		bool isSupported = polyTransComHelper.IsExtensionSupportedByImporters( ext );
 		if ( !isSupported )
 		{
+            osg::notify( osg::INFO ) << "osgdb_PolyTrans: Rejecting extension \"" << ext;
+            osg::notify( osg::INFO ) << " \". Consider using \"RejectExtensions\" option." << std::endl;
             return ReadResult::FILE_NOT_HANDLED;
 		}
 
-        // Do not handle an input file if its extension matches
-        //   the intermediate file type.
-		if ( configFileReader.HasProperty( _intermediateFileTypeToken ) )
-		{
-			// Get config file value to specify cached or non-cached load.
-			std::string valueStr = configFileReader.GetValue( _intermediateFileTypeToken );
-            if (osgDB::equalCaseInsensitive( valueStr, ext ) )
-                return ReadResult::FILE_NOT_HANDLED;
-        }
-        // handle default case
-        else if (osgDB::equalCaseInsensitive( "flt", ext ) )
-        {
-            return ReadResult::FILE_NOT_HANDLED;
-        }
-        // handle WaveFront files case
-        else if (osgDB::equalCaseInsensitive( "obj", ext ) )
-        {
-            return ReadResult::FILE_NOT_HANDLED;
-        }
-        // handle STL case
-        else if (osgDB::equalCaseInsensitive( "stl", ext ) )
-        {
-            return ReadResult::FILE_NOT_HANDLED;
-        }
-        
+
 		std::string fileName = osgDB::findDataFile( file, options );
         if (fileName.empty())
 		{
@@ -166,9 +212,13 @@ public:
 		//   tell OSG that it supports any extensions.
 		_loading = true;
 
-		// Check for ability to load from cache
-		bool cachedLoad = getLoadFromCache( configFileReader, fileName,
-			polyTransComHelper.ComputeIntermediateFileNameAndPath( fileName ) );
+        if (cachedLoad)
+    		// Check for ability to load from cache
+		    cachedLoad = getLoadFromCache( fileName, polyTransComHelper.ComputeIntermediateFileNameAndPath( fileName ) );
+        else
+			osg::notify( osg::INFO ) << "osgdb_PolyTrans: Cache disabled in config file. " <<
+				"Will convert from source file." << std::endl;
+
 
 		std::string intermediateFile;
 		if (cachedLoad)
@@ -182,6 +232,7 @@ public:
 			if (!loaded)
 			{
 				osg::notify(osg::FATAL) << "osgdb_PolyTrans:: Failed to import file: \"" << fileName << "\"." << std::endl;
+        		_loading = false;
 				return ReadResult::FILE_NOT_HANDLED;
 			}
 
@@ -193,6 +244,7 @@ public:
 			if ( !polyTransComHelper.ExportPolyTransModelToIntermediateFile())
 			{
 				osg::notify(osg::FATAL) << "osgdb_PolyTrans:: Failed PolyTrans conversion. Can't export to intermediate file." << std::endl;
+        		_loading = false;
 				return ReadResult::FILE_NOT_HANDLED;
 			}
 
@@ -223,17 +275,7 @@ public:
 		_loading = false;
 
 
-		// Check to see if we should delete the intermediate file.
-		bool delFile( false );
-		if ( configFileReader.HasProperty( _deleteIntermediateFileToken ) )
-		{
-			std::string valueStr = configFileReader.GetValue( _deleteIntermediateFileToken );
-			bool value;
-			if (ConfigFileReader::convertToBool( value, valueStr ))
-				delFile = value;
-		}
-
-		if (delFile)
+		if (deleteIntermediateFile)
 		{
 			// Delete the intermediate file.
 			// TODO: we might want to delete the new folder that may have been created by PolyTrans to
@@ -245,6 +287,59 @@ public:
     }
 
 protected:
+    // Config file and osgDB::ReaderWriterOptions options.
+    std::string _appWindowName;
+    std::string _intermediateFileNameBase;
+    std::string _intermediateFileNameExt;
+    bool _deleteIntermediateFile;
+    bool _cachedLoad;
+    bool _showImportOptions;
+    bool _showExportOptions;
+    ExtensionList _rejectExtensions;
+    PolyTransComHelper::PluginMap _polyTransPluginPreference;
+
+    // Config file and osgDB::ReaderWriterOptions options tokens.
+    static std::string _optionAppWindowName;
+    static std::string _optionIntermediateFileNameBase;
+    static std::string _optionIntermediateFileNameExt;
+    static std::string _optionDeleteIntermediateFile;
+    static std::string _optionCachedLoad;
+    static std::string _optionShowImportOptions;
+    static std::string _optionShowExportOptions;
+    static std::string _optionRejectExtensions;
+    static std::string _optionPolyTransPluginPreference;
+
+    static void parseExtensionList( ExtensionList& el, const std::string& str )
+    {
+        std::string::size_type startIdx( 0 );
+        std::string::size_type endIdx = str.find_first_of( " " );
+        while (endIdx != str.npos)
+        {
+            const std::string ext = str.substr( startIdx, endIdx );
+            el.push_back( ext );
+
+            startIdx = endIdx+1;
+            endIdx = str.find_first_of( " " );
+        }
+    }
+
+    static void parsePluginMap( PolyTransComHelper::PluginMap& pm, const std::string& str )
+    {
+        std::string::size_type startIdx( 0 );
+        std::string::size_type endIdx = str.find_first_of( "," );
+        while (endIdx != str.npos)
+        {
+            std::string::size_type spIdx = str.find_first_of( " " );
+            const std::string ext = str.substr( startIdx, spIdx );
+            const std::string pluginName = str.substr( spIdx+1, endIdx );
+            pm[ ext ] = pluginName;
+
+            startIdx = endIdx+1;
+            endIdx = str.find_first_of( "," );
+        }
+    }
+
+
 	// PTC Pro/Engineer appends a revision number to file names, such as "model.prt.1".
 	// Once this plugin is loaded, it gets a crack at loading every file that the app
 	// tries to load. This function strips the revision extension to see if it's a
@@ -263,45 +358,13 @@ protected:
 		return ext;
 	}
 
-	static int findOption( const std::string& target, const std::string& optStr )
+	static bool getLoadFromCache( const std::string& srcFile, const std::string& destFile )
 	{
-		int n = optStr.find( target );
-		if (n == optStr.npos)
-			return -1;
-
-		std::istringstream sOpt( optStr.substr(n) );
-		std::string targetX;
-		int value;
-		sOpt >> targetX;
-		sOpt >> value;
-		return value;
-	}
-
-	static bool getLoadFromCache( ConfigFileReader& cfr, const std::string& srcFile, const std::string& destFile )
-	{
-		// Check cache file existance
+		// Check cache file existence
 		if (!osgDB::fileExists( destFile ))
 		{
 			osg::notify( osg::INFO ) << "osgdb_PolyTrans: Can't find cache file \"" << destFile <<
 				"\". Will convert from source file." << std::endl;
-			return false;
-		}
-
-		// Determine whether we should try to load from cache.
-		//   The default behavior is 'true'.
-		bool cachedLoad( true );
-		if ( cfr.HasProperty( _cachedLoadToken ) )
-		{
-			// Get config file value to specify cached or non-cached load.
-			std::string valueStr = cfr.GetValue( _cachedLoadToken );
-			bool value;
-			if (ConfigFileReader::convertToBool( value, valueStr ))
-				cachedLoad = value;
-		}
-		if (!cachedLoad)
-		{
-			osg::notify( osg::INFO ) << "osgdb_PolyTrans: Cache disabled in cnfig file. " <<
-				"Will convert from source file." << std::endl;
 			return false;
 		}
 
@@ -340,7 +403,7 @@ protected:
 		CloseHandle( destHandle );
 
 		LONG result = CompareFileTime( &srcWrite, &destWrite );
-		cachedLoad = (result == -1 ); // -1 means first file time is earier than second.
+		bool cachedLoad = ( result == -1 ); // -1 means first file time is earier than second.
 
 		if (!cachedLoad)
 			osg::notify( osg::INFO ) << "osgdb_PolyTrans: Source file newer than cache file. " <<
@@ -350,11 +413,6 @@ protected:
 		return cachedLoad;
 	}
 
-	// Static config file tokens
-	static std::string _deleteIntermediateFileToken;
-	static std::string _cachedLoadToken;
-    static std::string _intermediateFileTypeToken;
-
 	// Static var to prevent this plugin from attempting to
 	//   use PolyTrans to load the intermediate file.
 	static bool _loading;
@@ -362,13 +420,20 @@ protected:
 
 // now register with Registry to instantiate the above
 // reader/writer.
+// TBD this is SG v1.2 method, need to switch over to v2.0 macro
 osgDB::RegisterReaderWriterProxy<ReaderWriterPolyTrans> g_readerWriter_PolyTrans_Proxy;
 
 
-// Define config file tokens
-std::string ReaderWriterPolyTrans::_deleteIntermediateFileToken( "DeleteIntermediateFile" );
-std::string ReaderWriterPolyTrans::_cachedLoadToken( "CachedLoad" );
-std::string ReaderWriterPolyTrans::_intermediateFileTypeToken( "COMHelper_IntermediateFileType" );
-
 // Initially, not loading. Will toggle to true during file load.
 bool ReaderWriterPolyTrans::_loading( false );
+
+
+std::string ReaderWriterPolyTrans::_optionAppWindowName( "AppWindowName" );
+std::string ReaderWriterPolyTrans::_optionIntermediateFileNameBase( "IntermediateFileNameBase" );
+std::string ReaderWriterPolyTrans::_optionIntermediateFileNameExt( "IntermediateFileNameExt" );
+std::string ReaderWriterPolyTrans::_optionDeleteIntermediateFile( "DeleteIntermediateFile" );
+std::string ReaderWriterPolyTrans::_optionCachedLoad( "CachedLoad" );
+std::string ReaderWriterPolyTrans::_optionShowImportOptions( "ShowImportOptions" );
+std::string ReaderWriterPolyTrans::_optionShowExportOptions( "ShowExportOptions" );
+std::string ReaderWriterPolyTrans::_optionRejectExtensions( "RejectExtensions" );
+std::string ReaderWriterPolyTrans::_optionPolyTransPluginPreference( "PolyTransPluginPreference" );
