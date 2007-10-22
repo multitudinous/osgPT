@@ -70,6 +70,7 @@ Example COMHelper_PolyTransINIFileName: c:\Windows\polytrans.ini
 
 #include "stdafx.h"
 #include <string>
+#include <list>
 #include <map>
 
 
@@ -77,6 +78,7 @@ Example COMHelper_PolyTransINIFileName: c:\Windows\polytrans.ini
 class PolyTransComHelper
 {
 public:
+    typedef std::list<std::string> ExtensionList;
     typedef std::map<std::string,std::string> PluginMap;
 
     //CONSTRUCTOR
@@ -98,6 +100,7 @@ public:
     std::string GetLowerCaseFullFileExtension( const std::string& aFileName );
     std::string ComputeIntermediateFileNameAndPath( const std::string& srcFile="" ) const;
     std::string ComputeGeneratedFileNameAndPath();
+    ExtensionList getSupportedExtensions();
 
     //UTILITIES
     bool AttachToPolyTransCom( HINSTANCE anAppInstance );
@@ -106,7 +109,6 @@ public:
     bool ExportPolyTransModelToOpenFlight();
     bool ExportPolyTransModelToWaveFront();
     bool ImportModelIntoPolyTrans( const std::string& aFileNameAndPathToImport );
-    bool IsExtensionSupportedByImporters( const std::string& aFileExtNoDot );
     bool ResetPolyTrans();
 
 private:
@@ -116,7 +118,6 @@ private:
     void SearchListOfExporters();
     void SearchListOfImporters();
     std::string GetGUIDForImporterName( const std::string& anImporterName );
-    bool IsExtensionInList( const std::string& aFileExtNoDot, const std::string& aListOfExtensions );
 
 
     //DATA MEMBERS

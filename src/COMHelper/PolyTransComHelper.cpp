@@ -631,69 +631,38 @@ PolyTransComHelper::FindPolyTransIniCreateNewFolderValue( const std::string& aPo
 	return newFolderValue;
 }
 
-//Each PolyTrans Importer has a string property that contains a list of file extensions supported by
-// that importer, separated by a semicolon.  This functions checks to see if aFileExtNoDot can be found
-// in any one of those lists.
-bool
-PolyTransComHelper::IsExtensionSupportedByImporters( const std::string& aFileExtNoDot )
+// Query PolyTrans for all supported extensions. Some PolyTrans plugins support multiple
+//   extensions, which we get as a space- or semicolon-separated char*. Parse out
+//   each individual extension and store it in a std::list<std::string>, and return it.
+PolyTransComHelper::ExtensionList
+PolyTransComHelper::getSupportedExtensions()
 {
-	bool isSupported = false;
+    Nd_Import_Converter_Info_List* listOfImporters = 
+            OkinoCommonComSource___GetListofImportersAndTheirAttributesFromCOMServer();
+    int numImporters = listOfImporters[0].num_importers_in_list;
 
-	Nd_Import_Converter_Info_List* listOfImporters = 
-			OkinoCommonComSource___GetListofImportersAndTheirAttributesFromCOMServer();
-	int numImporters = listOfImporters[0].num_importers_in_list;
+    ExtensionList el;
+    for ( int i=0; i<numImporters; i++ )
+    {
+        Nd_Import_Converter_Info_List* importerInList = &( listOfImporters[ i ] );
+        std::string manyExts( importerInList->file_extensions );
+        if (manyExts.empty())
+            continue;
 
-	for ( int i = 0; ( isSupported == false ) && ( i < numImporters ); i++ )
-	{
-		Nd_Import_Converter_Info_List* importerInList = &( listOfImporters[ i ] );
-		
-		isSupported = IsExtensionInList( aFileExtNoDot, importerInList->file_extensions );
-	}
+        std::string::size_type startIdx = manyExts.find_first_of( "." );
+        std::string::size_type endIdx = manyExts.find_first_of( " ;" );
+        while (startIdx < endIdx)
+        {
+            const std::string ext = manyExts.substr( startIdx+1, endIdx-(startIdx+1) );
+            el.push_back( ext );
+            if (endIdx == manyExts.npos)
+                break;
 
-	return isSupported;
+            startIdx = endIdx+1;
+            endIdx = manyExts.find_first_of( " ;", startIdx );
+        }
+    }
+
+    return el;
 }
 
-
-//Each PolyTrans Importer has a string property that contains a list of file extensions supported by
-// that importer, separated by a semicolon.  This functions checks to see if aFileExtNoDot can be found
-// in the list passed in as aListOfExtensions.  (ie. ".igs;.prt" ).
-bool
-PolyTransComHelper::IsExtensionInList( const std::string& aFileExtNoDot, const std::string& aListOfExtensions )
-{
-	bool isInList = false;
-
-	std::string extensionInList = "";
-	int stringLength = static_cast< int >( aListOfExtensions.size() );
-	for ( int i = 0; ( isInList == false ) && ( i < stringLength ); i++ )
-	{
-		char currentChar = aListOfExtensions[ i ];
-
-		if( ( currentChar == ';' ) || ( currentChar == ' ' ) )
-		{
-			if ( extensionInList.size() > 0 )
-			{
-				if ( extensionInList == aFileExtNoDot )
-				{
-					isInList = true;
-				}
-			}
-			extensionInList = "";
-		}
-		else
-		{
-			if ( currentChar != '.' )
-			{
-				extensionInList +=  currentChar;
-			}
-			if ( i == ( aListOfExtensions.size() - 1 ) )
-			{
-				//then we're reading last char in string, so go ahead and check for match:
-				if ( extensionInList == aFileExtNoDot )
-				{
-					isInList = true;
-				}
-			}
-		}
-	}
-	return isInList;
-}

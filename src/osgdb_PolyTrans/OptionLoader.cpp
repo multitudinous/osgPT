@@ -51,7 +51,7 @@ bool
 OptionLoader::getOption( const std::string& option, std::string& value ) const
 {
     bool found( false );
-    OptionMap::const_iterator it = _opts.find( "option" );
+    OptionMap::const_iterator it = _opts.find( option );
     if (it != _opts.end())
     {
         value = (*it).second;
@@ -66,7 +66,7 @@ bool
 OptionLoader::getOption( const std::string& option, bool& value ) const
 {
     bool found( false );
-    OptionMap::const_iterator it = _opts.find( "option" );
+    OptionMap::const_iterator it = _opts.find( option );
     if (it != _opts.end())
     {
         std::string optStr = (*it).second;
@@ -98,7 +98,7 @@ bool
 OptionLoader::getOption( const std::string& option, int& value ) const
 {
     bool found( false );
-    OptionMap::const_iterator it = _opts.find( "option" );
+    OptionMap::const_iterator it = _opts.find( option );
     if (it != _opts.end())
     {
 	    std::istringstream iStr( (*it).second );
@@ -119,7 +119,7 @@ bool
 OptionLoader::getOption( const std::string& option, float& value ) const
 {
     bool found( false );
-    OptionMap::const_iterator it = _opts.find( "option" );
+    OptionMap::const_iterator it = _opts.find( option );
     if (it != _opts.end())
     {
 	    std::istringstream iStr( (*it).second );

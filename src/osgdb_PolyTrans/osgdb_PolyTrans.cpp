@@ -12,8 +12,6 @@
 class ReaderWriterPolyTrans : public osgDB::ReaderWriter
 {
 public:
-    typedef std::list<std::string> ExtensionList;
-
     virtual const char* className() const { return "PolyTrans Reader"; }
 
     ReaderWriterPolyTrans()
@@ -42,7 +40,9 @@ public:
                 OptionLoader baseOptions;
                 std::ifstream in( fullName.c_str() );
                 if (!baseOptions.load( in ))
+                {
                     osg::notify( osg::WARN ) << "osgdb_PolyTrans: Some options failed to load from config file: \"" << fullName << "\"." << std::endl;
+                }
                 in.close();
 
                 baseOptions.getOption( _optionAppWindowName, _appWindowName );
@@ -60,23 +60,27 @@ public:
                 parsePluginMap( _polyTransPluginPreference, tmpString );
             }
             else
+            {
 				osg::notify(osg::WARN) << "osgdb_PolyTrans: Can't load " << envStr << ": \"" << fullName << "\"." << std::endl;
+            }
 		}
     }
 
 
-    bool rejectsExtension( const std::string& extension, const ExtensionList& rejectList ) const
+    bool rejectsExtension( const std::string& extension, const PolyTransComHelper::ExtensionList& rejectList ) const
     {
         // This function quickly rejects extensions that are known
         //   to not be supported by PolyTrans. This avoids having to
         //   launch PolyTrans via COM to find out the extension isn't
         //   supported.
 
-        ExtensionList::const_iterator it = rejectList.begin();
+        PolyTransComHelper::ExtensionList::const_iterator it = rejectList.begin();
         while (it != rejectList.end())
         {
             if (osgDB::equalCaseInsensitive( extension, *it ) )
+            {
                 return true;
+            }
             it++;
         }
         return false;
@@ -87,19 +91,21 @@ public:
 		// If we are already loading a file, DO NOT claim to support
 		//   ANY other file types.
 		if (_loading)
+        {
 			return false;
+        }
 
         if (rejectsExtension( extension, _rejectExtensions ) )
+        {
             return false;
+        }
 
-        PolyTransComHelper polyTransComHelper;
-		if (!polyTransComHelper.AttachToPolyTransCom( NULL ))
-		{
-			osg::notify(osg::FATAL) << "osgdb_PolyTrans:: Failed to attach to PolyTrans via Okino COM interface." << std::endl;
-			return false;
-		}
+        if (!internalAccept( extension ))
+        {
+            return false;
+        }
 
-		return( polyTransComHelper.IsExtensionSupportedByImporters( extension ) );
+        return true;
     }
 
     virtual ReadResult readObject( const std::string& file, const Options* options ) const
@@ -113,7 +119,9 @@ public:
 		//   a new load. This ensures we do not launch PolyTrans
 		//   in support of a cached load.
 		if (_loading)
+        {
 			return ReadResult::FILE_NOT_HANDLED;
+        }
 
 
         // Parse options string. This overrides any default settings
@@ -124,18 +132,23 @@ public:
         //     IntermediateFileNameExt obj;DeleteIntermediateFile true;CachedLoad false
         OptionLoader overrides;
         std::string allOptions = options->getOptionString();
-        while (!allOptions.empty())
+        std::string::size_type startIdx( 0 );
+        std::string::size_type endIdx = allOptions.find_first_of( ";" );
+        while( (startIdx < endIdx) && !allOptions.empty() )
         {
-            std::string::size_type scIdx = allOptions.find_first_of( ";" );
-            const std::string singleOpt = allOptions.substr( 0, scIdx );
-            std::string remainder = allOptions.substr( scIdx+1 );
-            if (scIdx == allOptions.npos)
-                remainder.clear();
+            const std::string singleOpt = allOptions.substr( startIdx, endIdx-startIdx );
 
             std::istringstream istr( singleOpt );
             if (!overrides.load( istr ))
+            {
                 osg::notify( osg::WARN ) << "osgdb_PolyTrans: Some options failed to load from osgDB::Options." << std::endl;
-            allOptions = remainder;
+            }
+
+            if (endIdx == allOptions.npos)
+                break;
+
+            startIdx = endIdx+1;
+            endIdx = allOptions.find_first_of( ";", startIdx );
         }
 
         std::string appWindowName( _appWindowName );
@@ -145,7 +158,7 @@ public:
         bool cachedLoad( _cachedLoad );
         bool showImportOptions( _showImportOptions );
         bool showExportOptions( _showExportOptions );
-        ExtensionList rejectExtensions( _rejectExtensions );
+        PolyTransComHelper::ExtensionList rejectExtensions( _rejectExtensions );
         PolyTransComHelper::PluginMap polyTransPluginPreference( _polyTransPluginPreference );
 
         overrides.getOption( _optionAppWindowName, appWindowName );
@@ -164,12 +177,31 @@ public:
 
         // Also reject the intermediate file name extension, if specified.
         if (!intermediateFileNameExt.empty())
+        {
             rejectExtensions.push_back( intermediateFileNameExt );
+        }
 
 
-        // Reject any explicitly-rejected extensions.
-        if (rejectsExtension( osgDB::getFileExtension( file ), rejectExtensions ))
+		// Get the extension and full path / file name 
+        std::string ext = findExtension( file );
+        //   See if PolyTrans accepts it
+		if ( !internalAccept( ext ) )
+		{
+            osg::notify( osg::INFO ) << "osgdb_PolyTrans: Not supported by PolyTrans: \"" << ext;
+            osg::notify( osg::INFO ) << " \". Consider using \"RejectExtensions\" option." << std::endl;
             return ReadResult::FILE_NOT_HANDLED;
+		}
+        //   Reject any explicitly-rejected extensions.
+        if (rejectsExtension( ext, rejectExtensions ))
+        {
+            return ReadResult::FILE_NOT_HANDLED;
+        }
+
+		std::string fileName = osgDB::findDataFile( file, options );
+        if (fileName.empty())
+		{
+            return ReadResult::FILE_NOT_FOUND;
+		}
 
         
         // Create the COMHelper object and configure it
@@ -188,24 +220,8 @@ public:
         polyTransComHelper.setIntermediateFileNameBase( intermediateFileNameBase );
         polyTransComHelper.setIntermediateFileNameExt( intermediateFileNameExt );
 
-
-		// Get the extension and full path / file name 
-        std::string ext = findExtension( file, &polyTransComHelper );
-		bool isSupported = polyTransComHelper.IsExtensionSupportedByImporters( ext );
-		if ( !isSupported )
-		{
-            osg::notify( osg::INFO ) << "osgdb_PolyTrans: Rejecting extension \"" << ext;
-            osg::notify( osg::INFO ) << " \". Consider using \"RejectExtensions\" option." << std::endl;
-            return ReadResult::FILE_NOT_HANDLED;
-		}
-
-
-		std::string fileName = osgDB::findDataFile( file, options );
-        if (fileName.empty())
-		{
-            return ReadResult::FILE_NOT_FOUND;
-		}
 		polyTransComHelper.SetExportPath( osgDB::getFilePath( fileName ) );
+
 
 		// Indicate that a load is in progress. When set to true,
 		//   this plugin will not allow a new load and will not
@@ -213,11 +229,15 @@ public:
 		_loading = true;
 
         if (cachedLoad)
+        {
     		// Check for ability to load from cache
 		    cachedLoad = getLoadFromCache( fileName, polyTransComHelper.ComputeIntermediateFileNameAndPath( fileName ) );
+        }
         else
+        {
 			osg::notify( osg::INFO ) << "osgdb_PolyTrans: Cache disabled in config file. " <<
 				"Will convert from source file." << std::endl;
+        }
 
 
 		std::string intermediateFile;
@@ -295,7 +315,7 @@ protected:
     bool _cachedLoad;
     bool _showImportOptions;
     bool _showExportOptions;
-    ExtensionList _rejectExtensions;
+    PolyTransComHelper::ExtensionList _rejectExtensions;
     PolyTransComHelper::PluginMap _polyTransPluginPreference;
 
     // Config file and osgDB::ReaderWriterOptions options tokens.
@@ -309,33 +329,43 @@ protected:
     static std::string _optionRejectExtensions;
     static std::string _optionPolyTransPluginPreference;
 
-    static void parseExtensionList( ExtensionList& el, const std::string& str )
+    static void parseExtensionList( PolyTransComHelper::ExtensionList& el, const std::string& str )
     {
+        if (str.empty())
+            return;
+
         std::string::size_type startIdx( 0 );
         std::string::size_type endIdx = str.find_first_of( " " );
-        while (endIdx != str.npos)
+        while (startIdx < endIdx)
         {
-            const std::string ext = str.substr( startIdx, endIdx );
+            const std::string ext = str.substr( startIdx, endIdx-startIdx );
             el.push_back( ext );
+            if (endIdx == str.npos)
+                break;
 
             startIdx = endIdx+1;
-            endIdx = str.find_first_of( " " );
+            endIdx = str.find_first_of( " ", startIdx );
         }
     }
 
     static void parsePluginMap( PolyTransComHelper::PluginMap& pm, const std::string& str )
     {
+        if (str.empty())
+            return;
+
         std::string::size_type startIdx( 0 );
         std::string::size_type endIdx = str.find_first_of( "," );
-        while (endIdx != str.npos)
+        while (startIdx < endIdx)
         {
-            std::string::size_type spIdx = str.find_first_of( " " );
-            const std::string ext = str.substr( startIdx, spIdx );
-            const std::string pluginName = str.substr( spIdx+1, endIdx );
+            std::string::size_type spIdx = str.find_first_of( " ", startIdx );
+            const std::string ext = str.substr( startIdx, spIdx-startIdx );
+            const std::string pluginName = str.substr( spIdx+1, endIdx-(spIdx+1) );
             pm[ ext ] = pluginName;
+            if (endIdx == str.npos)
+                break;
 
             startIdx = endIdx+1;
-            endIdx = str.find_first_of( "," );
+            endIdx = str.find_first_of( ",", startIdx );
         }
     }
 
@@ -345,10 +375,10 @@ protected:
 	// tries to load. This function strips the revision extension to see if it's a
 	// file we support. If the extension isn't a revision (e.g., "image.gif") then this
 	// function still returns some string which is probably not a supported file format.
-	std::string findExtension( const std::string& fName, PolyTransComHelper* aPolyTransComHelper ) const
+	std::string findExtension( const std::string& fName ) const
 	{
 		std::string ext = osgDB::getFileExtension( fName );
-		if ( !aPolyTransComHelper->IsExtensionSupportedByImporters( ext ) )
+		if ( !internalAccept( ext ) )
 		{
 			// Probably we just found a revision number: model.asm.2, for example.
 			// Strip this extension off and see if we can find another one.
@@ -413,9 +443,41 @@ protected:
 		return cachedLoad;
 	}
 
+    // If our cache of supported extensions doesn't exist, launch PolyTrans
+    //   to obtain the list of supported extensions.
+    // Check the given extension against the supported extensions list and
+    //   return true if supported by PolyTrans, false otherwise.
+    bool internalAccept( const std::string& ext ) const
+    {
+        if (_supportedExtensions.empty())
+        {
+            PolyTransComHelper polyTransComHelper;
+		    if (!polyTransComHelper.AttachToPolyTransCom( NULL ))
+		    {
+			    osg::notify(osg::FATAL) << "osgdb_PolyTrans:: Failed to attach to PolyTrans via Okino COM interface." << std::endl;
+			    return false;
+		    }
+            _supportedExtensions = polyTransComHelper.getSupportedExtensions();
+        }
+
+        PolyTransComHelper::ExtensionList::const_iterator it = _supportedExtensions.begin();
+        while (it != _supportedExtensions.end())
+        {
+            if (osgDB::equalCaseInsensitive( ext, *it ) )
+            {
+                return true;
+            }
+            it++;
+        }
+        return false;
+    }
+
 	// Static var to prevent this plugin from attempting to
 	//   use PolyTrans to load the intermediate file.
 	static bool _loading;
+
+    // List of supported extensions from PolyTrans.
+    mutable PolyTransComHelper::ExtensionList _supportedExtensions;
 };
 
 // now register with Registry to instantiate the above
