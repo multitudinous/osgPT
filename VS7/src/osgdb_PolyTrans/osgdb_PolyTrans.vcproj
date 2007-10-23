@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\..\osgOQ\include;..\..\..\src;..\..\..\..\OpenSceneGraph\include;..\..\..\..\OpenThreads\include"
+				AdditionalIncludeDirectories="..\..\..\..\osgOQ\include;..\..\..\src;C:\Program Files\OpenSceneGraph\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OSGDB_POLYTRANS_EXPORTS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -36,7 +36,7 @@
 				AdditionalDependencies="osgUtild.lib osgDBd.lib osgd.lib comctl32.lib"
 				OutputFile="$(OutDir)/osgdb_PolyTransd.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\..\OpenSceneGraph\lib\win32"
+				AdditionalLibraryDirectories="C:\Program Files\OpenSceneGraph\lib"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/osgdb_PolyTrans.pdb"
 				SubSystem="2"
@@ -71,7 +71,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\..\osgOQ\include;..\..\..\src;..\..\..\..\OpenSceneGraph\include;..\..\..\..\OpenThreads\include"
+				AdditionalIncludeDirectories="..\..\..\..\osgOQ\include;..\..\..\src;C:\Program Files\OpenSceneGraph\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;OSGDB_POLYTRANS_EXPORTS"
 				RuntimeLibrary="2"
 				RuntimeTypeInfo="TRUE"
@@ -86,7 +86,7 @@
 				AdditionalDependencies="osgUtil.lib osgDB.lib osg.lib comctl32.lib"
 				OutputFile="$(OutDir)/osgdb_PolyTrans.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\..\OpenSceneGraph\lib\win32"
+				AdditionalLibraryDirectories="C:\Program Files\OpenSceneGraph\lib"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				OptimizeReferences="2"
