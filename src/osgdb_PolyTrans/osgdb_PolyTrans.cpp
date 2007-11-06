@@ -131,7 +131,9 @@ public:
         //   For example, a valid option string might be:
         //     IntermediateFileNameExt obj;DeleteIntermediateFile true;CachedLoad false
         OptionLoader overrides;
-        std::string allOptions = options->getOptionString();
+        std::string allOptions;
+        if (options)
+            allOptions = options->getOptionString();
         std::string::size_type startIdx( 0 );
         std::string::size_type endIdx = allOptions.find_first_of( ";" );
         while( (startIdx < endIdx) && !allOptions.empty() )
