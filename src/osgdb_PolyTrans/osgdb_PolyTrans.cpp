@@ -9,13 +9,23 @@
 #include <sstream>
 
 
+
 class ReaderWriterPolyTrans : public osgDB::ReaderWriter
 {
 public:
     virtual const char* className() const { return "PolyTrans Reader"; }
 
     ReaderWriterPolyTrans()
-      : _intermediateFileNameExt( "flt" ),
+      : _optionAppWindowName( "AppWindowName" ),
+        _optionIntermediateFileNameBase( "IntermediateFileNameBase" ),
+        _optionIntermediateFileNameExt( "IntermediateFileNameExt" ),
+        _optionDeleteIntermediateFile( "DeleteIntermediateFile" ),
+        _optionCachedLoad( "CachedLoad" ),
+        _optionShowImportOptions( "ShowImportOptions" ),
+        _optionShowExportOptions( "ShowExportOptions" ),
+        _optionRejectExtensions( "RejectExtensions" ),
+        _optionPolyTransPluginPreference( "PolyTransPluginPreference" ),
+        _intermediateFileNameExt( "flt" ),
         _deleteIntermediateFile( false ),
         _cachedLoad( true ),
         _showImportOptions( true ),
@@ -189,13 +199,13 @@ public:
         //   See if PolyTrans accepts it
 		if ( !internalAccept( ext ) )
 		{
-            osg::notify( osg::INFO ) << "osgdb_PolyTrans: Not supported by PolyTrans: \"" << ext;
-            osg::notify( osg::INFO ) << " \". Consider using \"RejectExtensions\" option." << std::endl;
+            osg::notify( osg::INFO ) << "osgdb_PolyTrans: Not supported by PolyTrans: " << ext << std::endl;
             return ReadResult::FILE_NOT_HANDLED;
 		}
         //   Reject any explicitly-rejected extensions.
         if (rejectsExtension( ext, rejectExtensions ))
         {
+            osg::notify( osg::INFO ) << "osgdb_PolyTrans: Rejected extension: " << ext << std::endl;
             return ReadResult::FILE_NOT_HANDLED;
         }
 
@@ -321,15 +331,15 @@ protected:
     PolyTransComHelper::PluginMap _polyTransPluginPreference;
 
     // Config file and osgDB::ReaderWriterOptions options tokens.
-    static std::string _optionAppWindowName;
-    static std::string _optionIntermediateFileNameBase;
-    static std::string _optionIntermediateFileNameExt;
-    static std::string _optionDeleteIntermediateFile;
-    static std::string _optionCachedLoad;
-    static std::string _optionShowImportOptions;
-    static std::string _optionShowExportOptions;
-    static std::string _optionRejectExtensions;
-    static std::string _optionPolyTransPluginPreference;
+    std::string _optionAppWindowName;
+    std::string _optionIntermediateFileNameBase;
+    std::string _optionIntermediateFileNameExt;
+    std::string _optionDeleteIntermediateFile;
+    std::string _optionCachedLoad;
+    std::string _optionShowImportOptions;
+    std::string _optionShowExportOptions;
+    std::string _optionRejectExtensions;
+    std::string _optionPolyTransPluginPreference;
 
     static void parseExtensionList( PolyTransComHelper::ExtensionList& el, const std::string& str )
     {
@@ -487,17 +497,4 @@ protected:
 // TBD this is SG v1.2 method, need to switch over to v2.0 macro
 osgDB::RegisterReaderWriterProxy<ReaderWriterPolyTrans> g_readerWriter_PolyTrans_Proxy;
 
-
-// Initially, not loading. Will toggle to true during file load.
 bool ReaderWriterPolyTrans::_loading( false );
-
-
-std::string ReaderWriterPolyTrans::_optionAppWindowName( "AppWindowName" );
-std::string ReaderWriterPolyTrans::_optionIntermediateFileNameBase( "IntermediateFileNameBase" );
-std::string ReaderWriterPolyTrans::_optionIntermediateFileNameExt( "IntermediateFileNameExt" );
-std::string ReaderWriterPolyTrans::_optionDeleteIntermediateFile( "DeleteIntermediateFile" );
-std::string ReaderWriterPolyTrans::_optionCachedLoad( "CachedLoad" );
-std::string ReaderWriterPolyTrans::_optionShowImportOptions( "ShowImportOptions" );
-std::string ReaderWriterPolyTrans::_optionShowExportOptions( "ShowExportOptions" );
-std::string ReaderWriterPolyTrans::_optionRejectExtensions( "RejectExtensions" );
-std::string ReaderWriterPolyTrans::_optionPolyTransPluginPreference( "PolyTransPluginPreference" );
