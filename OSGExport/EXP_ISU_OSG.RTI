@@ -1,0 +1,42 @@
+#
+# PolyTrans export converter DLL runtime information.
+# This file is loaded by PolyTrans at start-up to determine the capabilities
+# of the corresponding export converter DLL module.
+#
+
+# This is the unique GUID that uniquely identifies this importer.
+# You can generate a new GUID for any Okino DLL using the GUID 
+# generator that comes VC++ IDE, unders the "Tools" menu.
+GUID				= {E824F7D3-1307-4dcf-B31A-CCD0A712C066}
+
+# What type of plug-in this is (ie: geometry import or export)
+Plugin_Type 			= GeometryExport
+
+# Which API version this plug-in adhears to (1, 2, etc).
+# If set to 2 then 'Show_File_Selector_Before_Exporting' is new to this .rti file
+Adhears_To_Plugin_Version	= 2
+
+# This options allow the host program to ask the user for the exported filename
+# or to have this exporter take control of the filename request. If this option
+# is set to '1' then the host program will ask the user for the exported
+# filename (based on the 'FileOpen_Filter_Spec' option below). If this option
+# is set to '0' then it is the responsibility of this exporter to ask for the
+# filename and return it to the host program via the "get_SaveAs_filename" command in ntdll.cpp.
+Show_File_Selector_Before_Exporting = 1
+
+# 1 = has an options dialog box, 0 = no options dialog box. If set to '1' then
+# show your dialog box in the "show_options_dialog" command of ntdll.cpp.
+Has_Options_Dialog_Box		= 1
+
+# 1 = has an "About" dialog box, 0 = no about dialog box. If set to '1' then
+# show your dialog box in the "show_about_dialog" command of ntdll.cpp.
+Has_About_Dialog_Box		= 1
+
+# An ASCII descriptive name for this plug-in (ie: used in the context of 'error loading "3D Studio" plug-in')
+Plugin_Descriptive_Name		= "OpenSceneGraph export plugin, funded by ISU and developed by Skew Matrix Software LLC"
+
+# An ASCII string added to the plug-ins main execution menu
+Menu_Description		= "OpenSceneGraph .ive/.osg"
+
+# The filter specification used for the Windows File-Save dialog box
+FileOpen_Filter_Spec		= "OpenSceneGraph Binary Files (*.ive)|*.ive|OpenSceneGraph Text Files (*.osg)|*.osg|"
