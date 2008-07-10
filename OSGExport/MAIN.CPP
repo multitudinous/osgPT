@@ -52,6 +52,8 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #include "main.h"	// Main includes for all modules
 
+#include "osg.h"
+
 #include <windows.h>	// Only needed for the MessageBox() call
 
 /* ---------------------->>>>  Definitions  <<<<--------------------------- */
@@ -82,9 +84,6 @@ static Nd_Void	NI_Exporter_StartEnd_Hierarchy_Level_Callback(Nd_Token Nv_Parent_
 
 // Utility routines
 static Nd_Void	NI_Exporter_DAGPath_UserDataMemoryFreeRoutine(void *data);
-
-void writeOSG( const char* out_filename, long *return_result );
-
 /* ------------------------------------------------------------------------ */
 
 // Main entry point to perform the actual export conversion.
@@ -101,7 +100,7 @@ ExportConverter_Main(char *tokens[], char *data[], long *return_result, void *au
 	FILE		*ofp;
 	Nd_Int		Nv_Walk_Tree_Return_Status, Nv_IgnoreEmptyObjectNodesInTree;
 	Nd_Token	Nv_Confirm_Overwrites_EnableToggle;
-	char   		*filename, out_filename[300];
+	char   		*filename, out_filename[300], osgFilename[300];
 #if _MSC_VER < 1300	// MSC v7 or newer (2003)
     char filepath_used[300];
 #endif
@@ -173,6 +172,9 @@ ExportConverter_Main(char *tokens[], char *data[], long *return_result, void *au
     else
         strncpy( out_filename, filename, 299 );
 
+    // Save OSG filename for debug text output
+    strncpy( osgFilename, out_filename, 299 );
+
 	/* Return if no instances attached to the "world" instance node */
 #if 0
 	Ni_Inquire_Instance("world", Nt_NUMCHILDREN, (Nd_Int *) &num_children_off_world_root, Nt_CMDEND);
@@ -204,6 +206,8 @@ ExportConverter_Main(char *tokens[], char *data[], long *return_result, void *au
 
     if (!export_options->osgDebugTextFile)
         goto exit;
+
+
 
     // Make sure the file extension is correct
 	Ni_Check_File_Extension(filename, out_filename, ".txt");
@@ -239,6 +243,35 @@ ExportConverter_Main(char *tokens[], char *data[], long *return_result, void *au
 		return_status = Nc_TRUE;	// Aborting
 		goto error;
 	}
+
+
+
+    //
+    // Print OSG control values
+	OPTIONAL_FPRINTF(ofp, "# OSG-specific export control parameters\n");
+    OPTIONAL_FPRINTF(ofp, "#\n");
+
+    OPTIONAL_FPRINTF(ofp, "OSG Filename = %s\n", osgFilename);
+    OPTIONAL_FPRINTF(ofp, "#\n");
+
+    OPTIONAL_FPRINTF(ofp, "osgStripTexturePaths = %d\n", export_options->osgStripTexturePaths );
+	OPTIONAL_FPRINTF(ofp, "osgNormalization = %d\n", export_options->osgNormalization );
+	OPTIONAL_FPRINTF(ofp, "osgBackfaceCulling = %d\n", export_options->osgBackfaceCulling );
+	OPTIONAL_FPRINTF(ofp, "osgDebugTextFile = %d\n", export_options->osgDebugTextFile );
+	OPTIONAL_FPRINTF(ofp, "osgInstanceFile = %d\n", export_options->osgInstanceFile );
+	OPTIONAL_FPRINTF(ofp, "osgInstanceShared = %d\n", export_options->osgInstanceShared );
+	OPTIONAL_FPRINTF(ofp, "osgInstanceIgnore = %d\n", export_options->osgInstanceIgnore );
+    OPTIONAL_FPRINTF(ofp, "#\n");
+
+    OPTIONAL_FPRINTF(ofp, "osgRunOptimizer = %d\n", export_options->osgRunOptimizer );
+	OPTIONAL_FPRINTF(ofp, "osgCreateTriangleStrips = %d\n", export_options->osgCreateTriangleStrips );
+	OPTIONAL_FPRINTF(ofp, "osgMergeGeometry = %d\n", export_options->osgMergeGeometry );
+    OPTIONAL_FPRINTF(ofp, "#\n\n\n");
+
+    // END OSG control values
+    //
+
+
 
 	/* Print header message to the file */
 	OPTIONAL_FPRINTF(ofp, "# This file lists some of the contents of the PolyTrans 3D database in an easy to\n");

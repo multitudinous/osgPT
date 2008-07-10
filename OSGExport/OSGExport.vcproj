@@ -540,6 +540,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\osgInstance.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\osgMesh.cpp"
 				>
 			</File>
@@ -668,6 +672,14 @@
 			>
 			<File
 				RelativePath="MAIN.H"
+				>
+			</File>
+			<File
+				RelativePath=".\osg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\osgInstance.h"
 				>
 			</File>
 			<File

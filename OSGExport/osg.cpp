@@ -1,7 +1,9 @@
 
 #include "main.h"
+#include "osg.h"
 #include "osgSurface.h"
 #include "osgMetaData.h"
+#include "osgInstance.h"
 
 #include <osg/Group>
 #include <osg/MatrixTransform>
@@ -53,6 +55,36 @@ convertMatrix( Nd_Matrix in )
 static Nd_Void
 walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 {
+    // Get the instance's handleName
+	char* handleName = Nv_Info->Nv_Handle_Name;
+
+    char* masterObject( NULL );
+    if (!export_options->osgInstanceIgnore)
+    {
+        // We're not ignoring instances. We need to handle them
+        //   in some way....
+        //
+        //  * ALWAYS process the first occurance and store in the
+        //    instance map in osgInstance.cpp.
+        //  * If writing as files:
+        //    - Return a reference to an instance (this is
+        //      something OSG can load offline, like a ProxyNode).
+        //    - After we process the master file, write all
+        //      instancves in the map as files.
+        //  * If sharing instances:
+        //    - Return the address of the instance subgraph.
+        //
+        // Many of the details are handled in osgInstance.cpp.
+
+        // If this is not an empty instance ('yellow folder' or grouping instance node)...
+	    if (!Nv_Info->Nv_Empty_Instance && !Nv_Info->Nv_Empty_Object) {
+		    /* Get the master object from which this instance was derived */
+		    Ni_Inquire_Instance( handleName,
+			    Nt_MASTEROBJECT, (char **) &masterObject, Nt_CMDSEP,
+			    Nt_CMDEND);
+        }
+    }
+
     // Get matrix from this instance, if there is one.
     osg::Matrix m = convertMatrix( Nv_Info->Nv_CTM );
     const bool isMatrix( !m.isIdentity() );
@@ -61,11 +93,9 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
         mt = new osg::MatrixTransform( m );
 
     // Collect all metadata and save as Node descriptions.
-    MetaDataCollector mdc( Nt_INSTANCE, Nv_Info->Nv_Handle_Name );
+    MetaDataCollector mdc( Nt_INSTANCE, handleName );
     const bool isLOD( mdc.hasMetaData( MetaDataCollector::LODCenterName ) );
     const bool isSwitch( mdc.hasMetaData( MetaDataCollector::SwitchNumMasksName ) );
-
-	char *handle_name = Nv_Info->Nv_Handle_Name;
 
     /* If this is an empty instance (yellow folder) or empty object (red folder) then process them here as grouping nodes */
 	if (Nv_Info->Nv_Empty_Instance || Nv_Info->Nv_Empty_Object || Nv_Info->Nv_Null_Object_To_Follow)
@@ -94,7 +124,7 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
             top = mt->asGroup();
         }
 
-        top->setName( handle_name );
+        top->setName( handleName );
         mdc.store( top.get() );
 
         if (!_root.valid())
@@ -110,7 +140,7 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 
 	/* Get the master object from which this instance was derived */
 	char *master_object;
-	Ni_Inquire_Instance(handle_name,
+	Ni_Inquire_Instance( handleName,
 		Nt_MASTEROBJECT, (char **) &master_object, Nt_CMDSEP,
 		Nt_CMDEND);
 
@@ -125,7 +155,7 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 
 
     osg::ref_ptr< osg::Geode > geode = new osg::Geode;
-    geode->setName( handle_name );
+    geode->setName( handleName );
     mdc.store( geode.get() );
 
     if (isMatrix)
@@ -233,5 +263,8 @@ writeOSG( const char* out_filename, long *return_result )
         // When the .ive gets loaded, this forces the plugin to read the texture image file.
         opt->setOptionString( "noTexturesInIVEFile" );
 
+    // The grand finale: Write the scene graph as a file.
     osgDB::writeNodeFile( *_root, fileName, opt );
+
+    writeInstancesAsFiles( ext, opt );
 }
