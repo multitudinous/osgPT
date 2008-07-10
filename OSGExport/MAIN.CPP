@@ -254,6 +254,9 @@ ExportConverter_Main(char *tokens[], char *data[], long *return_result, void *au
     OPTIONAL_FPRINTF(ofp, "OSG Filename = %s\n", osgFilename);
     OPTIONAL_FPRINTF(ofp, "#\n");
 
+    OPTIONAL_FPRINTF(ofp, "writeOSG return_result = %d\n", *return_result );
+    OPTIONAL_FPRINTF(ofp, "#\n");
+
     OPTIONAL_FPRINTF(ofp, "osgStripTexturePaths = %d\n", export_options->osgStripTexturePaths );
 	OPTIONAL_FPRINTF(ofp, "osgNormalization = %d\n", export_options->osgNormalization );
 	OPTIONAL_FPRINTF(ofp, "osgBackfaceCulling = %d\n", export_options->osgBackfaceCulling );

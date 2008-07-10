@@ -224,7 +224,7 @@ writeOSG( const char* out_filename, long *return_result )
 		}
 	catch( ... )
 	{
-		Ni_Report_Error_printf(Nc_ERR_ERROR, "Exporter is raising an unknown exception while walking the geometry tree.");
+		Ni_Report_Error_printf(Nc_ERR_ERROR, "OSG exporter raised an unknown exception while walking the geometry tree.");
 		*return_result = Nc_TRUE;
         return;
 	}
@@ -264,7 +264,15 @@ writeOSG( const char* out_filename, long *return_result )
         opt->setOptionString( "noTexturesInIVEFile" );
 
     // The grand finale: Write the scene graph as a file.
-    osgDB::writeNodeFile( *_root, fileName, opt );
+    bool success = osgDB::writeNodeFile( *_root, fileName, opt );
+    if (!success)
+    {
+        Ni_Report_Error_printf(Nc_ERR_ERROR, "OSG exporter: writeNodeFile failed.");
+        *return_result = Nc_TRUE;
+        return;
+    }
 
-    writeInstancesAsFiles( ext, opt );
+    if (export_options->osgInstanceFile)
+        writeInstancesAsFiles( ext, opt );
+
 }
