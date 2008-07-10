@@ -702,11 +702,25 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
 		}
 	}
 
-    // Empty mao of surface names to Geometry objects.
+    // Ensure we have a valid color array, and determine the
+    //   appropriate binding.
+    osg::Geometry::AttributeBinding colorBinding;
+    if (color.valid())
+    {
+        colorBinding = osg::Geometry::BIND_PER_VERTEX;
+    }
+    else
+    {
+        color = new osg::Vec4Array;
+        color->push_back( osg::Vec4( 1., 1., 1., 1. ) );
+        colorBinding = osg::Geometry::BIND_OVERALL;
+    }
+
+    // Empty map of surface names to Geometry objects.
     // Iterate over each primitive:
     //   Get surface name
     //   Get or create Geometry for this surface
-    //   If numvertes != last numVerts, new PrimitiveSet
+    //   If numverts != last numVerts, new PrimitiveSet
     //   Store indices in PrimitiveSet
 
     typedef std::map< std::string, osg::ref_ptr< osg::Geometry > > SurfaceGeomMap;
@@ -739,19 +753,10 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
                 newGeom->setNormalArray( normal.get() );
                 newGeom->setNormalBinding( osg::Geometry::BIND_PER_VERTEX );
             }
-            if (color.valid())
-            {
-                newGeom->setColorArray( color.get() );
-                newGeom->setColorBinding( osg::Geometry::BIND_PER_VERTEX );
-            }
-            else
-            {
-                // Fallback: all white
-                color = new osg::Vec4Array;
-                color->push_back( osg::Vec4( 1., 1., 1., 1. ) );
-                newGeom->setColorArray( color.get() );
-                newGeom->setColorBinding( osg::Geometry::BIND_OVERALL );
-            }
+
+            // We always have a valid color array.
+            newGeom->setColorArray( color.get() );
+            newGeom->setColorBinding( colorBinding );
 
             osg::Material* mat( NULL );
             osg::Texture2D* tex( NULL );
