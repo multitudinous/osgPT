@@ -58,6 +58,12 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
     // Get the instance's handleName
 	char* handleName = Nv_Info->Nv_Handle_Name;
 
+    // If this is a shared instance, "reference" will be valid.
+    osg::ref_ptr< osg::Node > reference( NULL );
+
+    // If this is an instance, masterName will be the instance name.
+    std::string masterName;
+
     char* masterObject( NULL );
     if (!export_options->osgInstanceIgnore)
     {
@@ -77,11 +83,27 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
         // Many of the details are handled in osgInstance.cpp.
 
         // If this is not an empty instance ('yellow folder' or grouping instance node)...
-	    if (!Nv_Info->Nv_Empty_Instance && !Nv_Info->Nv_Empty_Object) {
+	    if (!Nv_Info->Nv_Empty_Instance && !Nv_Info->Nv_Empty_Object)
+        {
 		    /* Get the master object from which this instance was derived */
 		    Ni_Inquire_Instance( handleName,
 			    Nt_MASTEROBJECT, (char **) &masterObject, Nt_CMDSEP,
 			    Nt_CMDEND);
+
+            masterName = std::string( masterObject );
+            if (!masterName.empty())
+            {
+                // This is an instance of a master object.
+
+                if ( findNodeForInstance( masterName ) )
+                {
+                    // We've already processed the master object and it's stored
+                    //   as a subtree in the instance map. Get a reference to it.
+                    reference = createReferenceToInstance( masterName );
+
+                    // TBD attach it
+                }
+            }
         }
     }
 
@@ -101,16 +123,9 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 	if (Nv_Info->Nv_Empty_Instance || Nv_Info->Nv_Empty_Object || Nv_Info->Nv_Null_Object_To_Follow)
     {
         osg::ref_ptr< osg::Group > top, tail;
-        //if (isSwitch)
-        //{
-        //}
-        //else
-        {
-            top = new osg::Group;
-            tail = top.get();
-            //if (isSwitch)
-            //    top->setNodeMask( 0 );
-        }
+        top = new osg::Group;
+        tail = top.get();
+
         if (isLOD)
         {
             osg::ref_ptr< osg::LOD > lod = new osg::LOD;
@@ -131,6 +146,7 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
             _root = top.get();
         if (getCurrentParent() != NULL)
             getCurrentParent()->addChild( top.get() );
+
         _lastNode = tail.get();
         return;
     }
@@ -138,15 +154,9 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 
     // Must be a non-Group
 
-	/* Get the master object from which this instance was derived */
-	char *master_object;
-	Ni_Inquire_Instance( handleName,
-		Nt_MASTEROBJECT, (char **) &master_object, Nt_CMDSEP,
-		Nt_CMDEND);
-
 	/* Determine how many primitives this object has (should only be 1 in all modern cases) */
     Nd_Int Nv_Num_Defined_Primitives;
-	Ni_Inquire_Object(master_object,
+	Ni_Inquire_Object(masterObject,
 		Nt_NUMPRIMITIVES, (Nd_Int *) &Nv_Num_Defined_Primitives, Nt_CMDSEP,
 		Nt_CMDEND);
 
@@ -154,13 +164,15 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 		return;
 
 
-    osg::ref_ptr< osg::Geode > geode = new osg::Geode;
-    geode->setName( handleName );
-    mdc.store( geode.get() );
+    // Use the reference to the instance, if we have one.
+    // Otherwise, just create a new Group.
+    osg::ref_ptr< osg::Group > newGroup = new osg::Group;
+    newGroup->setName( handleName );
+    mdc.store( newGroup.get() );
 
     if (isMatrix)
     {
-        mt->addChild( geode.get() );
+        mt->addChild( newGroup.get() );
         if (!_root.valid())
             _root = mt.get();
         if (getCurrentParent() != NULL)
@@ -170,16 +182,35 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
     {
         if (!_root.valid())
             // A one-geode scene graph?
-            osg::notify( osg::WARN ) << "PolyTrans OSG Exporter: Adding Geode to uninitialized _root." << std::endl;
+            Ni_Report_Error_printf( Nc_ERR_RAW_MSG, "walkTreeCallback: Adding Geode to uninitialized _root.\n" );
         if (getCurrentParent() != NULL)
-            getCurrentParent()->addChild( geode.get() );
+            getCurrentParent()->addChild( newGroup.get() );
     }
     _lastNode = NULL;
 
-    // TBD prob need to create a Geode/Geometry and pass it in
-    if (osgProcessMesh( Nv_Info, master_object, geode.get() ))
-        osg::notify( osg::FATAL ) << "PolyTrans OSG Exporter: Error return from osgProcessMesh." << std::endl;
+    if (reference.valid())
+    {
+        newGroup->addChild( reference.get() );
+        return;
+    }
+
+
+    osg::ref_ptr< osg::Geode > geode = new osg::Geode;
+    newGroup->addChild( geode.get() );
+
+    // If this is an instance of a master object, and it's the first
+    //   instance, add it.
+    if (!masterName.empty() && !reference.valid() )
+    {
+        addInstance( masterName, geode.get() );
+		++export_options->total_instances;
+    }
+
+    // Add mesh data to this Geode.
+    if (osgProcessMesh( Nv_Info, masterObject, geode.get() ))
+        Ni_Report_Error_printf( Nc_ERR_RAW_MSG, "walkTreeCallback: Error return from osgProcessMesh.\n" );
 }
+
 
 static Nd_Void
 changeLevelCallback(Nd_Token Nv_Parent_Type, char *Nv_Parent_Handle_Name, 
@@ -272,7 +303,9 @@ writeOSG( const char* out_filename, long *return_result )
         return;
     }
 
+    // Now that we've written the file, also write the instances
+    //   (if requested to do so) and clear the instance map.
     if (export_options->osgInstanceFile)
         writeInstancesAsFiles( ext, opt );
-
+    clearInstances();
 }

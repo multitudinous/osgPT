@@ -78,9 +78,10 @@ NI_Exporter_SaveExportConvertOptions(char *ini_filepath)
 		return (Nc_TRUE);
 	}
 
-    fprintf(fp, "# Default options for the Text Dumper geometry export converter.\n");
-	fprintf(fp, "# !! Do not modify this file. It is written by the converter.\n");
+    fprintf(fp, "# Default options for the OSG exporter.\n");
+	fprintf(fp, "# !! Do not modify this file. It is written by the exporter.\n\n");
 
+	fprintf(fp, "[Preferences]\n");
 	fprintf(fp, "# OSG options...\n");
     fprintf(fp, "Strip-Texture-Paths = %d\n", export_options->osgStripTexturePaths);
     fprintf(fp, "Normalization = %d\n", export_options->osgNormalization);
@@ -95,7 +96,6 @@ NI_Exporter_SaveExportConvertOptions(char *ini_filepath)
     fprintf(fp, "Merge-Geometry = %d\n", export_options->osgMergeGeometry);
 
     fprintf(fp, "# Non-OSG options...\n");
-	fprintf(fp, "[Preferences]\n");
 	fprintf(fp, "Output-Mesh-Data = %d\n", export_options->ena_mesh_data);
 	fprintf(fp, "Output-Mesh-Skinning-Weights = %d\n", export_options->ena_mesh_skinning_weights);
 	fprintf(fp, "Output-Hierarchy = %d\n", export_options->ena_hierarchy);

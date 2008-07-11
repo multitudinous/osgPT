@@ -8,20 +8,21 @@
 *****************************************************************************/
 
 // OSG Panal 1
-
 #define IDD_OSG_STRIP_TEXTURE_PATHS 5000
 #define IDD_OSG_NORMALIZATION 5001
 #define IDD_OSG_BACKFACE_CULLING 5002
 #define IDD_OSG_DEBUG_TEXT_FILE 5003
-#define IDD_OSG_INSTANCE_FILE_RB 5010
-#define IDD_OSG_INSTANCE_SHARED_RB 5011
-#define IDD_OSG_INSTANCE_IGNORE_RB 5012
-
 
 // OSG Panal 2, Optimzer controls
 #define IDD_OSG_RUN_OPTIMIZER 5100
 #define IDD_OSG_CREATE_TRIANGLE_STRIPS 5101
 #define IDD_OSG_MERGE_GEOMETRY 5102
+
+// OSG Panal 3, Instance handling
+#define IDD_OSG_INSTANCE_FILE_RB 5200
+#define IDD_OSG_INSTANCE_SHARED_RB 5201
+#define IDD_OSG_INSTANCE_IGNORE_RB 5202
+
 
 /* Enables panel # 1 */
 #define IDD_EXPORTER_ENA_MESHDATA		2000

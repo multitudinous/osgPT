@@ -83,6 +83,7 @@ static	short	updating_edit_control;
 
 static BOOL APIENTRY 	OSG1_DlgProc(HWND hDlg, UINT message, UINT wParam, LONG lParam);
 static BOOL APIENTRY 	OSG2_DlgProc(HWND hDlg, UINT message, UINT wParam, LONG lParam);
+static BOOL APIENTRY 	OSG3_DlgProc(HWND hDlg, UINT message, UINT wParam, LONG lParam);
 
 static BOOL APIENTRY 	EnablesPanel1_Page_DlgProc(HWND hDlg, UINT message, UINT wParam, LONG lParam);
 static BOOL APIENTRY 	EnablesPanel2_Page_DlgProc(HWND hDlg, UINT message, UINT wParam, LONG lParam);
@@ -366,6 +367,7 @@ ShowOptionsDialogBox(HINSTANCE hDLLinstance, HWND hwndOwner)
 	next_offset = 0;
 	FillInPropertyPage(&psp[next_offset++], "OptionsDialogOSG1", TEXT(""),OSG1_DlgProc);
 	FillInPropertyPage(&psp[next_offset++], "OptionsDialogOSG2", TEXT(""),OSG2_DlgProc);
+	FillInPropertyPage(&psp[next_offset++], "OptionsDialogOSG3", TEXT(""),OSG3_DlgProc);
 
     //FillInPropertyPage(&psp[next_offset++], "OptionsDialogEnablesPanel1", TEXT(""), EnablesPanel1_Page_DlgProc);
 	//FillInPropertyPage(&psp[next_offset++], "OptionsDialogEnablesPanel2", TEXT(""), EnablesPanel2_Page_DlgProc);
@@ -679,6 +681,135 @@ OSG2_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 				/* Update the enable state of the controls */
 				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
 				return(TRUE);
+
+			default:
+				break;
+		}
+	}
+	return (FALSE);
+}
+
+static BOOL APIENTRY 
+OSG3_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
+{
+	static PROPSHEETPAGE *ps;
+	LPPSHNOTIFY	lppsn;
+	short		cmd_id, val, user_clicked_apply_button;
+
+	switch (msg) {
+	case WM_INITDIALOG:
+		// Save the PROPSHEETPAGE information.
+		ps = (PROPSHEETPAGE *) (LPARAM) lParam;
+
+		// Center the window
+		Import_IO_Center_Window(parent_hwnd, GetParent(hDlg));
+
+		SendMessage(hDlg, WM_UPDATE_DIALOG_PARAMETERS, 0, 0L);
+		return (TRUE);
+	case WM_UPDATE_DIALOG_PARAMETERS:
+		if ( export_options->osgInstanceFile )
+			val = IDD_OSG_INSTANCE_FILE_RB;
+		else if ( export_options->osgInstanceShared )
+			val = IDD_OSG_INSTANCE_SHARED_RB;
+		else
+			val = IDD_OSG_INSTANCE_IGNORE_RB;
+		CheckRadioButton( hDlg, IDD_OSG_INSTANCE_FILE_RB, IDD_OSG_INSTANCE_IGNORE_RB, val );
+
+        /* Update the enable state of the controls */
+		SendMessage( hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L );
+
+		return (TRUE);
+	case WM_UPDATE_DIALOG_ENABLES:
+		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_INSTANCE_FILE_RB, 0);
+		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_INSTANCE_SHARED_RB, 1);
+		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_INSTANCE_IGNORE_RB, 1);
+
+        return(TRUE);
+	case WM_NOTIFY:
+    		switch (((NMHDR FAR *)  (LPARAM) lParam)->code) {
+		case PSN_KILLACTIVE:
+			// The page is either losing the activation, or the user pressed OK.
+           		// SetWindowLong(hDlg, DWL_MSGRESULT, FALSE);	// No error
+			break;
+                case PSN_APPLY:
+			// The Apply button was pressed, or the OK button was pressed
+			// and this message is being sent to all panels to have it send
+			// the control values to the toolkit.
+           		SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_INVALID);	// Error initially
+
+			/* Only update the UI if the user clicked the 'Apply' button and not the 'Ok' button */
+			lppsn = (LPPSHNOTIFY)  (LPARAM) lParam;
+			user_clicked_apply_button = !lppsn->lParam;
+			if (!user_clicked_apply_button)
+				property_sheet_return_value = IDOK;
+
+           		SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
+			return(TRUE);
+		case PSN_QUERYCANCEL:
+			// The user has pressed CANCEL. Return FALSE to allow canceling, or TRUE to prevent it
+           		SetWindowLong(hDlg, DWL_MSGRESULT, FALSE);
+			property_sheet_return_value = IDCANCEL;
+			return(FALSE);
+		case PSN_RESET:
+			// User has pressed CANCEL and property sheet is about to be destroyed
+           		SetWindowLong(hDlg, DWL_MSGRESULT, FALSE);
+			property_sheet_return_value = IDCANCEL;
+			break;
+		case PSN_SETACTIVE:
+			// Property sheet is about to be activated. We set up the values of the controls here
+
+			/* Enable the 'Apply' button */
+			SendMessage(GetParent(hDlg), PSM_CHANGED, (WPARAM) hDlg, 0L);
+
+			/* Update the enable state of the controls */
+			SendMessage(hDlg, WM_UPDATE_DIALOG_PARAMETERS, 0, 0L);
+			SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+
+			break;
+                case PSN_HELP:
+			// The Help button was pressed
+			Import_IO_DisplayHelpTopic(hDlg, plugin_directory, HELP_FILENAME, "main");
+			break;
+		default:
+			return FALSE;
+	    	}
+		break;
+	case WM_COMMAND:
+		cmd_id = LOWORD(wParam);
+		switch (cmd_id) {
+			case IDD_BUTTON_ABOUT:
+				DialogBox(hDLLinstance, "AboutBox", parent_hwnd, AboutDlgProc);
+				return(TRUE);
+			case IDD_BUTTON_RESET:
+				if (IDYES == MessageBox(hDlg, "This will reset the values of this dialog box to their power-up defaults.\n\nAre you sure you want to do this?", "Confirmation Request", MB_APPLMODAL | MB_YESNO | MB_DEFBUTTON1 | MB_ICONQUESTION)) {
+					export_options->options_initialized = FALSE;
+					NI_Exporter_InitExportOptionVariables();
+					SendMessage(hDlg, WM_UPDATE_DIALOG_PARAMETERS, 0, 0L);
+				}
+				return(TRUE);
+
+			case IDD_OSG_INSTANCE_FILE_RB:
+				export_options->osgInstanceFile = TRUE;
+                export_options->osgInstanceShared = export_options->osgInstanceIgnore = FALSE;
+				CheckRadioButton( hDlg, IDD_OSG_INSTANCE_FILE_RB, IDD_OSG_INSTANCE_IGNORE_RB, IDD_OSG_INSTANCE_FILE_RB );
+				/* Update the enable state of the controls */
+				SendMessage( hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L );
+				return(TRUE);
+
+            case IDD_OSG_INSTANCE_SHARED_RB:
+				export_options->osgInstanceShared = TRUE;
+                export_options->osgInstanceFile = export_options->osgInstanceIgnore = FALSE;
+				CheckRadioButton( hDlg, IDD_OSG_INSTANCE_FILE_RB, IDD_OSG_INSTANCE_IGNORE_RB, IDD_OSG_INSTANCE_SHARED_RB );
+				/* Update the enable state of the controls */
+				SendMessage( hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L );
+				return(TRUE);
+
+            case IDD_OSG_INSTANCE_IGNORE_RB:
+				export_options->osgInstanceIgnore = TRUE;
+                export_options->osgInstanceShared = export_options->osgInstanceFile = FALSE;
+				CheckRadioButton( hDlg, IDD_OSG_INSTANCE_FILE_RB, IDD_OSG_INSTANCE_IGNORE_RB, IDD_OSG_INSTANCE_IGNORE_RB );
+				/* Update the enable state of the controls */
+				SendMessage( hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L );
 
 			default:
 				break;
