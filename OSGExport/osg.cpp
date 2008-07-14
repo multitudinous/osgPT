@@ -21,6 +21,8 @@
 
 Nd_Bool osgProcessMesh( Nd_Walk_Tree_Info *Nv_Info, char *master_object, osg::Geode* geode );
 
+//std::string _extension( NULL );
+
 
 osg::ref_ptr< osg::Group > _root;
 osg::ref_ptr< osg::Group > _parent;
@@ -57,12 +59,14 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 {
     // Get the instance's handleName
 	char* handleName = Nv_Info->Nv_Handle_Name;
+    std::string extension( (char *)( Nv_Info->Nv_User_Data_Ptr1 ) );
 
     // If this is a shared instance, "reference" will be valid.
     osg::ref_ptr< osg::Node > reference( NULL );
 
     // If this is an instance, masterName will be the instance name.
     std::string masterName;
+    bool processSubgraph( true );
 
     char* masterObject( NULL );
     if (!export_options->osgInstanceIgnore)
@@ -89,6 +93,9 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 		    Ni_Inquire_Instance( handleName,
 			    Nt_MASTEROBJECT, (char **) &masterObject, Nt_CMDSEP,
 			    Nt_CMDEND);
+            // Ni_Inquire_Object options:
+            // Nt_NUMINSTANCES, (Nd_Int *)&num_derived_instances, Nt_CMDSEP,
+            // Nt_NUMCHILDREN, (Nd_Int *)&num_children_instances, Nt_CMDSEP,
 
             masterName = std::string( masterObject );
             if (!masterName.empty())
@@ -99,9 +106,15 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
                 {
                     // We've already processed the master object and it's stored
                     //   as a subtree in the instance map. Get a reference to it.
-                    reference = createReferenceToInstance( masterName );
+                    reference = createReferenceToInstance( masterName, handleName, extension );
+                    processSubgraph = false;
+                }
 
-                    // TBD attach it
+                else if (export_options->osgInstanceFile)
+                {
+                    // We haven't seen it before, so get the reference to the
+                    // (non-existing) file and process the subgraph anyway.
+                    reference = createReferenceToInstance( masterName, handleName, extension );
                 }
             }
         }
@@ -164,8 +177,10 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 		return;
 
 
-    // Use the reference to the instance, if we have one.
-    // Otherwise, just create a new Group.
+    // Creating a Group node here. This facilitates instancing, and
+    // allows us to attach metadata to the Group rather than the instance.
+    // If we attach metadata to the instance, then it would end up
+    // being attached to all references to the instance.
     osg::ref_ptr< osg::Group > newGroup = new osg::Group;
     newGroup->setName( handleName );
     mdc.store( newGroup.get() );
@@ -188,19 +203,28 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
     }
     _lastNode = NULL;
 
-    if (reference.valid())
+    if (!processSubgraph)
     {
         newGroup->addChild( reference.get() );
         return;
     }
+    if (reference.valid())
+    {
+        // We're writing instances as files and this is the first time
+        // we've seen this instance. So, we stick in the ProxyNode
+        // as a child, but we continue to process the subgraph.
+        newGroup->addChild( reference.get() );
+        newGroup = NULL;
+    }
 
 
     osg::ref_ptr< osg::Geode > geode = new osg::Geode;
-    newGroup->addChild( geode.get() );
+    geode->setName( handleName );
+    if (newGroup.valid())
+        newGroup->addChild( geode.get() );
 
-    // If this is an instance of a master object, and it's the first
-    //   instance, add it.
-    if (!masterName.empty() && !reference.valid() )
+    // If this is an instance of a master object, add it.
+    if (!masterName.empty())
     {
         addInstance( masterName, geode.get() );
 		++export_options->total_instances;
@@ -227,6 +251,9 @@ writeOSG( const char* out_filename, long *return_result )
 {
 	Nd_Int dummy;
 
+    std::string fileName( out_filename );
+    std::string extension = osgDB::getFileExtension( fileName );
+
     // Create map of texture definitions to osg::Texture objects.
 	Ni_Enumerate( &dummy, "*", Nc_FALSE, (Nd_Void *) NULL, (Nd_Void *) 0,
 		createTextureCB, Nt_TEXTURE, Nt_CMDEND);
@@ -241,7 +268,7 @@ writeOSG( const char* out_filename, long *return_result )
 	try {
         Nd_Token ena_instancing_detection_counts = (export_options->ena_instancing) ? Nt_ON : Nt_OFF;
 
-		Ni_Walk_Tree(NULL, (Nd_Void *) NULL, (Nd_Void *) NULL, walkTreeCallback,
+		Ni_Walk_Tree(NULL, (Nd_Ptr)( extension.c_str() ), (Nd_Void *) NULL, walkTreeCallback,
 			Nt_RETURNSTATUS, (Nd_Int *) &returnStatus, Nt_CMDSEP,
 			// Make sure some internal state is set up for data export queries
 			Nt_SETUPFOREXPORTER, Nt_ENABLED, Nt_ON, Nt_CMDSEP,
@@ -283,12 +310,9 @@ writeOSG( const char* out_filename, long *return_result )
         opt.optimize( _root.get(), flags );
     }
 
-    std::string fileName( out_filename );
-    std::string ext = osgDB::getFileExtension( fileName );
-    const bool isIVE = osgDB::equalCaseInsensitive( ext, "ive" );
-
     // Set OSG .ive/.osg export plugin Options.
     osgDB::ReaderWriter::Options* opt = new osgDB::ReaderWriter::Options;
+    const bool isIVE = osgDB::equalCaseInsensitive( extension, "ive" );
     if (isIVE)
         // Writing a .ive file. Tell it we don't have any texture image data.
         // When the .ive gets loaded, this forces the plugin to read the texture image file.
@@ -306,6 +330,6 @@ writeOSG( const char* out_filename, long *return_result )
     // Now that we've written the file, also write the instances
     //   (if requested to do so) and clear the instance map.
     if (export_options->osgInstanceFile)
-        writeInstancesAsFiles( ext, opt );
+        writeInstancesAsFiles( extension, opt );
     clearInstances();
 }

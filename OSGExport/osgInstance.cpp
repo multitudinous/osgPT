@@ -4,7 +4,9 @@
 
 #include <osgDB/FileNameUtils>
 #include <osgDB/WriteFile>
+#include <osgUtil/Optimizer>
 #include <osg/Node>
+#include <osg/ProxyNode>
 #include <osg/ref_ptr>
 #include <string>
 #include <map>
@@ -12,6 +14,27 @@
 
 typedef std::map< std::string, osg::ref_ptr< osg::Node > > InstanceMap;
 static InstanceMap _instanceMap;
+
+
+std::string createFileName( const std::string& handle, const std::string& extension )
+{
+    // The original PTC file name is embedded into the handdle name.
+    // However, each instance of the object is appended with " #<n>",
+    // where <n> is "2", "3", etc., for as many instances as are present.
+    // This function strips the " #<n>" suffix and appends the specified
+    // extension in its place.
+    // 
+    // As an example, if the input is:
+    //   handle "origfile-5.prt #3"
+    //   extension "ive"
+    // The return value will be:
+    //   "origfile-5.prt.ive"
+    std::string::size_type pos = handle.find_last_of( "#" );
+    if ( pos != handle.npos)
+        return( handle.substr( 0, pos-1 ) + "." + extension );
+    else
+        return( handle + "." + extension );
+}
 
 
 osg::Node*
@@ -25,19 +48,27 @@ findNodeForInstance( const std::string& name )
 }
 
 osg::Node*
-createReferenceToInstance( const std::string& name )
+createReferenceToInstance( const std::string& objectName, const std::string& sourceFileName, const std::string& extension )
 {
-    osg::Node* root = findNodeForInstance( name );
-    if (root == NULL)
-    {
-        Ni_Report_Error_printf( Nc_ERR_RAW_MSG, "createReferenceToInstance: can't find %s\n", name.c_str() );
-        return NULL;
-    }
-
     if (export_options->osgInstanceFile)
-        return NULL;
+    {
+        osg::ProxyNode* pn = new osg::ProxyNode;
+        pn->setFileName( 0, createFileName( sourceFileName, extension ) );
+        return( pn );
+    }
     else if (export_options->osgInstanceShared)
-        return( _instanceMap[ name ].get() );
+    {
+#ifdef _DEBUG
+        // DEBUG only -- verify that we really should be here.
+        osg::Node* root = findNodeForInstance( objectName );
+        if (root == NULL)
+        {
+            Ni_Report_Error_printf( Nc_ERR_RAW_MSG, "createReferenceToInstance: can't find %s\n", objectName.c_str() );
+            return NULL;
+        }
+#endif
+        return( _instanceMap[ objectName ].get() );
+    }
     else
         return NULL;
 }
@@ -56,9 +87,36 @@ getNumberOfInstances()
 }
 
 void
-writeInstancesAsFiles( const std::string& extension, osgDB::ReaderWriter::Options* opt )
+writeInstancesAsFiles( const std::string& extension, const osgDB::ReaderWriter::Options* opt )
 {
-    Ni_Report_Error_printf( Nc_ERR_RAW_MSG, "writeInstancesAsFiles: Not yet implemented.\n" );
+    // Possibly run the Optimizer
+    unsigned int flags( 0 );
+    if (export_options->osgRunOptimizer)
+    {
+        if (export_options->osgCreateTriangleStrips)
+            flags |= osgUtil::Optimizer::TRISTRIP_GEOMETRY;
+        if (export_options->osgMergeGeometry)
+            flags |= osgUtil::Optimizer::MERGE_GEOMETRY;
+    }
+
+    int count( 0 );
+    InstanceMap::iterator it = _instanceMap.begin();
+    for( ; it != _instanceMap.end(); it++)
+    {
+        osg::Node* node = it->second.get();
+
+        osgUtil::Optimizer optimizer;
+        optimizer.optimize( node, flags );
+
+        const std::string sourceFileName = node->getName();
+        const std::string fileName = createFileName( sourceFileName, extension );
+
+        bool success = osgDB::writeNodeFile( *node, fileName, opt );
+        if (!success)
+            Ni_Report_Error_printf( Nc_ERR_RAW_MSG, "writeInstancesAsFiles: Error writing instance file \"%s\".", fileName.c_str() );
+
+        count++;
+    }
 }
 
 void

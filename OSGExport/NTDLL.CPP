@@ -720,7 +720,7 @@ OSG3_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 
 		return (TRUE);
 	case WM_UPDATE_DIALOG_ENABLES:
-		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_INSTANCE_FILE_RB, 0);
+		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_INSTANCE_FILE_RB, 1);
 		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_INSTANCE_SHARED_RB, 1);
 		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_INSTANCE_IGNORE_RB, 1);
 
