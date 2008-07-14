@@ -4,6 +4,7 @@
 
 #include <osgDB/FileNameUtils>
 #include <osgDB/WriteFile>
+#include <osgDB/FileUtils>
 #include <osgUtil/Optimizer>
 #include <osg/Node>
 #include <osg/ProxyNode>
@@ -63,7 +64,7 @@ createReferenceToInstance( const std::string& objectName, const std::string& sou
         osg::Node* root = findNodeForInstance( objectName );
         if (root == NULL)
         {
-            Ni_Report_Error_printf( Nc_ERR_RAW_MSG, "createReferenceToInstance: can't find %s\n", objectName.c_str() );
+            Ni_Report_Error_printf( Nc_ERR_WARN, "createReferenceToInstance: can't find %s\n", objectName.c_str() );
             return NULL;
         }
 #endif
@@ -111,11 +112,19 @@ writeInstancesAsFiles( const std::string& extension, const osgDB::ReaderWriter::
         const std::string sourceFileName = node->getName();
         const std::string fileName = createFileName( sourceFileName, extension );
 
+        if (osgDB::fileExists( fileName ))
+            Ni_Report_Error_printf( Nc_ERR_WARNING, "writeInstancesAsFiles: File already exists: \"%s\".", fileName.c_str() );
+
+        Export_IO_UpdateStatusDisplay( "instance", (char *)(fileName.c_str()), "Exporting instance as file." );
         bool success = osgDB::writeNodeFile( *node, fileName, opt );
         if (!success)
-            Ni_Report_Error_printf( Nc_ERR_RAW_MSG, "writeInstancesAsFiles: Error writing instance file \"%s\".", fileName.c_str() );
+            Ni_Report_Error_printf( Nc_ERR_INFO, "writeInstancesAsFiles: Error writing instance file \"%s\".", fileName.c_str() );
 
         count++;
+
+        // Update progress bar and check for user aboirt.
+        if (Export_IO_Check_For_User_Interrupt_With_Stats( count, _instanceMap.size() ))
+            return;
     }
 }
 

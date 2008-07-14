@@ -232,7 +232,7 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 
     // Add mesh data to this Geode.
     if (osgProcessMesh( Nv_Info, masterObject, geode.get() ))
-        Ni_Report_Error_printf( Nc_ERR_RAW_MSG, "walkTreeCallback: Error return from osgProcessMesh.\n" );
+        Ni_Report_Error_printf( Nc_ERR_WARNING, "walkTreeCallback: Error return from osgProcessMesh.\n" );
 }
 
 
@@ -322,7 +322,7 @@ writeOSG( const char* out_filename, long *return_result )
     bool success = osgDB::writeNodeFile( *_root, fileName, opt );
     if (!success)
     {
-        Ni_Report_Error_printf(Nc_ERR_ERROR, "OSG exporter: writeNodeFile failed.");
+        Ni_Report_Error_printf(Nc_ERR_FATAL, "writeOSG: writeNodeFile failed.");
         *return_result = Nc_TRUE;
         return;
     }
