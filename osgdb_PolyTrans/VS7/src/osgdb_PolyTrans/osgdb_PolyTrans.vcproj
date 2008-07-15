@@ -33,7 +33,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="osgUtild.lib osgDBd.lib osgd.lib comctl32.lib"
+				AdditionalDependencies="osgUtild.lib osgDBd.lib osgd.lib OpenThreadsd.lib comctl32.lib"
 				OutputFile="$(OutDir)/osgdb_PolyTransd.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="C:\Program Files\OpenSceneGraph\lib"
@@ -83,7 +83,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="osgUtil.lib osgDB.lib osg.lib comctl32.lib"
+				AdditionalDependencies="osgUtil.lib osgDB.lib osg.lib OpenThreads.lib comctl32.lib"
 				OutputFile="$(OutDir)/osgdb_PolyTrans.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="C:\Program Files\OpenSceneGraph\lib"
