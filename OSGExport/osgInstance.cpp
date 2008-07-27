@@ -64,7 +64,7 @@ createReferenceToInstance( const std::string& objectName, const std::string& sou
         osg::Node* root = findNodeForInstance( objectName );
         if (root == NULL)
         {
-            Ni_Report_Error_printf( Nc_ERR_WARN, "createReferenceToInstance: can't find %s\n", objectName.c_str() );
+            Ni_Report_Error_printf( Nc_ERR_WARNING, "createReferenceToInstance: can't find %s\n", objectName.c_str() );
             return NULL;
         }
 #endif

@@ -201,7 +201,9 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
         if (getCurrentParent() != NULL)
             getCurrentParent()->addChild( newGroup.get() );
     }
-    _lastNode = NULL;
+    // Nodes with Geometry can also have children; our new Group
+    // will be the parent pushed onto the parentStack.
+    _lastNode = newGroup.get();
 
     if (!processSubgraph)
     {
@@ -240,10 +242,17 @@ static Nd_Void
 changeLevelCallback(Nd_Token Nv_Parent_Type, char *Nv_Parent_Handle_Name, 
 	Nd_Short Nv_Current_Hierarchy_Level, Nd_Short Nv_Starting_New_Level)
 {
+    unsigned int size = _parentStack.size();
+    if (size < (Nv_Current_Hierarchy_Level-1) )
+        _parentStack.push_back( _lastNode->asGroup() );
+    else
+        _parentStack.pop_back();
+#if 0
     if (Nv_Starting_New_Level != 0)
         _parentStack.push_back( _lastNode->asGroup() );
     else
         _parentStack.pop_back();
+#endif
 }
 
 void
