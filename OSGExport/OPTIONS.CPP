@@ -478,10 +478,10 @@ NI_Exporter_InitExportOptionVariables()
 		export_options->mesh_processing_want_planar_polygons_only = Nc_FALSE;
 	 	export_options->mesh_processing_want_planar_polygons_only_tolerance = 1e-4;
 
-	 	export_options->ena_object_animation = Nc_TRUE;
-		export_options->ena_camera_animation = Nc_TRUE;
-		export_options->ena_light_animation = Nc_TRUE;
-		export_options->ena_material_animation = Nc_TRUE;
+	 	export_options->ena_object_animation = Nc_FALSE;
+		export_options->ena_camera_animation = Nc_FALSE;
+		export_options->ena_light_animation = Nc_FALSE;
+		export_options->ena_material_animation = Nc_FALSE;
 
 		// If export XYZ (3 channel) animation, such as XYZ translation, setting this to TRUE will cause
 		// the 3 channels to be exported using 3 independent controllers animation channels. 
