@@ -83,7 +83,7 @@ static Nd_Void	NI_Exporter_WalkTree_Main_Callback(Nd_Walk_Tree_Info *wt_ptr, Nd_
 static Nd_Void	NI_Exporter_StartEnd_Hierarchy_Level_Callback(Nd_Token Nv_Parent_Type, char *Nv_Parent_Handle_Name, Nd_Short Nv_Current_Hierarchy_Level, Nd_Short Nv_Starting_New_Level);
 
 // Utility routines
-static Nd_Void	NI_Exporter_DAGPath_UserDataMemoryFreeRoutine(void *data);
+Nd_Void	NI_Exporter_DAGPath_UserDataMemoryFreeRoutine(void *data);
 /* ------------------------------------------------------------------------ */
 
 // Main entry point to perform the actual export conversion.
@@ -1063,7 +1063,7 @@ NI_Exporter_StartEnd_Hierarchy_Level_Callback(Nd_Token Nv_Parent_Type, char *Nv_
 // Ni_FreeHierarchyDAGPathLists() function is called at the end of the export
 // process. You don't ever have to touch or modify this function.
 
-	static Nd_Void
+	Nd_Void
 NI_Exporter_DAGPath_UserDataMemoryFreeRoutine(void *data)
 {
 	Ni_Free_Memory((char *) data);

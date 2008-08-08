@@ -19,9 +19,11 @@
 #include <map>
 
 
+#define	IGNORE_RED_FOLDERS_IN_HIERARCHY	Nc_TRUE
+
 Nd_Bool osgProcessMesh( Nd_Walk_Tree_Info *Nv_Info, char *master_object, osg::Geode* geode );
 
-//std::string _extension( NULL );
+extern Nd_Void	NI_Exporter_DAGPath_UserDataMemoryFreeRoutine(void *data);
 
 
 osg::ref_ptr< osg::Group > _root;
@@ -57,6 +59,37 @@ convertMatrix( Nd_Matrix in )
 static Nd_Void
 walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 {
+	// In case there are 'red folders' (empty objects) in the hierarchy
+	// tree (cases of object instancing) we have to keep track of each
+	// instance in the tree based on DAG Paths (see explanation in the 
+	// file ni4_aux.h). This function adds a new DAG Path to this current
+	// empty instance. To uniquely find the parent of this instance in the 
+	// the tree call the 'Ni_FindParentViaDAGPathLineage()' function (see above)
+	//
+	// NOTE: An exporter can associate its own local data with this newly
+	//       allocated DAG Path node by supplying its pointer to the 
+	//	'Nv_DAGPath_User_Data_Pointer' argument. If you allocate memory and pass in this memory pointer
+	// 	then you will have to specify the 'NI_Exporter_DAGPath_UserDataMemoryFreeRoutine'
+	//	argument which is the callback function called by the toolkit
+	//	to free up this memory at the end of the export process, otherwise
+	//	set the function pointer argument to NULL and no callbacks will be
+	// 	called by the toolkit.
+	Nd_Void			*Nv_DAGPath_User_Data_Pointer( NULL );
+	Nd_HierarchyDAGPath_Info *hierarchy_node =
+        Ni_AddHierarchyDAGPath(Nv_Info, NI_Exporter_DAGPath_UserDataMemoryFreeRoutine, (void *) Nv_DAGPath_User_Data_Pointer);
+
+	// If we don't care about "red folders" in the hierarchy then let's
+	// return now. The red folder will be added to the DAG Path lists
+	// above (via 'Ni_AddHierarchyDAGPath()') and the 'Nv_IgnoreEmptyObjectNodesInTree'
+	// option above will effectively make them invisible to this exporter.
+	// In general you would only want to deal with red folders if your
+	// exporter allows sub-sections of a hierarchy tree to be instantiated
+	// in some manner; normally no file formats allow this to happen.
+#if IGNORE_RED_FOLDERS_IN_HIERARCHY
+	if (Nv_Info->Nv_Empty_Object)
+		return;
+#endif
+
     // Get the instance's handleName
 	char* handleName = Nv_Info->Nv_Handle_Name;
     std::string extension( (char *)( Nv_Info->Nv_User_Data_Ptr1 ) );
@@ -237,28 +270,34 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
         Ni_Report_Error_printf( Nc_ERR_WARNING, "walkTreeCallback: Error return from osgProcessMesh.\n" );
 }
 
-
 static Nd_Void
 changeLevelCallback(Nd_Token Nv_Parent_Type, char *Nv_Parent_Handle_Name, 
 	Nd_Short Nv_Current_Hierarchy_Level, Nd_Short Nv_Starting_New_Level)
 {
-    unsigned int size = _parentStack.size();
-    if (size < (Nv_Current_Hierarchy_Level-1) )
-        _parentStack.push_back( _lastNode->asGroup() );
-    else
-        _parentStack.pop_back();
-#if 0
+#if IGNORE_RED_FOLDERS_IN_HIERARCHY
+	if (Nv_Parent_Type == Nt_OBJECT)
+		return;
+#endif
+
     if (Nv_Starting_New_Level != 0)
         _parentStack.push_back( _lastNode->asGroup() );
     else
         _parentStack.pop_back();
-#endif
 }
 
 void
 writeOSG( const char* out_filename, long *return_result )
 {
-	Nd_Int dummy;
+	// Init the DAG Path hierarchy lists (used to uniquely identify any 
+	// instance or empty object (red folder) in the hierarchy tree)
+#if IGNORE_RED_FOLDERS_IN_HIERARCHY
+	Nd_Int		Nv_IgnoreEmptyObjectNodesInTree = Nc_TRUE;
+#else
+	Nd_Int		Nv_IgnoreEmptyObjectNodesInTree = Nc_FALSE;
+#endif
+	Ni_InitHierarchyDAGPathLists(Nv_IgnoreEmptyObjectNodesInTree);
+
+    Nd_Int dummy;
 
     std::string fileName( out_filename );
     std::string extension = osgDB::getFileExtension( fileName );
