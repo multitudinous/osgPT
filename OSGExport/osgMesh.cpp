@@ -55,6 +55,8 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <osg/Geometry>
 #include <osg/Material>
 #include <osg/Texture2D>
+#include <osg/BlendColor>
+#include <osg/BlendFunc>
 
 /* ----------------------->>>>  Definitions  <<<<--------------------------- */
 
@@ -758,13 +760,22 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
             newGeom->setColorArray( color.get() );
             newGeom->setColorBinding( colorBinding );
 
-            osg::Material* mat( NULL );
-            osg::Texture2D* tex( NULL );
-            lookupSurface( surfaceName , &mat, &tex );
-            if (mat != NULL)
-                newGeom->getOrCreateStateSet()->setAttribute( mat );
-            if (tex != NULL)
-                newGeom->getOrCreateStateSet()->setTextureAttributeAndModes( 0, tex );
+            osg::StateSet* ss = newGeom->getOrCreateStateSet();
+            const SurfaceInfo& si = lookupSurface( surfaceName );
+            if (si._mat.valid())
+                ss->setAttribute( si._mat.get() );
+            if (si._tex.valid())
+                ss->setTextureAttributeAndModes( 0, si._tex.get() );
+
+            if (si._faceAlpha != 1.0)
+            {
+                osg::BlendColor* bc = new osg::BlendColor( osg::Vec4( 1., 1., 1., si._faceAlpha ) );
+                osg::BlendFunc* bf = new osg::BlendFunc( osg::BlendFunc::CONSTANT_ALPHA,
+                    osg::BlendFunc::ONE_MINUS_CONSTANT_ALPHA );
+                ss->setAttribute( bc );
+                ss->setAttributeAndModes( bf );
+                ss->setRenderingHint( osg::StateSet::TRANSPARENT_BIN );
+            }
         }
         else
             newGeom = it->second.get();

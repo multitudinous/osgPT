@@ -17,21 +17,6 @@ static Nd_Int surfaceTextureCB( Nd_Enumerate_Callback_Info *cbi_ptr );
 typedef std::map< std::string, osg::ref_ptr< osg::Texture2D > > TextureMap;
 TextureMap _textureMap;
 
-struct SurfaceInfo
-{
-    SurfaceInfo()
-    {}
-    SurfaceInfo( const SurfaceInfo& si )
-    {
-        _mat = si._mat.get();
-        _tex = si._tex.get();
-    }
-    ~SurfaceInfo()
-    {}
-
-    osg::ref_ptr< osg::Material > _mat;
-    osg::ref_ptr< osg::Texture2D > _tex;
-};
 typedef std::map< std::string, SurfaceInfo > SurfaceMap;
 SurfaceMap _surfaceMap;
 
@@ -47,17 +32,19 @@ lookupTexture( const std::string& name )
         return NULL;
 }
 
-void
-lookupSurface( const std::string& name, osg::Material** mat, osg::Texture2D** tex )
+const SurfaceInfo&
+lookupSurface( const std::string& name )
 {
     SurfaceMap::const_iterator it = _surfaceMap.find( name );
     if (it != _surfaceMap.end())
     {
         const SurfaceInfo& si = (*it).second;
-        if (si._mat.valid())
-            *mat = si._mat.get();
-        if (si._tex.valid())
-            *tex = si._tex.get();
+        return si;
+    }
+    else
+    {
+        Ni_Report_Error_printf( Nc_ERR_RAW_MSG, "lookupSurface: Could not find %s\n", name );
+        return( *(new SurfaceInfo) );
     }
 }
 
@@ -89,10 +76,13 @@ createMaterialCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 	Export_IO_Inquire_Surface(surface_name, &surf_info);
 
 
+    SurfaceInfo si;
+    si._faceAlpha = surf_info.Nv_Opacity_FaceCoeff;
+    si._reflectAlpha = surf_info.Nv_Opacity_ReflectCoeff;
+
     std::string nameStr( surface_name );
     osg::ref_ptr< osg::Material > mat = new osg::Material;
 
-    SurfaceInfo si;
     si._mat = mat.get();
 
     mat->setName( nameStr );
