@@ -173,8 +173,6 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 	if (Nv_Info->Nv_Empty_Instance || Nv_Info->Nv_Empty_Object || Nv_Info->Nv_Null_Object_To_Follow)
     {
         osg::ref_ptr< osg::Group > top, tail;
-        top = new osg::Group;
-        tail = top.get();
 
         if (isLOD)
         {
@@ -182,11 +180,28 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
             mdc.configureLOD( lod.get() );
             lod->addChild( top.get() );
             top = lod->asGroup();
+            tail = lod->asGroup();
         }
         if (isMatrix)
         {
-            mt->addChild( top.get() );
-            top = mt->asGroup();
+            if (top.valid())
+            {
+                // Matrix parent, LOD child
+                mt->addChild( top.get() );
+                top = mt->asGroup();
+            }
+            else
+            {
+                // Just a MatrixTransform
+                top = mt->asGroup();
+                tail = mt->asGroup();
+            }
+        }
+        if (!top.valid())
+        {
+            // Neither a MatrixTransform nor a LOD, so just a Group.
+            top = new osg::Group;
+            tail = top;
         }
 
         top->setName( handleName );
