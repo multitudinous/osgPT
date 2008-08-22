@@ -152,6 +152,10 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
             }
         }
     }
+    else
+        // We query # of prims using "masterObject", so make
+        // sure it contains a name for the query.
+        masterObject = handleName;
 
     // Get matrix from this instance, if there is one.
     osg::Matrix m = convertMatrix( Nv_Info->Nv_CTM );
