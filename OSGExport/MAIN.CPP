@@ -184,16 +184,259 @@ ExportConverter_Main(char *tokens[], char *data[], long *return_result, void *au
 	}
 #endif
 
+    if (export_options->osgDebugTextFile)
+    {
+        // Make sure the file extension is correct
+	    Ni_Check_File_Extension(filename, out_filename, ".txt");
+
+	    /* Open the file for writing with optional 'Do you want to overwrite file?' checking */
+	    Ni_Inquire_Option(Nt_CONFIRM, Nt_OVERWRITES, Nt_ENABLED, (Nd_Token *) &Nv_Confirm_Overwrites_EnableToggle, Nt_CMDEND);
+#if _MSC_VER >= 1300	// MSC v7 or newer (2003)
+	    if (Nv_Confirm_Overwrites_EnableToggle == Nt_ON) {
+		    Nd_Int	result;
+
+		    Ni_File_Exists(out_filename, &result);
+		    if (result) {
+			    char	buf[300];
+
+			    sprintf(buf, "Filename '%s' already exists.\n\nReplace existing file?", out_filename);
+			    result = MessageBox(GetFocus(), buf, "Info Request", MB_APPLMODAL | MB_YESNO | MB_DEFBUTTON2 | MB_ICONQUESTION);
+			    if (result == IDNO) {
+				    return_status = Nc_TRUE;	// Aborting
+				    goto error;
+			    }
+		    }
+	    }
+	    ofp = fopen(out_filename, "w");
+#else
+	    ofp = Ni_Search_And_Open_File(out_filename, "w", (Nv_Confirm_Overwrites_EnableToggle == Nt_ON), "NG_WORKING_DIR", filepath_used);
+#endif
+	    if (ofp == NULL) {
+		    /* %s: Could not open /text dump/ file '%s' for writing. */
+		    Ni_Report_Error(Nc_ERR_ERROR, 
+			    "OUTERR_FILE_OPEN_WRITE", 
+			    CURR_FN_NAME, 
+			    "ISU OpenSceneGraph Export", filename);
+		    return_status = Nc_TRUE;	// Aborting
+		    goto error;
+	    }
+
+
+
+        //
+        // Print OSG control values
+	    OPTIONAL_FPRINTF(ofp, "# OSG-specific export control parameters\n");
+        OPTIONAL_FPRINTF(ofp, "#\n");
+
+        OPTIONAL_FPRINTF(ofp, "OSG Filename = %s\n", osgFilename);
+        OPTIONAL_FPRINTF(ofp, "#\n");
+
+        OPTIONAL_FPRINTF(ofp, "osgExporterVersion = %s\n", export_options->osgExporterVersion );
+        OPTIONAL_FPRINTF(ofp, "#\n");
+
+        OPTIONAL_FPRINTF(ofp, "osgStripTexturePaths = %d\n", export_options->osgStripTexturePaths );
+	    OPTIONAL_FPRINTF(ofp, "osgNormalization = %d\n", export_options->osgNormalization );
+	    OPTIONAL_FPRINTF(ofp, "osgBackfaceCulling = %d\n", export_options->osgBackfaceCulling );
+	    OPTIONAL_FPRINTF(ofp, "osgDebugTextFile = %d\n", export_options->osgDebugTextFile );
+        OPTIONAL_FPRINTF(ofp, "#\n");
+
+	    OPTIONAL_FPRINTF(ofp, "osgInstanceFile = %d\n", export_options->osgInstanceFile );
+	    OPTIONAL_FPRINTF(ofp, "osgInstanceShared = %d\n", export_options->osgInstanceShared );
+	    OPTIONAL_FPRINTF(ofp, "osgInstanceIgnore = %d\n", export_options->osgInstanceIgnore );
+        OPTIONAL_FPRINTF(ofp, "#\n");
+
+        OPTIONAL_FPRINTF(ofp, "osgRunOptimizer = %d\n", export_options->osgRunOptimizer );
+	    OPTIONAL_FPRINTF(ofp, "osgCreateTriangleStrips = %d\n", export_options->osgCreateTriangleStrips );
+	    OPTIONAL_FPRINTF(ofp, "osgMergeGeometry = %d\n", export_options->osgMergeGeometry );
+        OPTIONAL_FPRINTF(ofp, "#\n\n\n");
+
+        // END OSG control values
+        //
+
+
+
+	    /* Print header message to the file */
+	    OPTIONAL_FPRINTF(ofp, "# This file lists some of the contents of the PolyTrans 3D database in an easy to\n");
+	    OPTIONAL_FPRINTF(ofp, "# understand ASCII text form. More information can be output to this file by\n");
+	    OPTIONAL_FPRINTF(ofp, "# expanding the 'exp_isu_osg.cpp' example source code file.\n\n");
+
+	    // First, go and output some global information about the animation data currently
+	    // defined in the dataset and the current/start/end animation times + playvback rate.
+	    NI_Exporter_QueryAndOutputGeneralAnimationInformation(ofp);
+
+	    // Output any meta data associated with global scene
+	    NI_Exporter_Output_Meta_Data(ofp, NULL, NULL);
+
+	    // --------------->>>>  Light Source Output
+
+	    OPTIONAL_FPRINTF(ofp, "--------------->>>>  Light Source Output  <<<<----------------\n\n");
+
+	    /* Call 'List_Light_Callback()' for every light source defined. */
+	    if (export_options->ena_lights)
+		    Ni_Enumerate(&dummy, "*", Nc_FALSE, (Nd_Void *) ofp, (Nd_Void *) 0, 
+			    NI_Exporter_List_Light_Callback, Nt_LIGHT, Nt_CMDEND);
+
+	    // --------------->>>>  Camera Definitions Output
+
+	    OPTIONAL_FPRINTF(ofp, "\n--------------->>>>  Camera Definitions Output  <<<<----------------\n\n");
+
+	    /* Call 'List_Camera_Callback()' for every camera defined. */
+	    if (export_options->ena_cameras)
+		    Ni_Enumerate(&dummy, "*", Nc_FALSE, (Nd_Void *) ofp, (Nd_Void *) 0, 
+			    NI_Exporter_List_Camera_Callback, Nt_CAMERA, Nt_CMDEND);
+
+	    // --------------->>>>  Surface (Material) Definition Output
+
+	    OPTIONAL_FPRINTF(ofp, "\n--------------->>>>  Surface (Material) Definition Output  <<<<----------------\n");
+
+	    /* Call 'List_Surface_Callback()' for every surface defined. */
+	    if (export_options->ena_materials)
+		    Ni_Enumerate(&dummy, "*", Nc_FALSE, (Nd_Void *) ofp, (Nd_Void *) 0, 
+			    NI_Exporter_List_Surface_Callback, Nt_SURFACE, Nt_CMDEND);
+
+	    // --------------->>>>  Texture Definition Output
+
+	    OPTIONAL_FPRINTF(ofp, "\n--------------->>>>  Texture Definition Output  <<<<----------------\n\n");
+
+	    /* Call 'List_Texture_Callback()' for every texture defined. */
+	    if (export_options->ena_texture_definitions)
+		    Ni_Enumerate(&dummy, "*", Nc_FALSE, (Nd_Void *) ofp, (Nd_Void *) 0, 
+			    NI_Exporter_List_Texture_Callback, Nt_TEXTURE, Nt_CMDEND);
+
+	    // --------------->>>>  Atmospherics Output
+
+	    OPTIONAL_FPRINTF(ofp, "\n--------------->>>>  Atmospherics Output  <<<<----------------\n\n");
+
+	    /* List the atmospheric parameters */
+	    if (export_options->ena_env_info)
+		    NI_Exporter_List_Atmospheric_Values(ofp);
+
+	    // --------------->>>>  Background Output
+
+	    OPTIONAL_FPRINTF(ofp, "\n--------------->>>>  Background Output  <<<<----------------\n\n");
+
+	    /* List the background parameters */
+	    if (export_options->ena_background_info)
+		    NI_Exporter_List_Background_Values(ofp);
+
+	    // --------------->>>>  Hierarchy & Geometry Output
+
+	    OPTIONAL_FPRINTF(ofp, "\n--------------->>>>  Hierarchy & Geometry Output  <<<<-----------------\n");
+
+	    // Init the DAG Path hierarchy lists (used to uniquely identify any 
+	    // instance or empty object (red folder) in the hierarchy tree)
+#if IGNORE_RED_FOLDERS_IN_HIERARCHY
+	    Nv_IgnoreEmptyObjectNodesInTree = Nc_TRUE;
+#else
+	    Nv_IgnoreEmptyObjectNodesInTree = Nc_FALSE;
+#endif
+	    Ni_InitHierarchyDAGPathLists(Nv_IgnoreEmptyObjectNodesInTree);
+
+	    // Make sure we get the Import I/O toolkit to send the current polygon reduction options
+	    // from the main UI (dialog box level) into the toolkit, so that polygon reduction can be
+	    // performed during the export phase.
+	    if (export_options->polygon_reduction_ena) {
+		    char *ptr, ini_filepath[1024];
+
+		    // The reduction options are in their own .ini file since the main .ini file overwrites them.
+		    strcpy(ini_filepath, plugin_directory);
+		    strcat(ini_filepath, INI_FILENAME);
+		    ptr = strstr(ini_filepath, ".ini");
+		    if (ptr) *ptr = '\0';
+			    strcat(ini_filepath, "_reduction.ini");
+
+		    Import_IO_Send_Polygon_Reduction_UI_Options_To_Toolkit(ini_filepath);
+	    }
+
+	    // Walk the scene graph. This is where the action starts!
+	    try {
+		    // If your export file format allows for instancing of object geometry then you will want
+		    // to enable this option when instancing is enabled in the exporter. It invokes internal
+		    // helper routines which pre-walk the tree before the main tree walk is done, and sets up
+		    // the 'instancing detection' variables found at the end of the Nd_Walk_Tree data stucture (see ni.h)
+		    //
+		    // These instancing-detection helper variables help your exporter determine:
+		    //
+		    // (1) How many times an object definition is referenced (if 2 or more times, then the
+		    //     object definition is a candidate for instancing during output).
+		    // (2) If a Nt_INDEXEDPOLYGON mesh is instanced 2 or more times and that mesh inherits different polygon-level
+		    //     materials from each different instance. In such cases the object definition usually
+		    //     can't be instanced since most export file formats cannot output a multiply instanced
+		    //     polygon mesh which has different polygon-level materials on each instance.
+               	    Nd_Token ena_instancing_detection_counts = (export_options->ena_instancing) ? Nt_ON : Nt_OFF;
+
+		    Ni_Walk_Tree(NULL, (Nd_Void *) ofp, (Nd_Void *) NULL,
+			    NI_Exporter_WalkTree_Main_Callback,
+			    Nt_RETURNSTATUS, (Nd_Int *) &Nv_Walk_Tree_Return_Status, Nt_CMDSEP,
+			    // Make sure some internal state is set up for data export queries
+			    Nt_SETUPFOREXPORTER, Nt_ENABLED, Nt_ON, Nt_CMDSEP,
+			    // Specify a callback which will inform us when a new hierarchy level is started/ended
+			    Nt_STARTENDHIERARCHYCB, (void *) NI_Exporter_StartEnd_Hierarchy_Level_Callback, Nt_CMDSEP,
+			    // This enables the internal pre-walk routines which determine the state and counts for the instancing
+			    // helper detection variables found at the end of the Nd_Walk_Tree data structure (see ni.h). See above
+			    // for a further explanation, or the Nd_Walk_Tree data structure for full variables explanations.
+			    Nt_ENABLEINSTANCINGDETECTIONCOUNTS, Nt_ENABLED, ena_instancing_detection_counts, Nt_CMDSEP,
+			    Nt_CMDEND);
+		    }
+	    catch( ... )
+	    {
+		    Ni_Report_Error_printf(Nc_ERR_ERROR, "Exporter is raising an unknown exception while walking the geometry tree.");
+		    *return_result = Nc_TRUE;
+		    goto error;
+	    }
+
+	    // If the user aborted the tree walk then return now
+	    if (Nv_Walk_Tree_Return_Status == Nc_WALKTREE_ABORT) {
+		    return_status = Nc_TRUE;	// Error
+		    goto exit;
+	    }
+
+	    // Optionally perform automatic bitmap conversion for those bitmap
+	    // images which were queued up during the material export phase.
+	    NI_Exporter_Convert_Bitmap_Files(filename);
+
+	    // Output some statistics
+	    if (TRUE) {
+		    Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "Export statistics:");
+		    if (export_options->total_meshes)
+			    Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of meshes = %ld", export_options->total_meshes);
+		    if (export_options->total_polygons)
+			    Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of polygons = %ld", export_options->total_polygons);
+		    if (export_options->total_polylines)
+			    Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of polylines = %ld", export_options->total_polylines);
+		    if (export_options->total_spline_shapes)
+			    Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of spline shapes = %ld", export_options->total_spline_shapes);
+		    if (export_options->total_nurbs_curves)
+			    Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of independent NURBS curves = %ld", export_options->total_nurbs_curves);
+		    if (export_options->total_nurbs_surfaces)
+			    Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of NURBS surfaces = %ld", export_options->total_nurbs_surfaces);
+		    if (export_options->total_pointsets)
+			    Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of pointsets = %ld (%ld total vertices)", export_options->total_pointsets, export_options->total_pointset_points);
+		    if (export_options->total_materials)
+			    Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of materials = %ld", export_options->total_materials);
+		    if (export_options->total_texture_maps)
+			    Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of texture maps = %ld", export_options->total_texture_maps);
+		    if (export_options->total_groups)
+			    Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of grouping nodes = %ld", export_options->total_groups);
+		    if (export_options->total_instances)
+			    Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of instances = %ld", export_options->total_instances);
+	    }
+    }
+
+    //
+    // Finally, create the OSG tree and write the file.
+    //
+
     /* Open the file for writing with optional 'Do you want to overwrite file?' checking */
 	Ni_Inquire_Option(Nt_CONFIRM, Nt_OVERWRITES, Nt_ENABLED, (Nd_Token *) &Nv_Confirm_Overwrites_EnableToggle, Nt_CMDEND);
 	if (Nv_Confirm_Overwrites_EnableToggle == Nt_ON) {
 		Nd_Int	result;
 
-		Ni_File_Exists(out_filename, &result);
+		Ni_File_Exists(osgFilename, &result);
 		if (result) {
 			char	buf[300];
 
-			sprintf(buf, "Filename '%s' already exists.\n\nReplace existing file?", out_filename);
+			sprintf(buf, "Filename '%s' already exists.\n\nReplace existing file?", osgFilename);
 			result = MessageBox(GetFocus(), buf, "Info Request", MB_APPLMODAL | MB_YESNO | MB_DEFBUTTON2 | MB_ICONQUESTION);
 			if (result == IDNO) {
 				return_status = Nc_TRUE;	// Aborting
@@ -202,249 +445,12 @@ ExportConverter_Main(char *tokens[], char *data[], long *return_result, void *au
 		}
 	}
 
-    writeOSG( out_filename, return_result );
-
-    if (!export_options->osgDebugTextFile)
-        goto exit;
-
-
-
-    // Make sure the file extension is correct
-	Ni_Check_File_Extension(filename, out_filename, ".txt");
-
-	/* Open the file for writing with optional 'Do you want to overwrite file?' checking */
-	Ni_Inquire_Option(Nt_CONFIRM, Nt_OVERWRITES, Nt_ENABLED, (Nd_Token *) &Nv_Confirm_Overwrites_EnableToggle, Nt_CMDEND);
-#if _MSC_VER >= 1300	// MSC v7 or newer (2003)
-	if (Nv_Confirm_Overwrites_EnableToggle == Nt_ON) {
-		Nd_Int	result;
-
-		Ni_File_Exists(out_filename, &result);
-		if (result) {
-			char	buf[300];
-
-			sprintf(buf, "Filename '%s' already exists.\n\nReplace existing file?", out_filename);
-			result = MessageBox(GetFocus(), buf, "Info Request", MB_APPLMODAL | MB_YESNO | MB_DEFBUTTON2 | MB_ICONQUESTION);
-			if (result == IDNO) {
-				return_status = Nc_TRUE;	// Aborting
-				goto error;
-			}
-		}
-	}
-	ofp = fopen(out_filename, "w");
-#else
-	ofp = Ni_Search_And_Open_File(out_filename, "w", (Nv_Confirm_Overwrites_EnableToggle == Nt_ON), "NG_WORKING_DIR", filepath_used);
-#endif
-	if (ofp == NULL) {
-		/* %s: Could not open /text dump/ file '%s' for writing. */
-		Ni_Report_Error(Nc_ERR_ERROR, 
-			"OUTERR_FILE_OPEN_WRITE", 
-			CURR_FN_NAME, 
-			"ISU OpenSceneGraph Export", filename);
-		return_status = Nc_TRUE;	// Aborting
+    writeOSG( osgFilename, return_result );
+    if (*return_result == Nc_TRUE)
+    {
+		Ni_Report_Error_printf(Nc_ERR_ERROR, "writeOSG returned an error.");
 		goto error;
-	}
-
-
-
-    //
-    // Print OSG control values
-	OPTIONAL_FPRINTF(ofp, "# OSG-specific export control parameters\n");
-    OPTIONAL_FPRINTF(ofp, "#\n");
-
-    OPTIONAL_FPRINTF(ofp, "OSG Filename = %s\n", osgFilename);
-    OPTIONAL_FPRINTF(ofp, "#\n");
-
-    OPTIONAL_FPRINTF(ofp, "writeOSG return_result = %d\n", *return_result );
-    OPTIONAL_FPRINTF(ofp, "#\n");
-
-    OPTIONAL_FPRINTF(ofp, "osgExporterVersion = %s\n", export_options->osgExporterVersion );
-    OPTIONAL_FPRINTF(ofp, "#\n");
-
-    OPTIONAL_FPRINTF(ofp, "osgStripTexturePaths = %d\n", export_options->osgStripTexturePaths );
-	OPTIONAL_FPRINTF(ofp, "osgNormalization = %d\n", export_options->osgNormalization );
-	OPTIONAL_FPRINTF(ofp, "osgBackfaceCulling = %d\n", export_options->osgBackfaceCulling );
-	OPTIONAL_FPRINTF(ofp, "osgDebugTextFile = %d\n", export_options->osgDebugTextFile );
-	OPTIONAL_FPRINTF(ofp, "osgInstanceFile = %d\n", export_options->osgInstanceFile );
-	OPTIONAL_FPRINTF(ofp, "osgInstanceShared = %d\n", export_options->osgInstanceShared );
-	OPTIONAL_FPRINTF(ofp, "osgInstanceIgnore = %d\n", export_options->osgInstanceIgnore );
-    OPTIONAL_FPRINTF(ofp, "#\n");
-
-    OPTIONAL_FPRINTF(ofp, "osgRunOptimizer = %d\n", export_options->osgRunOptimizer );
-	OPTIONAL_FPRINTF(ofp, "osgCreateTriangleStrips = %d\n", export_options->osgCreateTriangleStrips );
-	OPTIONAL_FPRINTF(ofp, "osgMergeGeometry = %d\n", export_options->osgMergeGeometry );
-    OPTIONAL_FPRINTF(ofp, "#\n\n\n");
-
-    // END OSG control values
-    //
-
-
-
-	/* Print header message to the file */
-	OPTIONAL_FPRINTF(ofp, "# This file lists some of the contents of the PolyTrans 3D database in an easy to\n");
-	OPTIONAL_FPRINTF(ofp, "# understand ASCII text form. More information can be output to this file by\n");
-	OPTIONAL_FPRINTF(ofp, "# expanding the 'exp_isu_osg.cpp' example source code file.\n\n");
-
-	// First, go and output some global information about the animation data currently
-	// defined in the dataset and the current/start/end animation times + playvback rate.
-	NI_Exporter_QueryAndOutputGeneralAnimationInformation(ofp);
-
-	// Output any meta data associated with global scene
-	NI_Exporter_Output_Meta_Data(ofp, NULL, NULL);
-
-	// --------------->>>>  Light Source Output
-
-	OPTIONAL_FPRINTF(ofp, "--------------->>>>  Light Source Output  <<<<----------------\n\n");
-
-	/* Call 'List_Light_Callback()' for every light source defined. */
-	if (export_options->ena_lights)
-		Ni_Enumerate(&dummy, "*", Nc_FALSE, (Nd_Void *) ofp, (Nd_Void *) 0, 
-			NI_Exporter_List_Light_Callback, Nt_LIGHT, Nt_CMDEND);
-
-	// --------------->>>>  Camera Definitions Output
-
-	OPTIONAL_FPRINTF(ofp, "\n--------------->>>>  Camera Definitions Output  <<<<----------------\n\n");
-
-	/* Call 'List_Camera_Callback()' for every camera defined. */
-	if (export_options->ena_cameras)
-		Ni_Enumerate(&dummy, "*", Nc_FALSE, (Nd_Void *) ofp, (Nd_Void *) 0, 
-			NI_Exporter_List_Camera_Callback, Nt_CAMERA, Nt_CMDEND);
-
-	// --------------->>>>  Surface (Material) Definition Output
-
-	OPTIONAL_FPRINTF(ofp, "\n--------------->>>>  Surface (Material) Definition Output  <<<<----------------\n");
-
-	/* Call 'List_Surface_Callback()' for every surface defined. */
-	if (export_options->ena_materials)
-		Ni_Enumerate(&dummy, "*", Nc_FALSE, (Nd_Void *) ofp, (Nd_Void *) 0, 
-			NI_Exporter_List_Surface_Callback, Nt_SURFACE, Nt_CMDEND);
-
-	// --------------->>>>  Texture Definition Output
-
-	OPTIONAL_FPRINTF(ofp, "\n--------------->>>>  Texture Definition Output  <<<<----------------\n\n");
-
-	/* Call 'List_Texture_Callback()' for every texture defined. */
-	if (export_options->ena_texture_definitions)
-		Ni_Enumerate(&dummy, "*", Nc_FALSE, (Nd_Void *) ofp, (Nd_Void *) 0, 
-			NI_Exporter_List_Texture_Callback, Nt_TEXTURE, Nt_CMDEND);
-
-	// --------------->>>>  Atmospherics Output
-
-	OPTIONAL_FPRINTF(ofp, "\n--------------->>>>  Atmospherics Output  <<<<----------------\n\n");
-
-	/* List the atmospheric parameters */
-	if (export_options->ena_env_info)
-		NI_Exporter_List_Atmospheric_Values(ofp);
-
-	// --------------->>>>  Background Output
-
-	OPTIONAL_FPRINTF(ofp, "\n--------------->>>>  Background Output  <<<<----------------\n\n");
-
-	/* List the background parameters */
-	if (export_options->ena_background_info)
-		NI_Exporter_List_Background_Values(ofp);
-
-	// --------------->>>>  Hierarchy & Geometry Output
-
-	OPTIONAL_FPRINTF(ofp, "\n--------------->>>>  Hierarchy & Geometry Output  <<<<-----------------\n");
-
-	// Init the DAG Path hierarchy lists (used to uniquely identify any 
-	// instance or empty object (red folder) in the hierarchy tree)
-#if IGNORE_RED_FOLDERS_IN_HIERARCHY
-	Nv_IgnoreEmptyObjectNodesInTree = Nc_TRUE;
-#else
-	Nv_IgnoreEmptyObjectNodesInTree = Nc_FALSE;
-#endif
-	Ni_InitHierarchyDAGPathLists(Nv_IgnoreEmptyObjectNodesInTree);
-
-	// Make sure we get the Import I/O toolkit to send the current polygon reduction options
-	// from the main UI (dialog box level) into the toolkit, so that polygon reduction can be
-	// performed during the export phase.
-	if (export_options->polygon_reduction_ena) {
-		char *ptr, ini_filepath[1024];
-
-		// The reduction options are in their own .ini file since the main .ini file overwrites them.
-		strcpy(ini_filepath, plugin_directory);
-		strcat(ini_filepath, INI_FILENAME);
-		ptr = strstr(ini_filepath, ".ini");
-		if (ptr) *ptr = '\0';
-			strcat(ini_filepath, "_reduction.ini");
-
-		Import_IO_Send_Polygon_Reduction_UI_Options_To_Toolkit(ini_filepath);
-	}
-
-	// Walk the scene graph. This is where the action starts!
-	try {
-		// If your export file format allows for instancing of object geometry then you will want
-		// to enable this option when instancing is enabled in the exporter. It invokes internal
-		// helper routines which pre-walk the tree before the main tree walk is done, and sets up
-		// the 'instancing detection' variables found at the end of the Nd_Walk_Tree data stucture (see ni.h)
-		//
-		// These instancing-detection helper variables help your exporter determine:
-		//
-		// (1) How many times an object definition is referenced (if 2 or more times, then the
-		//     object definition is a candidate for instancing during output).
-		// (2) If a Nt_INDEXEDPOLYGON mesh is instanced 2 or more times and that mesh inherits different polygon-level
-		//     materials from each different instance. In such cases the object definition usually
-		//     can't be instanced since most export file formats cannot output a multiply instanced
-		//     polygon mesh which has different polygon-level materials on each instance.
-               	Nd_Token ena_instancing_detection_counts = (export_options->ena_instancing) ? Nt_ON : Nt_OFF;
-
-		Ni_Walk_Tree(NULL, (Nd_Void *) ofp, (Nd_Void *) NULL,
-			NI_Exporter_WalkTree_Main_Callback,
-			Nt_RETURNSTATUS, (Nd_Int *) &Nv_Walk_Tree_Return_Status, Nt_CMDSEP,
-			// Make sure some internal state is set up for data export queries
-			Nt_SETUPFOREXPORTER, Nt_ENABLED, Nt_ON, Nt_CMDSEP,
-			// Specify a callback which will inform us when a new hierarchy level is started/ended
-			Nt_STARTENDHIERARCHYCB, (void *) NI_Exporter_StartEnd_Hierarchy_Level_Callback, Nt_CMDSEP,
-			// This enables the internal pre-walk routines which determine the state and counts for the instancing
-			// helper detection variables found at the end of the Nd_Walk_Tree data structure (see ni.h). See above
-			// for a further explanation, or the Nd_Walk_Tree data structure for full variables explanations.
-			Nt_ENABLEINSTANCINGDETECTIONCOUNTS, Nt_ENABLED, ena_instancing_detection_counts, Nt_CMDSEP,
-			Nt_CMDEND);
-		}
-	catch( ... )
-	{
-		Ni_Report_Error_printf(Nc_ERR_ERROR, "Exporter is raising an unknown exception while walking the geometry tree.");
-		*return_result = Nc_TRUE;
-		goto error;
-	}
-
-	// If the user aborted the tree walk then return now
-	if (Nv_Walk_Tree_Return_Status == Nc_WALKTREE_ABORT) {
-		return_status = Nc_TRUE;	// Error
-		goto exit;
-	}
-
-	// Optionally perform automatic bitmap conversion for those bitmap
-	// images which were queued up during the material export phase.
-	NI_Exporter_Convert_Bitmap_Files(filename);
-
-	// Output some statistics
-	if (TRUE) {
-		Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "Export statistics:");
-		if (export_options->total_meshes)
-			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of meshes = %ld", export_options->total_meshes);
-		if (export_options->total_polygons)
-			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of polygons = %ld", export_options->total_polygons);
-		if (export_options->total_polylines)
-			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of polylines = %ld", export_options->total_polylines);
-		if (export_options->total_spline_shapes)
-			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of spline shapes = %ld", export_options->total_spline_shapes);
-		if (export_options->total_nurbs_curves)
-			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of independent NURBS curves = %ld", export_options->total_nurbs_curves);
-		if (export_options->total_nurbs_surfaces)
-			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of NURBS surfaces = %ld", export_options->total_nurbs_surfaces);
-		if (export_options->total_pointsets)
-			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of pointsets = %ld (%ld total vertices)", export_options->total_pointsets, export_options->total_pointset_points);
-		if (export_options->total_materials)
-			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of materials = %ld", export_options->total_materials);
-		if (export_options->total_texture_maps)
-			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of texture maps = %ld", export_options->total_texture_maps);
-		if (export_options->total_groups)
-			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of grouping nodes = %ld", export_options->total_groups);
-		if (export_options->total_instances)
-			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "\tNumber of instances = %ld", export_options->total_instances);
-	}
+    }
 
 exit:
 	if (ofp)
