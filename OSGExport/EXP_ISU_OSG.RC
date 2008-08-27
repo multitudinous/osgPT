@@ -3,19 +3,25 @@
 #include "resource.h"
 #define NG_DS_3DLOOK	DS_3DLOOK
 
-AboutBox DIALOG 40, 41, 206, 119
+AboutBox DIALOG 40, 41, 226, 200
 STYLE DS_MODALFRAME | 0x4L | WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU
 CAPTION "About the OpenSceneGraph Export Plug-In"
 FONT 8, "HELV"
 {
- CONTROL "", -1, "static", SS_WHITERECT | WS_CHILD | WS_VISIBLE | WS_BORDER, 12, 13, 182, 63
- CTEXT "ISU OpenSceneGraph Export Plugin", -1, 23, 20, 160, 10, SS_CENTER | WS_BORDER | WS_GROUP
- CTEXT "By Paul Martz", -1, 71, 31, 63, 8
- LTEXT "Copyright (c) 2008 Skew Matrix Software LLC.", -1, 29, 42, 163, 8
- LTEXT "Portions Copyright (c) 2006 Okino Computer Graphics, Inc.", -1, 14, 53, 185, 8
- LTEXT "All Rights Reserved.", -1, 69, 64, 68, 8, WS_CHILD | WS_VISIBLE | WS_GROUP
- DEFPUSHBUTTON "&OK", IDOK, 45, 89, 52, 18, BS_DEFPUSHBUTTON | WS_TABSTOP
- PUSHBUTTON "&Help", IDD_BUTTON_HELP, 108, 89, 52, 18
+ LTEXT "ISU OpenSceneGraph Export Plugin", -1, 10, 10, 160, 10
+ LTEXT "vX.x", IDD_OSG_EXPORTER_VERSION, 20, 20, 63, 8
+ LTEXT "By Paul Martz", -1, 20, 30, 63, 8
+
+ LTEXT "Copyright (c) 2008 Skew Matrix Software LLC.", -1, 10, 50, 163, 8
+ LTEXT "Portions Copyright (c) 2006 Okino Computer Graphics, Inc.", -1, 10, 60, 185, 8
+ LTEXT "All Rights Reserved.", -1, 10, 70, 68, 8
+
+ LTEXT "To report an issue:", -1, 10, 90, 200, 8
+ LTEXT "Email: pmartz@skew-matrix.com", -1, 20, 100, 200, 8
+ LTEXT "Web: http://www.skew-matrix.com/products", -1, 20, 110, 200, 8
+
+ DEFPUSHBUTTON "&OK", IDOK, 102, 172, 52, 18, BS_DEFPUSHBUTTON | WS_TABSTOP
+ PUSHBUTTON "&Help", IDD_BUTTON_HELP, 164, 172, 52, 18
 }
 
 OptionsDialogOSG1 DIALOG 75, 67, 216, 217

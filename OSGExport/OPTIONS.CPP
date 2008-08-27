@@ -49,6 +49,7 @@ POSSIBILITY OF SUCH DAMAGES.
 *****************************************************************************/
 
 #include "main.h"	// Main include file for a PolyTrans exporter
+#include "osgVersion.h"
 
 /* ----------------------->>>>  Definitions  <<<<--------------------------- */
 
@@ -421,6 +422,7 @@ NI_Exporter_InitExportOptionVariables()
         export_options->osgNormalization = Nc_TRUE;
         export_options->osgBackfaceCulling = Nc_TRUE;
         export_options->osgDebugTextFile = Nc_FALSE;
+
         export_options->osgInstanceFile = Nc_FALSE; // write them as separate files
         export_options->osgInstanceShared = Nc_TRUE; // share instances within a single-file scene graph
         export_options->osgInstanceIgnore = Nc_FALSE; // ignore (copy) instances.
@@ -428,6 +430,10 @@ NI_Exporter_InitExportOptionVariables()
         export_options->osgRunOptimizer = Nc_TRUE;
         export_options->osgCreateTriangleStrips = Nc_FALSE;
         export_options->osgMergeGeometry = Nc_TRUE;
+
+        char* expVersion = new char[ 32 ];
+        sprintf( expVersion, "v%d.%d%c", OSG_MAJOR_VERSION, OSG_MINOR_VERSION, 0 );
+        export_options->osgExporterVersion = expVersion;
 
         // Non-OSG...
         export_options->ena_hierarchy = Nc_TRUE; 

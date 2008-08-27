@@ -690,6 +690,10 @@
 				RelativePath=".\osgSurface.h"
 				>
 			</File>
+			<File
+				RelativePath=".\osgVersion.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

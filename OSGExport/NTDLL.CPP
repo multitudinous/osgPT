@@ -2489,6 +2489,10 @@ AboutDlgProc(HWND hDlg, UINT msg, UINT wparam, LONG lparam)
 	switch (msg) {
 	case WM_INITDIALOG:
 		Import_IO_Center_Window(parent_hwnd, hDlg);
+		SendMessage(hDlg, WM_UPDATE_DIALOG_PARAMETERS, 0, 0L);
+		return (TRUE);
+	case WM_UPDATE_DIALOG_PARAMETERS:
+		SetDlgItemText( hDlg, IDD_OSG_EXPORTER_VERSION, export_options->osgExporterVersion );
 		return (TRUE);
 	case WM_COMMAND:
 		if (LOWORD(wparam) == IDOK) {
