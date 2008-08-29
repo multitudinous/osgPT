@@ -432,7 +432,7 @@ NI_Exporter_InitExportOptionVariables()
         export_options->osgMergeGeometry = Nc_TRUE;
 
         char* expVersion = new char[ 32 ];
-        sprintf( expVersion, "v%d.%d%c", OSG_MAJOR_VERSION, OSG_MINOR_VERSION, 0 );
+        sprintf( expVersion, "v%d.%d.%d%c", OSGEXP_MAJOR_VERSION, OSGEXP_MINOR_VERSION, OSGEXP_SUB_VERSION, 0 );
         export_options->osgExporterVersion = expVersion;
 
         // Non-OSG...

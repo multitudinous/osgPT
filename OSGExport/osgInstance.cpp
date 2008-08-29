@@ -100,32 +100,38 @@ writeInstancesAsFiles( const std::string& extension, const osgDB::ReaderWriter::
             flags |= osgUtil::Optimizer::MERGE_GEOMETRY;
     }
 
+    unsigned int skipped( 0 );
     int count( 0 );
     InstanceMap::iterator it = _instanceMap.begin();
     for( ; it != _instanceMap.end(); it++)
     {
-        osg::Node* node = it->second.get();
+        // Update progress bar and check for user aboirt.
+        count++;
+        if (Export_IO_Check_For_User_Interrupt_With_Stats( count, _instanceMap.size() ))
+            return;
 
-        osgUtil::Optimizer optimizer;
-        optimizer.optimize( node, flags );
+        osg::Node* node = it->second.get();
 
         const std::string sourceFileName = node->getName();
         const std::string fileName = createFileName( sourceFileName, extension );
 
         if (osgDB::fileExists( fileName ))
-            Ni_Report_Error_printf( Nc_ERR_WARNING, "writeInstancesAsFiles: File already exists: \"%s\".", fileName.c_str() );
+        {
+            skipped++;
+            continue;
+        }
+
+        osgUtil::Optimizer optimizer;
+        optimizer.optimize( node, flags );
 
         Export_IO_UpdateStatusDisplay( "instance", (char *)(fileName.c_str()), "Exporting instance as file." );
         bool success = osgDB::writeNodeFile( *node, fileName, opt );
         if (!success)
             Ni_Report_Error_printf( Nc_ERR_INFO, "writeInstancesAsFiles: Error writing instance file \"%s\".", fileName.c_str() );
-
-        count++;
-
-        // Update progress bar and check for user aboirt.
-        if (Export_IO_Check_For_User_Interrupt_With_Stats( count, _instanceMap.size() ))
-            return;
     }
+
+    if (skipped > 0)
+        Ni_Report_Error_printf( Nc_ERR_WARNING, "writeInstancesAsFiles: Skipped %d files that already exist.", skipped );
 }
 
 void
