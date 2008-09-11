@@ -105,7 +105,7 @@ writeInstancesAsFiles( const std::string& extension, const osgDB::ReaderWriter::
     InstanceMap::iterator it = _instanceMap.begin();
     for( ; it != _instanceMap.end(); it++)
     {
-        // Update progress bar and check for user aboirt.
+        // Update progress bar and check for user abort.
         count++;
         if (Export_IO_Check_For_User_Interrupt_With_Stats( count, _instanceMap.size() ))
             return;

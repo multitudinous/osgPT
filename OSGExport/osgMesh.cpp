@@ -486,7 +486,18 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
 	object_name = Nv_Prp_Ptr->Nv_ObjectContainingMeshData_Handle_Name;
 
 	child_num = 0;
-	Ni_Inquire_Primitive(Nt_OBJECT, object_name, child_num, &primitive_type,
+
+    Ni_Inquire_Primitive( Nt_OBJECT, object_name, child_num, &primitive_type, Nt_CMDEND );	// Get the type of this primitive
+    if ( primitive_type != Nt_INDEXEDPOLYGONS)
+    {
+        // Currently experiencing a crash exporting some jt files and suspect it's
+        //   because they contain line, not polys. Ignote non-polys for now to test
+        //   this theory.
+        Ni_Report_Error_printf( Nc_ERR_WARNING, "osgProcessRawMeshPrimitiveCB: Skipping non-indexpolygon primitive, type = 0x%x.", primitive_type );
+        return;
+    }
+
+    Ni_Inquire_Primitive(Nt_OBJECT, object_name, child_num, &primitive_type,
 		Nt_INDEXEDPOLYGONS,
 			Nt_NUMPOLYGONS, (Nd_Int *) &num_polygons,
 			Nt_VERTICESPERPOLY, (Nd_UShort *) &vertices_per_polygon, 
