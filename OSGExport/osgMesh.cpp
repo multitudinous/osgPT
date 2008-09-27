@@ -774,7 +774,12 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
             osg::StateSet* ss = newGeom->getOrCreateStateSet();
             const SurfaceInfo& si = lookupSurface( surfaceName );
             if (si._mat.valid())
-                ss->setAttribute( si._mat.get() );
+            {
+                // Must make a copy because app could possibly tweak this on
+                //   a per-node basis.
+                osg::Material* mat = new osg::Material( *( si._mat ) );
+                ss->setAttribute( mat );
+            }
             if (si._tex.valid())
                 ss->setTextureAttributeAndModes( 0, si._tex.get() );
 
