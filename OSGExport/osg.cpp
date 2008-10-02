@@ -7,6 +7,7 @@
 
 #include <osg/Group>
 #include <osg/MatrixTransform>
+#include <osg/ProxyNode>
 #include <osg/LOD>
 #include <osg/Geode>
 #include <osg/Geometry>
@@ -29,6 +30,8 @@ extern Nd_Void	NI_Exporter_DAGPath_UserDataMemoryFreeRoutine(void *data);
 osg::ref_ptr< osg::Group > _root;
 osg::ref_ptr< osg::Group > _parent;
 osg::ref_ptr< osg::Node > _lastNode;
+unsigned int _numNodes;
+unsigned int _nodeCount;
 
 typedef std::deque< osg::Group* > GroupStack;
 GroupStack _parentStack;
@@ -42,7 +45,6 @@ getCurrentParent()
         return _parentStack.back();
 }
 
-
 osg::Matrix
 convertMatrix( Nd_Matrix in )
 {
@@ -55,6 +57,68 @@ convertMatrix( Nd_Matrix in )
     return out;
 }
 
+
+std::string
+getKeyName( const std::string& name )
+{
+    return( name.substr( 0, name.find_last_of( " #" )-1 ) );
+}
+
+std::string
+getParentName( Nd_Walk_Tree_Info* Nv_Info )
+{
+    if( Nv_Info->Nv_Hierarchy_Level < 2 )
+        return( "" );
+
+    Nd_Walk_Tree_Info** stack = Nv_Info->Nv_TreeInfoStackPtr;
+    Nd_Walk_Tree_Info* parent = stack[ Nv_Info->Nv_Hierarchy_Level - 2 ];
+    return( parent->Nv_Handle_Name );
+}
+
+bool
+sharable( Nd_Walk_Tree_Info* Nv_Info, const std::string& handleNameStr, const std::string& keyName )
+{
+    if( export_options->osgInstanceIgnore )
+        // Sharing is disabled by user.
+        return false;
+
+    if( !Nv_Info->Nv_Empty_Instance )
+        // We only share yellow folders.
+        return false;
+
+    if( ( keyName == std::string( "face" ) ) ||
+        ( keyName == std::string( "body" ) ) ||
+        ( keyName == std::string( "world" ) ) )
+        // Commonly used node name that we never want to treat as an instance
+        return false;
+
+    const std::string parentKeyName = getKeyName( getParentName( Nv_Info ) );
+    if( keyName == parentKeyName )
+        // Can't be an instance of our own parent
+        return false;
+
+    if( ( handleNameStr.find( "ASM" ) != handleNameStr.npos ) ||
+        ( handleNameStr.find( "asm" ) != handleNameStr.npos ) ||
+        ( handleNameStr.find( "PRT" ) != handleNameStr.npos ) ||
+        ( handleNameStr.find( "prt" ) != handleNameStr.npos ) )
+        // Must contain keyword "asm" or "prt", case insensitive.
+        //   Note: This is ProE specific and might need to change in the future.
+        // If we got this far and found the keyword, then this must be sharable.
+        return true;
+    else
+        // Didn't find the keyword, not sharable.
+        return false;
+}
+
+static Nd_Void
+countNodesCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
+{
+#if IGNORE_RED_FOLDERS_IN_HIERARCHY
+	if (Nv_Info->Nv_Empty_Object)
+		return;
+#endif
+    _numNodes++;
+}
 
 static Nd_Void
 walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
@@ -90,21 +154,30 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 		return;
 #endif
 
+    _nodeCount++;
+    Export_IO_Check_For_User_Interrupt_With_Stats( _nodeCount, _numNodes );
+
     // Get the instance's handleName
 	char* handleName = Nv_Info->Nv_Handle_Name;
+    std::string handleNameStr( handleName );
     std::string extension( (char *)( Nv_Info->Nv_User_Data_Ptr1 ) );
 
-    // If this is a shared instance, "reference" will be valid.
-    osg::ref_ptr< osg::Node > reference( NULL );
+    Export_IO_UpdateStatusDisplay( "node", handleName, "Creating OSG scene graph data." );
 
-    // If this is an instance, masterName will be the instance name.
-    std::string masterName;
+    // For instancing, the key name is the handle name with "#<n>" stripped off the end.
+    std::string keyName = getKeyName( handleNameStr );
+    std::string instanceFileName = keyName + "." + extension;
+
+    // Collect OSG instance information.
+    bool sharableInstance( false );
+    osg::ref_ptr< osg::Node > reference( NULL );
     bool processSubgraph( true );
 
-    char* masterObject( NULL );
-    if (!export_options->osgInstanceIgnore)
+    if( sharable( Nv_Info, handleNameStr, keyName ) )
     {
-        // We're not ignoring instances. We need to handle them
+        sharableInstance = true;
+
+        // This is a sharable instance. We need to handle them
         //   in some way....
         //
         //  * ALWAYS process the first occurance and store in the
@@ -116,46 +189,37 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
         //      instancves in the map as files.
         //  * If sharing instances:
         //    - Return the address of the instance subgraph.
+        //  * If we're referencing an instance already in the instanceMap,
+        //    increment its reference count.
         //
         // Many of the details are handled in osgInstance.cpp.
 
-        // If this is not an empty instance ('yellow folder' or grouping instance node)...
-	    if (!Nv_Info->Nv_Empty_Instance && !Nv_Info->Nv_Empty_Object)
+        const bool exists( doesInstanceExist( keyName ) );
+        if( export_options->osgInstanceFile )
         {
-		    /* Get the master object from which this instance was derived */
-		    Ni_Inquire_Instance( handleName,
-			    Nt_MASTEROBJECT, (char **) &masterObject, Nt_CMDSEP,
-			    Nt_CMDEND);
-            // Ni_Inquire_Object options:
-            // Nt_NUMINSTANCES, (Nd_Int *)&num_derived_instances, Nt_CMDSEP,
-            // Nt_NUMCHILDREN, (Nd_Int *)&num_children_instances, Nt_CMDSEP,
+            // Regardless of whether this instance already exists or not, create a ProxyNode
+            //   reference to it.
+            osg::ProxyNode* pn = new osg::ProxyNode;
+            pn->setFileName( 0, instanceFileName );
+            reference = pn;
+            if( exists )
+                // It's already in the map. No need to traverse this PolyTrans subgraph again.
+                processSubgraph = false;
+        }
+        else if( exists )
+        {
+            // It's already in the map.
+            processSubgraph = false;
 
-            masterName = std::string( masterObject );
-            if (!masterName.empty())
-            {
-                // This is an instance of a master object.
-
-                if ( findNodeForInstance( masterName ) )
-                {
-                    // We've already processed the master object and it's stored
-                    //   as a subtree in the instance map. Get a reference to it.
-                    reference = createReferenceToInstance( masterName, handleName, extension );
-                    processSubgraph = false;
-                }
-
-                else if (export_options->osgInstanceFile)
-                {
-                    // We haven't seen it before, so get the reference to the
-                    // (non-existing) file and process the subgraph anyway.
-                    reference = createReferenceToInstance( masterName, handleName, extension );
-                }
-            }
+            // Create a reference to the instance.
+            InstanceInfo* iInfo = getInstance( keyName );
+            iInfo->_refCount++;
+            reference = iInfo->_subgraph.get();
         }
     }
-    else
-        // We query # of prims using "masterObject", so make
-        // sure it contains a name for the query.
-        masterObject = handleName;
+    //Ni_Report_Error_printf( Nc_ERR_RAW_MSG, "Key: %s, Sharable: %d, exists: %d, reference: %x, pt ref %d.", keyName.c_str(), sharableInstance,
+    //    doesInstanceExist( keyName ), reference.get(),
+    //    Nv_Info->Nv_ObjectDefinition__InstanceReferenceCountInHierarchyTree );
 
     // Get matrix from this instance, if there is one.
     osg::Matrix m = convertMatrix( Nv_Info->Nv_CTM );
@@ -167,125 +231,152 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
     // Collect all metadata and save as Node descriptions.
     MetaDataCollector mdc( Nt_INSTANCE, handleName );
     const bool isLOD( mdc.hasMetaData( MetaDataCollector::LODCenterName ) );
+    // Switch: Not currently used.
     const bool isSwitch( mdc.hasMetaData( MetaDataCollector::SwitchNumMasksName ) );
 
-    /* If this is an empty instance (yellow folder) or empty object (red folder) then process them here as grouping nodes */
-	if (Nv_Info->Nv_Empty_Instance || Nv_Info->Nv_Empty_Object || Nv_Info->Nv_Null_Object_To_Follow)
-    {
-        osg::ref_ptr< osg::Group > top, tail;
 
-        if (isLOD)
-        {
-            osg::ref_ptr< osg::LOD > lod = new osg::LOD;
-            mdc.configureLOD( lod.get() );
-            lod->addChild( top.get() );
-            top = lod->asGroup();
-            tail = lod->asGroup();
-        }
+    osg::ref_ptr< osg::Node > newNode;
+    {
+        osg::Node* top( NULL );
+        osg::Node* tail( NULL );
+
         if (isMatrix)
         {
-            if (top.valid())
+            top = mt.get();
+            tail = mt.get();
+        }
+        if (isLOD)
+        {
+            osg::LOD* lod = new osg::LOD;
+            mdc.configureLOD( lod );
+            if( tail != NULL )
             {
-                // Matrix parent, LOD child
-                mt->addChild( top.get() );
-                top = mt->asGroup();
+                // Add LOD as child of the MatrixTransform
+                mt->addChild( lod );
             }
             else
             {
-                // Just a MatrixTransform
-                top = mt->asGroup();
-                tail = mt->asGroup();
+                // Just an LOD.
+                top = lod;
             }
+            tail = lod;
         }
-        if (!top.valid())
+
+        // So far, we have constructed a subgraph that is one of the following possibilities:
+        // 1) Empty
+        // 2) Just a MatrixTransform
+        // 3) A MatrixTransform with an LOD child.
+
+        // Next, add a new child to that subgraph. The child could be one of the following:
+        // a) A reference to a sharable subgraph.
+        // b) A Group node (if this PolyTrans node has no geometry).
+        // c) A Geode (if this PolyTrans node does have geometry).
+        if( reference.valid() )
         {
-            // Neither a MatrixTransform nor a LOD, so just a Group.
-            top = new osg::Group;
-            tail = top;
+            newNode = reference;
+        }
+        else
+        {
+            if( Nv_Info->Nv_Empty_Instance || Nv_Info->Nv_Empty_Object || Nv_Info->Nv_Null_Object_To_Follow )
+            {
+                // Empty (no geometry) so create a Group to hold the children
+                newNode = (osg::Node*) new osg::Group;
+            }
+            else
+                // Create a Geode to hold the geometry.
+                newNode = (osg::Node*) new osg::Geode;
+        }
+        // Add the new node...
+        if( tail != NULL )
+        {
+            osg::Group* grp = tail->asGroup();
+            grp->addChild( newNode.get() );
+            tail = newNode.get();
+        }
+        else
+        {
+            tail = newNode.get();
+            top = tail;
         }
 
-        top->setName( handleName );
-        mdc.store( top.get() );
+        // Record the node name on the tail node.
+        if( sharableInstance )
+        {
+            // Sharable, so the node name will be the keyName (no " #<n>")
+            if( !export_options->osgInstanceFile )
+                // Do not assign the node name to tha tail node if we are writing files.
+                //   "tail" is a ProxyNode in this case. The keyName is stored on the
+                //   root of the shared subgraph, not on the ProxyNode.
+                tail->setName( keyName );
+        }
+        else
+            // Not sharing, just use the handleName.
+            // TBD. Possibly change this? Might need to have it match the ProE part name...
+            tail->setName( handleName );
+        // Store metadata on the top node.
+        mdc.store( top );
 
+        // Add this new subgraph into the hierarchy.
         if (!_root.valid())
-            _root = top.get();
+            _root = top->asGroup();
         if (getCurrentParent() != NULL)
-            getCurrentParent()->addChild( top.get() );
+            getCurrentParent()->addChild( top );
 
-        _lastNode = tail.get();
-        return;
+        _lastNode = tail;
     }
 
-
-    // Must be a non-Group
-
-	/* Determine how many primitives this object has (should only be 1 in all modern cases) */
-    Nd_Int Nv_Num_Defined_Primitives;
-	Ni_Inquire_Object(masterObject,
-		Nt_NUMPRIMITIVES, (Nd_Int *) &Nv_Num_Defined_Primitives, Nt_CMDSEP,
-		Nt_CMDEND);
-
-    if (!Nv_Num_Defined_Primitives)
-		return;
-
-
-    // Creating a Group node here. This facilitates instancing, and
-    // allows us to attach metadata to the Group rather than the instance.
-    // If we attach metadata to the instance, then it would end up
-    // being attached to all references to the instance.
-    osg::ref_ptr< osg::Group > newGroup = new osg::Group;
-    newGroup->setName( handleName );
-    mdc.store( newGroup.get() );
-
-    if (isMatrix)
+    // add the instance
+    if( sharableInstance && processSubgraph)
     {
-        mt->addChild( newGroup.get() );
-        if (!_root.valid())
-            _root = mt.get();
-        if (getCurrentParent() != NULL)
-            getCurrentParent()->addChild( mt.get() );
+        if( export_options->osgInstanceFile )
+        {
+            // Ha! Overwrite _lastNode with a new Group. This will be
+            //   the root of the shared subgraph.
+            _lastNode = new osg::Group;
+            _lastNode->setName( keyName );
+        }
+
+        InstanceInfo iInfo;
+        iInfo._subgraph = _lastNode.get();
+        iInfo._fileName = instanceFileName;
+        iInfo._refCount = 1;
+        addInstance( keyName, iInfo );
     }
-    else
-    {
-        if (!_root.valid())
-            // A one-geode scene graph?
-            Ni_Report_Error_printf( Nc_ERR_RAW_MSG, "walkTreeCallback: Adding Geode to uninitialized _root.\n" );
-        if (getCurrentParent() != NULL)
-            getCurrentParent()->addChild( newGroup.get() );
+
+    // Support PolyTrans instancing -- This is differenct from OSG instancing.
+    std::string masterName;
+    char* masterObject( NULL );
+    Nd_Int numPrimitives( 0 );
+    // If this is not an empty instance ('yellow folder' or grouping instance node)...
+    if (!Nv_Info->Nv_Empty_Instance && !Nv_Info->Nv_Empty_Object) {
+        /* Get the master object from which this instance was derived */
+        Ni_Inquire_Instance(handleName,
+            Nt_MASTEROBJECT, (char **) &masterObject, Nt_CMDSEP,
+            Nt_CMDEND);
+
+        /* Determine how many primitives this object has (should only be 1 in all modern cases) */
+        Ni_Inquire_Object(masterObject,
+            Nt_NUMPRIMITIVES, (Nd_Int *) &numPrimitives, Nt_CMDSEP,
+            Nt_CMDEND);
     }
-    // Nodes with Geometry can also have children; our new Group
-    // will be the parent pushed onto the parentStack.
-    _lastNode = newGroup.get();
 
     if (!processSubgraph)
     {
-        newGroup->addChild( reference.get() );
+        // We're sharing and do not need to process the subgraph.
+        //   Tell PolyTrans to ignore the subgraph and keep walking.
+        *Nv_Status = Nc_WALKTREE_IGNORE_SUBTREE;
         return;
     }
-    if (reference.valid())
-    {
-        // We're writing instances as files and this is the first time
-        // we've seen this instance. So, we stick in the ProxyNode
-        // as a child, but we continue to process the subgraph.
-        newGroup->addChild( reference.get() );
-        newGroup = NULL;
-    }
+    if (!numPrimitives)
+        // No primitives to process. Continue walking the subgraph.
+		return;
 
-
-    osg::ref_ptr< osg::Geode > geode = new osg::Geode;
-    geode->setName( handleName );
-    if (newGroup.valid())
-        newGroup->addChild( geode.get() );
-
-    // If this is an instance of a master object, add it.
-    if (!masterName.empty())
-    {
-        addInstance( masterName, geode.get() );
-		++export_options->total_instances;
-    }
 
     // Add mesh data to this Geode.
-    if (osgProcessMesh( Nv_Info, masterObject, geode.get() ))
+    osg::Geode* geode = dynamic_cast< osg::Geode* >( newNode.get() );
+    if( geode == NULL )
+        Ni_Report_Error_printf( Nc_ERR_RAW_MSG, "Geode is NULL." );
+    if (osgProcessMesh( Nv_Info, masterObject, geode ))
         Ni_Report_Error_printf( Nc_ERR_WARNING, "walkTreeCallback: Error return from osgProcessMesh.\n" );
 }
 
@@ -335,7 +426,14 @@ writeOSG( const char* out_filename, long *return_result )
 	try {
         Nd_Token ena_instancing_detection_counts = (export_options->ena_instancing) ? Nt_ON : Nt_OFF;
 
-		Ni_Walk_Tree(NULL, (Nd_Ptr)( extension.c_str() ), (Nd_Void *) NULL, walkTreeCallback,
+        Export_IO_UpdateStatusDisplay( "", "", "Counting nodes." );
+        _numNodes = 0;
+        _nodeCount = 0;
+		Ni_Walk_Tree(NULL, (Nd_Ptr)( extension.c_str() ), (Nd_Void *) NULL, countNodesCallback,
+			Nt_RETURNSTATUS, (Nd_Int *) &returnStatus, Nt_CMDSEP,
+			Nt_CMDEND);
+
+        Ni_Walk_Tree(NULL, (Nd_Ptr)( extension.c_str() ), (Nd_Void *) NULL, walkTreeCallback,
 			Nt_RETURNSTATUS, (Nd_Int *) &returnStatus, Nt_CMDSEP,
 			// Make sure some internal state is set up for data export queries
 			Nt_SETUPFOREXPORTER, Nt_ENABLED, Nt_ON, Nt_CMDSEP,
@@ -386,6 +484,8 @@ writeOSG( const char* out_filename, long *return_result )
         opt->setOptionString( "noTexturesInIVEFile" );
 
     // The grand finale: Write the scene graph as a file.
+    Export_IO_Check_For_User_Interrupt_With_Stats( 100, 100 );
+    Export_IO_UpdateStatusDisplay( "file", (char *)(fileName.c_str()), "Exporting OSG file." );
     bool success = osgDB::writeNodeFile( *_root, fileName, opt );
     if (!success)
     {
@@ -399,4 +499,9 @@ writeOSG( const char* out_filename, long *return_result )
     if (export_options->osgInstanceFile)
         writeInstancesAsFiles( extension, opt );
     clearInstances();
+
+    // Let go of ref_ptrs.
+    _root = NULL;
+    _parent = NULL;
+    _lastNode = NULL;
 }

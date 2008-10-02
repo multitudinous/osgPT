@@ -613,6 +613,8 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
     //   Store indices in PrimitiveSet
 
     // Add vertex data
+    Export_IO_UpdateStatusDisplay( "geode", instance_name, "Creating OSG geometry data." );
+
     osg::ref_ptr< osg::Vec3Array > v = new osg::Vec3Array;
     Nd_Struct_XYZ* coords = ip_vertex_info.coords;
     v->resize( ip_vertex_info.num_coords );

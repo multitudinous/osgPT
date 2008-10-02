@@ -7,14 +7,27 @@
 #include <osgDB/ReaderWriter>
 #include <string>
 
-namespace osg {
-    class Node;
-}
+class osg::Node;
 
 
-osg::Node* findNodeForInstance( const std::string& name );
-osg::Node* createReferenceToInstance( const std::string& objectName, const std::string& sourceFileName, const std::string& extension );
-bool addInstance( const std::string& name, osg::Node* root );
+struct InstanceInfo
+{
+    InstanceInfo()
+      : _refCount( 0 )
+    {}
+    ~InstanceInfo()
+    {}
+
+    osg::ref_ptr< osg::Node > _subgraph;
+    std::string _fileName;
+    unsigned int _refCount;
+};
+
+
+bool doesInstanceExist( const std::string& key );
+InstanceInfo* getInstance( const std::string& key );
+void addInstance( const std::string& key, const InstanceInfo& iInfo );
+
 unsigned int getNumberOfInstances();
 void writeInstancesAsFiles( const std::string& extension, const osgDB::ReaderWriter::Options* opt );
 void clearInstances();
