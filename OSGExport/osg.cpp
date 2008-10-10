@@ -226,7 +226,10 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
     const bool isMatrix( !m.isIdentity() );
     osg::ref_ptr< osg::MatrixTransform > mt;
     if (isMatrix)
+    {
         mt = new osg::MatrixTransform( m );
+        mt->setDataVariance( osg::Object::STATIC );
+    }
 
     // Collect all metadata and save as Node descriptions.
     MetaDataCollector mdc( Nt_INSTANCE, handleName );
