@@ -40,7 +40,18 @@ public:
         //   An example config file with documentation is
         //   located in the sibling data directory.
 		std::string envStr( "OSG_POLYTRANS_CONFIG_FILE" );
-		if (char* charPtr = getenv( envStr.c_str() ))
+        char* charPtr = getenv( envStr.c_str() );
+        std::string osgPolytransConfigName;
+        if ( charPtr )
+        {
+            osgPolytransConfigName.assign( charPtr );
+        }
+        else
+        {
+            osgPolytransConfigName = "ptconfigfile.txt";
+        }
+        
+		//if (char* charPtr = getenv( envStr.c_str() ))
 		{
 			std::string fullName = osgDB::findDataFile( std::string( charPtr ) );
 			if (!fullName.empty())
