@@ -478,7 +478,7 @@ protected:
             PolyTransComHelper polyTransComHelper;
 		    if (!polyTransComHelper.AttachToPolyTransCom( NULL ))
 		    {
-			    osg::notify(osg::FATAL) << "osgdb_PolyTrans:: Failed to attach to PolyTrans via Okino COM interface to generate list of accepted file extensions." << std::endl;
+			    osg::notify(osg::WARN) << "osgdb_PolyTrans:: Failed to attach to PolyTrans via Okino COM interface to generate list of accepted file extensions." << std::endl;
 			    return false;
 		    }
             _supportedExtensions = polyTransComHelper.getSupportedExtensions();
