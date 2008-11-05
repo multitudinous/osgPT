@@ -207,18 +207,19 @@ public:
 
 		// Get the extension and full path / file name 
         std::string ext = findExtension( file );
-        //   See if PolyTrans accepts it
-		if ( !internalAccept( ext ) )
-		{
-            osg::notify( osg::INFO ) << "osgdb_PolyTrans: Not supported by PolyTrans: " << ext << std::endl;
-            return ReadResult::FILE_NOT_HANDLED;
-		}
         //   Reject any explicitly-rejected extensions.
         if (rejectsExtension( ext, rejectExtensions ))
         {
-            osg::notify( osg::INFO ) << "osgdb_PolyTrans: Rejected extension: " << ext << std::endl;
+            osg::notify( osg::INFO ) << "osgdb_PolyTrans: Rejected extension " << ext << " specified by the user." << std::endl;
             return ReadResult::FILE_NOT_HANDLED;
         }
+
+        //   See if PolyTrans accepts it
+		if ( !internalAccept( ext ) )
+		{
+            osg::notify( osg::INFO ) << "osgdb_PolyTrans: File extension " << ext << " not supported by PolyTrans." << std::endl;
+            return ReadResult::FILE_NOT_HANDLED;
+		}
 
 		std::string fileName = osgDB::findDataFile( file, options );
         if (fileName.empty())
