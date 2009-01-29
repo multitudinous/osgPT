@@ -1,5 +1,5 @@
 #include <osg/Notify>
-#include <osgDB/Registry>
+#include <osgDB/ReaderWriter>
 #include <osgDB/FileNameUtils>
 #include <osgDB/FileUtils>
 

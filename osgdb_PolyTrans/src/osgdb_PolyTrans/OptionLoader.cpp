@@ -1,6 +1,5 @@
 #include "OptionLoader.h"
 #include <osg/Notify>
-#include <osgDB/Registry>
 #include <osgDB/FileNameUtils>
 #include <iostream>
 #include <sstream>
