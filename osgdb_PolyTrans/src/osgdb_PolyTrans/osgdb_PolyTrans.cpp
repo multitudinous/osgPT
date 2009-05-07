@@ -204,6 +204,14 @@ public:
             rejectExtensions.push_back( intermediateFileNameExt );
         }
 
+        //   Do an initial check of the extension before we hit the 
+        //   Okino PolyCom interface
+        //   Reject any explicitly-rejected extensions.
+        if (rejectsExtension( osgDB::getFileExtension( file ), rejectExtensions ))
+        {
+            osg::notify( osg::INFO ) << "osgdb_PolyTrans: Rejected extension " << ext << " specified by the user." << std::endl;
+            return ReadResult::FILE_NOT_HANDLED;
+        }
 
 		// Get the extension and full path / file name 
         std::string ext = findExtension( file );
