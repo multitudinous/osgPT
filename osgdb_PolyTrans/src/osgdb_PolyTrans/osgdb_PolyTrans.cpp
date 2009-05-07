@@ -209,7 +209,7 @@ public:
         //   Reject any explicitly-rejected extensions.
         if (rejectsExtension( osgDB::getFileExtension( file ), rejectExtensions ))
         {
-            osg::notify( osg::INFO ) << "osgdb_PolyTrans: Rejected extension " << ext << " specified by the user." << std::endl;
+            osg::notify( osg::INFO ) << "osgdb_PolyTrans: Rejected extension " << file << " specified by the user." << std::endl;
             return ReadResult::FILE_NOT_HANDLED;
         }
 
