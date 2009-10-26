@@ -691,13 +691,13 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
 						user_defined_arrays__handle_name, user_defined_arrays__guid, user_defined_arrays__flags, user_defined_arrays__datatype, user_defined_arrays__size_of_each_element_in_coord_array, 0L);
 
                     color = new osg::Vec4Array;
-                    Nd_Struct_RGBA* colors = (Nd_Struct_RGBA*)user_defined_arrays__element_list;
+                    Nd_Color* colors = (Nd_Color*)user_defined_arrays__element_list;
                     color->resize( user_defined_arrays__num_coords );
                     int idx;
                     for (idx=0; idx<user_defined_arrays__num_coords; idx++)
                     {
                         osg::Vec4& c = (*color)[ idx ];
-                        c.set( colors->r, colors->g, colors->b, colors->alpha );
+                         c.set( (*colors)[0], (*colors)[1], (*colors)[2], 1.0 );
                         colors++;
                     }
                 }
