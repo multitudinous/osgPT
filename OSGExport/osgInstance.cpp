@@ -59,7 +59,6 @@ writeInstancesAsFiles( const std::string& extension, const osgDB::ReaderWriter::
             flags |= osgUtil::Optimizer::MERGE_GEOMETRY;
     }
 
-    unsigned int skipped( 0 );
     int count( 0 );
     InstanceMap::iterator it = _instanceMap.begin();
     for( ; it != _instanceMap.end(); it++)
@@ -73,12 +72,6 @@ writeInstancesAsFiles( const std::string& extension, const osgDB::ReaderWriter::
         const std::string fileName = iInfo._fileName;
         osg::Node* node = iInfo._subgraph.get();
 
-        if (osgDB::fileExists( fileName ))
-        {
-            skipped++;
-            continue;
-        }
-
         osgUtil::Optimizer optimizer;
         optimizer.optimize( node, flags );
 
@@ -87,9 +80,6 @@ writeInstancesAsFiles( const std::string& extension, const osgDB::ReaderWriter::
         if (!success)
             Ni_Report_Error_printf( Nc_ERR_INFO, "writeInstancesAsFiles: Error writing instance file \"%s\".", fileName.c_str() );
     }
-
-    if (skipped > 0)
-        Ni_Report_Error_printf( Nc_ERR_WARNING, "writeInstancesAsFiles: Skipped %d files that already exist.", skipped );
 }
 
 void
