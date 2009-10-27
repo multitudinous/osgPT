@@ -774,6 +774,7 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
             newGeom->setColorBinding( colorBinding );
 
             osg::StateSet* ss = newGeom->getOrCreateStateSet();
+            ss->setDataVariance( osg::Object::STATIC ); // Facilitate StateSet sharing.
             const SurfaceInfo& si = lookupSurface( surfaceName );
             if (si._mat.valid())
             {

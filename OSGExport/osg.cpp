@@ -157,6 +157,15 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
     _nodeCount++;
     Export_IO_Check_For_User_Interrupt_With_Stats( _nodeCount, _numNodes );
 
+	// If instance's "hidden" flag turned on, or inherited hidden,
+    // then return.
+    if( ( !export_options->osgWriteHiddenNodes ) &&
+	    ( Nv_Info->Nv_Hidden_Flag || Nv_Info->Nv_Inherited_Hidden_Flag ) )
+    {
+		*Nv_Status = Nc_WALKTREE_IGNORE_SUBTREE;
+		return;
+	}
+
     // Get the instance's handleName
 	char* handleName = Nv_Info->Nv_Handle_Name;
     std::string handleNameStr( handleName );

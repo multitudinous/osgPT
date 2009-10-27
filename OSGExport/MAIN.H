@@ -121,6 +121,7 @@ typedef struct Exporter_Options {
     char osgNormalization;
     char osgBackfaceCulling;
     char osgDebugTextFile;
+    char osgWriteHiddenNodes;
 
     char osgInstanceFile;
     char osgInstanceShared;

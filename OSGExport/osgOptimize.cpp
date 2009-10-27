@@ -21,13 +21,17 @@ public:
     void apply( osg::Group& node )
     {
         std::string name( node.getName() );
-        if( name.find( std::string( "body " ) ) != name.npos )
+        if( name.find( std::string( "body " ) ) == 0 )
+            // Starts with "body "
             node.setName( "" );
         traverse( node );
     }
     void apply( osg::Geode& node )
     {
-        node.setName( "" );
+        std::string name( node.getName() );
+        if( name.find( std::string( "face " ) ) == 0 )
+            // Starts with "face "
+            node.setName( "" );
         traverse( node );
     }
 };
@@ -78,7 +82,7 @@ removeRedundantGroups( osg::Node* node )
     osg::Node::DescriptionList& preserveDL( node->getDescriptions() );
     osg::Node* localNode( node );
     osg::Group* grp( dynamic_cast< osg::Group* >( localNode ) );
-    while( grp != NULL )
+    while( ( grp != NULL ) && ( grp->getNumChildren() > 0 ) )
     {
         if( grp->getNumChildren() > 1 )
         {

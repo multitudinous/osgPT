@@ -88,6 +88,8 @@ NI_Exporter_SaveExportConvertOptions(char *ini_filepath)
     fprintf(fp, "Normalization = %d\n", export_options->osgNormalization);
     fprintf(fp, "Backface-Culling = %d\n", export_options->osgBackfaceCulling);
     fprintf(fp, "Debug-Text-File = %d\n", export_options->osgDebugTextFile);
+    fprintf(fp, "Write-Hidden-Nodes = %d\n", export_options->osgWriteHiddenNodes);
+
     fprintf(fp, "Instance-File = %d\n", export_options->osgInstanceFile);
     fprintf(fp, "Instance-Shared = %d\n", export_options->osgInstanceShared);
     fprintf(fp, "Instance-Ignore = %d\n", export_options->osgInstanceIgnore);
@@ -223,6 +225,9 @@ NI_Exporter_RestoreExportConvertOptions(char *ini_filepath)
             export_options->osgBackfaceCulling = atoi(data);
 		else if (!strcmp(token, "Debug-Text-File"))
             export_options->osgDebugTextFile = atoi(data);
+		else if (!strcmp(token, "Write-Hidden-Nodes"))
+            export_options->osgWriteHiddenNodes = atoi(data);
+
 		else if (!strcmp(token, "Instance-File"))
             export_options->osgInstanceFile = atoi(data);
 		else if (!strcmp(token, "Instance-Shared"))
@@ -434,6 +439,7 @@ NI_Exporter_InitExportOptionVariables()
         export_options->osgNormalization = Nc_TRUE;
         export_options->osgBackfaceCulling = Nc_TRUE;
         export_options->osgDebugTextFile = Nc_FALSE;
+        export_options->osgWriteHiddenNodes = Nc_FALSE;
 
         export_options->osgInstanceFile = Nc_FALSE; // write them as separate files
         export_options->osgInstanceShared = Nc_TRUE; // share instances within a single-file scene graph
