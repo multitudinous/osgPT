@@ -544,6 +544,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\osgOptimize.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\osgMesh.cpp"
 				>
 			</File>
@@ -680,6 +684,10 @@
 			</File>
 			<File
 				RelativePath=".\osgInstance.h"
+				>
+			</File>
+			<File
+				RelativePath=".\osgOptimize.h"
 				>
 			</File>
 			<File
