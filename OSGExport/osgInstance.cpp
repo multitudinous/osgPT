@@ -6,7 +6,6 @@
 #include <osgDB/FileNameUtils>
 #include <osgDB/WriteFile>
 #include <osgDB/FileUtils>
-#include <osgUtil/Optimizer>
 #include <osg/Node>
 #include <osg/ProxyNode>
 #include <osg/ref_ptr>
@@ -50,16 +49,6 @@ getNumberOfInstances()
 void
 writeInstancesAsFiles( const std::string& extension, const osgDB::ReaderWriter::Options* opt )
 {
-    // Possibly run the Optimizer
-    unsigned int flags( 0 );
-    if (export_options->osgRunOptimizer)
-    {
-        if (export_options->osgCreateTriangleStrips)
-            flags |= osgUtil::Optimizer::TRISTRIP_GEOMETRY;
-        if (export_options->osgMergeGeometry)
-            flags |= osgUtil::Optimizer::MERGE_GEOMETRY;
-    }
-
     int count( 0 );
     InstanceMap::iterator it = _instanceMap.begin();
     for( ; it != _instanceMap.end(); it++)
@@ -73,7 +62,7 @@ writeInstancesAsFiles( const std::string& extension, const osgDB::ReaderWriter::
         const std::string fileName = iInfo._fileName;
         osg::ref_ptr< osg::Node > node = iInfo._subgraph.get();
 
-        node = performSceneGraphOptimizations( node, flags );
+        node = performSceneGraphOptimizations( node );
 
         Export_IO_UpdateStatusDisplay( "instance", (char *)(fileName.c_str()), "Exporting instance as file." );
         bool success = osgDB::writeNodeFile( *node, fileName, opt );

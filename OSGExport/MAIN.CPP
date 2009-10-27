@@ -246,8 +246,12 @@ ExportConverter_Main(char *tokens[], char *data[], long *return_result, void *au
         OPTIONAL_FPRINTF(ofp, "#\n");
 
         OPTIONAL_FPRINTF(ofp, "osgRunOptimizer = %d\n", export_options->osgRunOptimizer );
-	    OPTIONAL_FPRINTF(ofp, "osgCreateTriangleStrips = %d\n", export_options->osgCreateTriangleStrips );
+	    OPTIONAL_FPRINTF(ofp, "osgMergeGeodes = %d\n", export_options->osgMergeGeodes );
+	    OPTIONAL_FPRINTF(ofp, "osgShareState = %d\n", export_options->osgShareState );
 	    OPTIONAL_FPRINTF(ofp, "osgMergeGeometry = %d\n", export_options->osgMergeGeometry );
+	    OPTIONAL_FPRINTF(ofp, "osgCreateTriangleStrips = %d\n", export_options->osgCreateTriangleStrips );
+	    OPTIONAL_FPRINTF(ofp, "osgRemoveRedundantNodes = %d\n", export_options->osgRemoveRedundantNodes );
+	    OPTIONAL_FPRINTF(ofp, "osgStripImplicitNames = %d\n", export_options->osgStripImplicitNames );
         OPTIONAL_FPRINTF(ofp, "#\n\n\n");
 
         // END OSG control values

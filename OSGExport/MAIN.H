@@ -127,8 +127,12 @@ typedef struct Exporter_Options {
     char osgInstanceIgnore;
 
     char osgRunOptimizer;
-    char osgCreateTriangleStrips;
+    char osgMergeGeodes;
+    char osgShareState;
     char osgMergeGeometry;
+    char osgCreateTriangleStrips;
+    char osgRemoveRedundantNodes;
+    char osgStripImplicitNames;
 
     char* osgExporterVersion;
     // END OSG

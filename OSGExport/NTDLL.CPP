@@ -586,8 +586,12 @@ OSG2_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 		return (TRUE);
 	case WM_UPDATE_DIALOG_PARAMETERS:
 		CheckDlgButton(hDlg, IDD_OSG_RUN_OPTIMIZER, export_options->osgRunOptimizer);
-        CheckDlgButton(hDlg, IDD_OSG_CREATE_TRIANGLE_STRIPS, export_options->osgCreateTriangleStrips);
+		CheckDlgButton(hDlg, IDD_OSG_MERGE_GEODES, export_options->osgMergeGeodes);
+		CheckDlgButton(hDlg, IDD_OSG_SHARE_STATE, export_options->osgShareState);
         CheckDlgButton(hDlg, IDD_OSG_MERGE_GEOMETRY, export_options->osgMergeGeometry);
+        CheckDlgButton(hDlg, IDD_OSG_CREATE_TRIANGLE_STRIPS, export_options->osgCreateTriangleStrips);
+        CheckDlgButton(hDlg, IDD_OSG_REMOVE_REDUNDANT_NODES, export_options->osgRemoveRedundantNodes);
+        CheckDlgButton(hDlg, IDD_OSG_STRIP_IMPLICIT_NAMES, export_options->osgStripImplicitNames);
 
 		/* Update the enable state of the controls */
 		SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
@@ -661,9 +665,30 @@ OSG2_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 				}
 				return(TRUE);
 
-			case IDD_OSG_RUN_OPTIMIZER:
+            case IDD_OSG_RUN_OPTIMIZER:
 				export_options->osgRunOptimizer = !export_options->osgRunOptimizer;
 				CheckDlgButton(hDlg, IDD_OSG_RUN_OPTIMIZER, export_options->osgRunOptimizer);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+
+            case IDD_OSG_MERGE_GEODES:
+				export_options->osgMergeGeodes = !export_options->osgMergeGeodes;
+				CheckDlgButton(hDlg, IDD_OSG_MERGE_GEODES, export_options->osgMergeGeodes);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+
+            case IDD_OSG_SHARE_STATE:
+				export_options->osgShareState = !export_options->osgShareState;
+				CheckDlgButton(hDlg, IDD_OSG_SHARE_STATE, export_options->osgShareState);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+
+            case IDD_OSG_MERGE_GEOMETRY:
+				export_options->osgMergeGeometry = !export_options->osgMergeGeometry;
+				CheckDlgButton(hDlg, IDD_OSG_MERGE_GEOMETRY, export_options->osgMergeGeometry);
 				/* Update the enable state of the controls */
 				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
 				return(TRUE);
@@ -675,14 +700,21 @@ OSG2_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
 				return(TRUE);
 
-			case IDD_OSG_MERGE_GEOMETRY:
-				export_options->osgMergeGeometry = !export_options->osgMergeGeometry;
-				CheckDlgButton(hDlg, IDD_OSG_MERGE_GEOMETRY, export_options->osgMergeGeometry);
+            case IDD_OSG_REMOVE_REDUNDANT_NODES:
+				export_options->osgRemoveRedundantNodes = !export_options->osgRemoveRedundantNodes;
+				CheckDlgButton(hDlg, IDD_OSG_REMOVE_REDUNDANT_NODES, export_options->osgRemoveRedundantNodes);
 				/* Update the enable state of the controls */
 				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
 				return(TRUE);
 
-			default:
+            case IDD_OSG_STRIP_IMPLICIT_NAMES:
+				export_options->osgStripImplicitNames = !export_options->osgStripImplicitNames;
+				CheckDlgButton(hDlg, IDD_OSG_STRIP_IMPLICIT_NAMES, export_options->osgStripImplicitNames);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+
+            default:
 				break;
 		}
 	}

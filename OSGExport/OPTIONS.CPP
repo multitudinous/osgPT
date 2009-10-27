@@ -93,8 +93,12 @@ NI_Exporter_SaveExportConvertOptions(char *ini_filepath)
     fprintf(fp, "Instance-Ignore = %d\n", export_options->osgInstanceIgnore);
 
     fprintf(fp, "Run-Optimizer = %d\n", export_options->osgRunOptimizer);
-    fprintf(fp, "Create-Triangle-Strips = %d\n", export_options->osgCreateTriangleStrips);
+    fprintf(fp, "Merge-Geodes = %d\n", export_options->osgMergeGeodes);
+    fprintf(fp, "Share-State = %d\n", export_options->osgShareState);
     fprintf(fp, "Merge-Geometry = %d\n", export_options->osgMergeGeometry);
+    fprintf(fp, "Create-Triangle-Strips = %d\n", export_options->osgCreateTriangleStrips);
+    fprintf(fp, "Remove-Redundant-Nodes = %d\n", export_options->osgRemoveRedundantNodes);
+    fprintf(fp, "Strip-Implicit-Names = %d\n", export_options->osgStripImplicitNames);
 
     fprintf(fp, "# Non-OSG options...\n");
 	fprintf(fp, "Output-Mesh-Data = %d\n", export_options->ena_mesh_data);
@@ -228,10 +232,18 @@ NI_Exporter_RestoreExportConvertOptions(char *ini_filepath)
 
 		else if (!strcmp(token, "Run-Optimizer"))
             export_options->osgRunOptimizer = atoi(data);
-		else if (!strcmp(token, "Create-Triangle-Strips"))
-            export_options->osgCreateTriangleStrips = atoi(data);
+		else if (!strcmp(token, "Merge-Geodes"))
+            export_options->osgMergeGeodes = atoi(data);
+		else if (!strcmp(token, "Share-State"))
+            export_options->osgShareState = atoi(data);
 		else if (!strcmp(token, "Merge-Geometry"))
 			export_options->osgMergeGeometry = atoi(data);
+		else if (!strcmp(token, "Create-Triangle-Strips"))
+            export_options->osgCreateTriangleStrips = atoi(data);
+		else if (!strcmp(token, "Remove-Redundant-Nodes"))
+            export_options->osgRemoveRedundantNodes = atoi(data);
+		else if (!strcmp(token, "Strip-Implicit-Names"))
+            export_options->osgStripImplicitNames = atoi(data);
 
         // Non-OSG...
 		else if (!strcmp(token, "Output-Mesh-Data"))
@@ -428,8 +440,12 @@ NI_Exporter_InitExportOptionVariables()
         export_options->osgInstanceIgnore = Nc_FALSE; // ignore (copy) instances.
 
         export_options->osgRunOptimizer = Nc_TRUE;
-        export_options->osgCreateTriangleStrips = Nc_FALSE;
+        export_options->osgMergeGeodes = Nc_TRUE;
+        export_options->osgShareState = Nc_TRUE;
         export_options->osgMergeGeometry = Nc_TRUE;
+        export_options->osgCreateTriangleStrips = Nc_TRUE;
+        export_options->osgRemoveRedundantNodes = Nc_TRUE;
+        export_options->osgStripImplicitNames = Nc_TRUE;
 
         char* expVersion = new char[ 32 ];
         sprintf( expVersion, "v%d.%d.%d%c", OSGEXP_MAJOR_VERSION, OSGEXP_MINOR_VERSION, OSGEXP_SUB_VERSION, 0 );

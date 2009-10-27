@@ -6,12 +6,9 @@
 #include "main.h"
 #include <osg/ref_ptr>
 #include <osg/Material>
+#include <osg/Texture2D>
 #include <string>
 
-namespace osg {
-    class Material;
-    class Texture2D;
-}
 
 
 struct SurfaceInfo

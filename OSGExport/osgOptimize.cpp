@@ -109,31 +109,58 @@ removeRedundantGroups( osg::Node* node )
 
 
 osg::Node*
-performSceneGraphOptimizations( osg::Node* model, unsigned int flags )
+performSceneGraphOptimizations( osg::Node* model )
 {
     osgUtil::Optimizer uOpt;
 
-    // Share StateSets and merge the Geometry objects.
-    // Must use statis object detection to detect static StateSets.
-    uOpt.optimize( model,
-        osgUtil::Optimizer::STATIC_OBJECT_DETECTION |
-        osgUtil::Optimizer::SHARE_DUPLICATE_STATE |
-        osgUtil::Optimizer::MERGE_GEODES );
+    osg::Node* newRoot;
+    if (export_options->osgRunOptimizer)
+    {
+        // Share StateSets and merge the Geometry objects.
+        // Must use statis object detection to detect static StateSets.
+        unsigned int flags = osgUtil::Optimizer::STATIC_OBJECT_DETECTION;
+        if( export_options->osgShareState )
+            flags |= osgUtil::Optimizer::STATIC_OBJECT_DETECTION;
+        if( export_options->osgMergeGeodes )
+            flags |= osgUtil::Optimizer::MERGE_GEODES;
 
-    // Remove any redundant nodes.
-    uOpt.reset();
-    uOpt.optimize( model,
-        osgUtil::Optimizer::STATIC_OBJECT_DETECTION |
-        osgUtil::Optimizer::MERGE_GEOMETRY |
-        osgUtil::Optimizer::REMOVE_REDUNDANT_NODES );
+        if( flags != osgUtil::Optimizer::STATIC_OBJECT_DETECTION )
+            uOpt.optimize( model, flags );
 
-    // Remove some PolyTrans-inserted nodes names
-    StripNames sgn;
-    model->accept( sgn );
+        // Merge Geometry and remove any redundant nodes.
+        uOpt.reset();
+        flags = osgUtil::Optimizer::STATIC_OBJECT_DETECTION;
+        if( export_options->osgMergeGeometry )
+            flags |= osgUtil::Optimizer::MERGE_GEOMETRY;
+        if( export_options->osgRemoveRedundantNodes )
+            flags |= osgUtil::Optimizer::REMOVE_REDUNDANT_NODES;
 
-    // Remove groups with one child, preserving topmost
-    // node names and description lists.
-    osg::Node* newRoot = removeRedundantGroups( model );
+        if( flags != osgUtil::Optimizer::STATIC_OBJECT_DETECTION )
+            uOpt.optimize( model, flags );
+
+        // Tristrip geometry
+        uOpt.reset();
+        flags = 0;
+        if( export_options->osgCreateTriangleStrips)
+            flags |= osgUtil::Optimizer::TRISTRIP_GEOMETRY;
+
+        if( flags != 0 )
+            uOpt.optimize( model, flags );
+
+        // Remove some PolyTrans-inserted nodes names
+        if( export_options->osgStripImplicitNames)
+        {
+            StripNames sgn;
+            model->accept( sgn );
+        }
+
+        // Remove groups with one child, preserving topmost
+        // node names and description lists.
+        if( export_options->osgRemoveRedundantNodes )
+            newRoot = removeRedundantGroups( model );
+    }
+    else
+        newRoot = model;
 
     return( newRoot );
 }

@@ -4,6 +4,7 @@
 #include "osgSurface.h"
 #include "osgMetaData.h"
 #include "osgInstance.h"
+#include "osgOptimize.h"
 
 #include <osg/Group>
 #include <osg/MatrixTransform>
@@ -14,7 +15,6 @@
 #include <osg/CullFace>
 #include <osgDB/WriteFile>
 #include <osgDB/FileNameUtils>
-#include <osgUtil/Optimizer>
 #include <string>
 #include <deque>
 #include <map>
@@ -401,6 +401,7 @@ changeLevelCallback(Nd_Token Nv_Parent_Type, char *Nv_Parent_Handle_Name,
 void
 writeOSG( const char* out_filename, long *return_result )
 {
+    osg::ref_ptr< osg::Node > writeCandidate;
 	// Init the DAG Path hierarchy lists (used to uniquely identify any 
 	// instance or empty object (red folder) in the hierarchy tree)
 #if IGNORE_RED_FOLDERS_IN_HIERARCHY
@@ -465,43 +466,37 @@ writeOSG( const char* out_filename, long *return_result )
         _root->getOrCreateStateSet()->setAttributeAndModes( cf.get() );
     }
 
-    // Possibly run the Optimizer
-    if (export_options->osgRunOptimizer)
-    {
-        unsigned int flags( 0 );
-        if (export_options->osgCreateTriangleStrips)
-            flags |= osgUtil::Optimizer::TRISTRIP_GEOMETRY;
-        if (export_options->osgMergeGeometry)
-            flags |= osgUtil::Optimizer::MERGE_GEOMETRY;
 
-        osgUtil::Optimizer opt;
-        opt.optimize( _root.get(), flags );
+    {
+        // Possibly run the Optimizer
+        writeCandidate = performSceneGraphOptimizations( _root.get() );
+
+        // Set OSG .ive/.osg export plugin Options.
+        osgDB::ReaderWriter::Options* opt = new osgDB::ReaderWriter::Options;
+        const bool isIVE = osgDB::equalCaseInsensitive( extension, "ive" );
+        if (isIVE)
+            // Writing a .ive file. Tell it we don't have any texture image data.
+            // When the .ive gets loaded, this forces the plugin to read the texture image file.
+            opt->setOptionString( "noTexturesInIVEFile" );
+
+        // The grand finale: Write the scene graph as a file.
+        Export_IO_Check_For_User_Interrupt_With_Stats( 100, 100 );
+        Export_IO_UpdateStatusDisplay( "file", (char *)(fileName.c_str()), "Exporting OSG file." );
+        bool success = osgDB::writeNodeFile( *writeCandidate, fileName, opt );
+        if (!success)
+        {
+            Ni_Report_Error_printf(Nc_ERR_FATAL, "writeOSG: writeNodeFile failed.");
+            *return_result = Nc_TRUE;
+            return;
+        }
+
+        // Now that we've written the file, also write the instances
+        //   (if requested to do so) and clear the instance map.
+        if (export_options->osgInstanceFile)
+            writeInstancesAsFiles( extension, opt );
+        clearInstances();
     }
 
-    // Set OSG .ive/.osg export plugin Options.
-    osgDB::ReaderWriter::Options* opt = new osgDB::ReaderWriter::Options;
-    const bool isIVE = osgDB::equalCaseInsensitive( extension, "ive" );
-    if (isIVE)
-        // Writing a .ive file. Tell it we don't have any texture image data.
-        // When the .ive gets loaded, this forces the plugin to read the texture image file.
-        opt->setOptionString( "noTexturesInIVEFile" );
-
-    // The grand finale: Write the scene graph as a file.
-    Export_IO_Check_For_User_Interrupt_With_Stats( 100, 100 );
-    Export_IO_UpdateStatusDisplay( "file", (char *)(fileName.c_str()), "Exporting OSG file." );
-    bool success = osgDB::writeNodeFile( *_root, fileName, opt );
-    if (!success)
-    {
-        Ni_Report_Error_printf(Nc_ERR_FATAL, "writeOSG: writeNodeFile failed.");
-        *return_result = Nc_TRUE;
-        return;
-    }
-
-    // Now that we've written the file, also write the instances
-    //   (if requested to do so) and clear the instance map.
-    if (export_options->osgInstanceFile)
-        writeInstancesAsFiles( extension, opt );
-    clearInstances();
 
     // Let go of ref_ptrs.
     _root = NULL;
