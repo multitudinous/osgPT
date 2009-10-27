@@ -1,6 +1,7 @@
 
 #include "main.h"
 #include "osgInstance.h"
+#include "osgOptimize.h"
 
 #include <osgDB/FileNameUtils>
 #include <osgDB/WriteFile>
@@ -70,10 +71,9 @@ writeInstancesAsFiles( const std::string& extension, const osgDB::ReaderWriter::
 
         InstanceInfo& iInfo = it->second;
         const std::string fileName = iInfo._fileName;
-        osg::Node* node = iInfo._subgraph.get();
+        osg::ref_ptr< osg::Node > node = iInfo._subgraph.get();
 
-        osgUtil::Optimizer optimizer;
-        optimizer.optimize( node, flags );
+        node = performSceneGraphOptimizations( node, flags );
 
         Export_IO_UpdateStatusDisplay( "instance", (char *)(fileName.c_str()), "Exporting instance as file." );
         bool success = osgDB::writeNodeFile( *node, fileName, opt );
