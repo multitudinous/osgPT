@@ -605,8 +605,12 @@ OSG2_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 
 		return (TRUE);
 	case WM_UPDATE_DIALOG_ENABLES:
-		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_CREATE_TRIANGLE_STRIPS, export_options->osgRunOptimizer);
-		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_MERGE_GEOMETRY, export_options->osgRunOptimizer);
+        Import_IO_Set_Control_Enable(hDlg, IDD_OSG_MERGE_GEODES, export_options->osgRunOptimizer);
+        Import_IO_Set_Control_Enable(hDlg, IDD_OSG_SHARE_STATE, export_options->osgRunOptimizer);
+        Import_IO_Set_Control_Enable(hDlg, IDD_OSG_MERGE_GEOMETRY, export_options->osgRunOptimizer);
+        Import_IO_Set_Control_Enable(hDlg, IDD_OSG_CREATE_TRIANGLE_STRIPS, export_options->osgRunOptimizer);
+        Import_IO_Set_Control_Enable(hDlg, IDD_OSG_REMOVE_REDUNDANT_NODES, export_options->osgRunOptimizer);
+        Import_IO_Set_Control_Enable(hDlg, IDD_OSG_STRIP_IMPLICIT_NAMES, export_options->osgRunOptimizer);
 
         return(TRUE);
 	case WM_NOTIFY:
