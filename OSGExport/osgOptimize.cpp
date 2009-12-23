@@ -149,7 +149,7 @@ performSceneGraphOptimizations( osg::Node* model )
 {
     osgUtil::Optimizer uOpt;
 
-    osg::Node* newRoot;
+    osg::Node* newRoot( model );
     if (export_options->osgRunOptimizer)
     {
         // Remove some PolyTrans-inserted node names
@@ -188,6 +188,8 @@ performSceneGraphOptimizations( osg::Node* model )
         // node names and description lists.
         if( export_options->osgRemoveRedundantNodes )
             newRoot = removeRedundantGroups( model );
+        else
+            newRoot = model;
 
 
         // Tristrip geometry
@@ -197,10 +199,8 @@ performSceneGraphOptimizations( osg::Node* model )
             flags |= osgUtil::Optimizer::TRISTRIP_GEOMETRY;
 
         if( flags != 0 )
-            uOpt.optimize( model, flags );
+            uOpt.optimize( newRoot, flags );
     }
-    else
-        newRoot = model;
 
     return( newRoot );
 }
