@@ -9,7 +9,7 @@
 	 about common meta data tags (such as for FLT & DXF importers).
 	----------------------------------------------------------------
 
-  Copyright (c) 1988, 2006 Okino Computer Graphics, Inc. All Rights Reserved.
+  Copyright (c) 1988, 2009 Okino Computer Graphics, Inc. All Rights Reserved.
 
 This file is proprietary source code of Okino Computer Graphics, Inc. and it 
 is not to be disclosed to third parties, published, adopted, distributed,
@@ -48,6 +48,7 @@ POSSIBILITY OF SUCH DAMAGES.
 *****************************************************************************/
 
 #include "main.h"	// Main include file for a PolyTrans exporter
+#include <stdlib.h>
 
 /* ----------------------->>>>  Definitions  <<<<--------------------------- */
 
@@ -72,7 +73,7 @@ static void	NI_OutputMetaDataInfo(FILE *ofp, char *Nv_Handle_Name, Nd_Int Nv_Num
 	Nd_Int
 NI_Exporter_Output_Meta_Data(FILE *ofp, Nd_Token Nv_Handle_Type, char *Nv_Handle_Name)
 {
-	long	num_output = 0;
+	Nd_Int num_output = 0;
 	int 	index;
 
 	// Enumerate all of the meta data items associated with a specific
@@ -115,17 +116,22 @@ NI_Enumerate_MetaData_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 	if (cbi_ptr->Nv_Call_Count == 1)
 		OPTIONAL_FPRINTF(ofp, "\tMeta data:\n");
 
-	OPTIONAL_FPRINTF(ofp, "\t\t");
+	// Determine if this is one of the hidden or private internal Okino meta data
+	// items. This is an 'inline' function defined in ni4_aux.h, as is the list of
+	// known hidden/private Okino meta data names. We want to ignore these meta data items.
+	if ( !Ni_User_Data_IsHandleNameReservedForInternalUsage( cbi_ptr->Nv_Handle_Name1 ) ) {
+		OPTIONAL_FPRINTF(ofp, "\t\t");
 
-	// Go inquire about one meta data item ("cbi_ptr->Nv_Handle_Name1")
-	// from the specified instance/object/camera/etc (as defined by
-	// the "cbi_ptr->Nv_Handle_Type2, cbi_ptr->Nv_Handle_Name2" arguments)
-	Ni_User_Data_Inquire2(cbi_ptr->Nv_Handle_Name1, 		// This is the ID name of the user data item
-		&Nv_BDF_Save_Flag, &Nv_Num_Items, &Nv_Data_Type, (Nd_Void **) &Nv_Data_Ptr,	// These are the returned meta data item contents
-		cbi_ptr->Nv_Handle_Type2, cbi_ptr->Nv_Handle_Name2, 	// This is the handle type and name, such as 'Nt_INSTANCE, "world"' 
-		Nt_CMDEND);
+		// Go inquire about one meta data item ("cbi_ptr->Nv_Handle_Name1")
+		// from the specified instance/object/camera/etc (as defined by
+		// the "cbi_ptr->Nv_Handle_Type2, cbi_ptr->Nv_Handle_Name2" arguments)
+		Ni_User_Data_Inquire2(cbi_ptr->Nv_Handle_Name1, 		// This is the ID name of the user data item
+			&Nv_BDF_Save_Flag, &Nv_Num_Items, &Nv_Data_Type, (Nd_Void **) &Nv_Data_Ptr,	// These are the returned meta data item contents
+			cbi_ptr->Nv_Handle_Type2, cbi_ptr->Nv_Handle_Name2, 	// This is the handle type and name, such as 'Nt_INSTANCE, "world"' 
+			Nt_CMDEND);
 
-	NI_OutputMetaDataInfo(ofp, cbi_ptr->Nv_Handle_Name1, Nv_Num_Items, Nv_Data_Type, Nv_Data_Ptr);
+		NI_OutputMetaDataInfo(ofp, (char *) cbi_ptr->Nv_Handle_Name1, Nv_Num_Items, Nv_Data_Type, Nv_Data_Ptr);
+	}
 
 	if (cbi_ptr->Nv_Call_Count == cbi_ptr->Nv_Matches_Made)
 		OPTIONAL_FPRINTF(ofp, "\n");
@@ -152,13 +158,18 @@ NI_Enumerate_GlobalSceneMetaData_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 	if (cbi_ptr->Nv_Call_Count == 1)
 		OPTIONAL_FPRINTF(ofp, "Meta data assigned to the global scene:\n");
 
-	OPTIONAL_FPRINTF(ofp, "\t");
+	// Determine if this is one of the hidden or private internal Okino meta data
+	// items. This is an 'inline' function defined in ni4_aux.h, as is the list of
+	// known hidden/private Okino meta data names. We want to ignore these meta data items.
+	if ( !Ni_User_Data_IsHandleNameReservedForInternalUsage( cbi_ptr->Nv_Handle_Name1 ) ) {
+		OPTIONAL_FPRINTF(ofp, "\t");
 
-	// Go inquire about one meta data item from the global scene
-	Ni_User_Data_Inquire(cbi_ptr->Nv_Handle_Name1, 		// This is the ID name of the meta data item
-		&Nv_BDF_Save_Flag, &Nv_Num_Items, &Nv_Data_Type, (Nd_Void **) &Nv_Data_Ptr);	// These are the returned user data item contents
+		// Go inquire about one meta data item from the global scene
+		Ni_User_Data_Inquire(cbi_ptr->Nv_Handle_Name1, 		// This is the ID name of the meta data item
+			&Nv_BDF_Save_Flag, &Nv_Num_Items, &Nv_Data_Type, (Nd_Void **) &Nv_Data_Ptr);	// These are the returned user data item contents
 
-	NI_OutputMetaDataInfo(ofp, cbi_ptr->Nv_Handle_Name1, Nv_Num_Items, Nv_Data_Type, Nv_Data_Ptr);
+		NI_OutputMetaDataInfo(ofp, (char *) cbi_ptr->Nv_Handle_Name1, Nv_Num_Items, Nv_Data_Type, Nv_Data_Ptr);
+	}
 
 	if (cbi_ptr->Nv_Call_Count == cbi_ptr->Nv_Matches_Made)
 		OPTIONAL_FPRINTF(ofp, "\n");
@@ -248,7 +259,7 @@ NI_OutputMetaDataInfo(
 		}
 		break;
 	case Nc_BDF_USERDATA_NdInt:
-		for (i = 0; i < Nv_Num_Items; ++i, Nv_Data_Ptr += sizeof(long)) {
+		for (i = 0; i < Nv_Num_Items; ++i, Nv_Data_Ptr += sizeof(Nd_Int)) {
 			char	buf[256];
 
 			if (!i)
@@ -258,7 +269,7 @@ NI_OutputMetaDataInfo(
 
 			OPTIONAL_FPRINTF(ofp, "Data type = '32-bit Integer', %ld of %ld, ", i+1, Nv_Num_Items);
 
-			sprintf(buf, "%ld", *((long *) Nv_Data_Ptr));
+			sprintf(buf, "%ld", *((Nd_Int *) Nv_Data_Ptr));
 			OPTIONAL_FPRINTF(ofp, "%s\n", buf);
 		}
 		break;
@@ -288,7 +299,6 @@ NI_OutputMetaDataInfo(
 
 			OPTIONAL_FPRINTF(ofp, "Data type = 'RGB Color', %ld of %ld, ", i+1, Nv_Num_Items);
 
-			sprintf(buf, "%ld", *((float *) Nv_Data_Ptr));
 			sprintf(buf, "%f %f %f", ((Nd_Float *) Nv_Data_Ptr)[0], ((Nd_Float *) Nv_Data_Ptr)[1], ((Nd_Float *) Nv_Data_Ptr)[2]);
 			OPTIONAL_FPRINTF(ofp, "%s\n", buf);
 		}
@@ -428,3 +438,4 @@ NI_OutputMetaDataInfo(
 		break;
 	}
 }
+

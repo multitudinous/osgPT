@@ -11,7 +11,7 @@
 	how to query all of the parameters related to the Texture Definition.
 	----------------------------------------------------------------
 
-  Copyright (c) 1988, 2006 Okino Computer Graphics, Inc. All Rights Reserved.
+  Copyright (c) 1988, 2009 Okino Computer Graphics, Inc. All Rights Reserved.
 
 This file is proprietary source code of Okino Computer Graphics, Inc. and it 
 is not to be disclosed to third parties, published, adopted, distributed,
@@ -98,7 +98,7 @@ NI_Exporter_List_Texture_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 	FILE				*ofp;
 	Export_IO_TextureParameters	txtr_info;
 	Nd_Matrix			Nv_Texture_Matrix;
-	char				*texture_defn_name = cbi_ptr->Nv_Handle_Name1;
+	const char			*texture_defn_name = cbi_ptr->Nv_Handle_Name1;
 
 	ofp = (FILE *) cbi_ptr->Nv_User_Data_Ptr1;	// Pick up user-defined parameter #1; we're passing in the ASCII file output handle
 
@@ -116,13 +116,13 @@ NI_Exporter_List_Texture_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 	++export_options->total_texture_maps;
 
 	// Update the status display with the current texture definition being exported
-	Export_IO_UpdateStatusDisplay("texture", texture_defn_name, "Exporting texture definitions."); 
+	Export_IO_UpdateStatusDisplay("texture", (char *) texture_defn_name, "Exporting texture definitions."); 
 
 	// And check for user abort
 	if (Export_IO_Check_For_User_Interrupt_With_Stats(cbi_ptr->Nv_Call_Count, cbi_ptr->Nv_Matches_Made))
 		return(Nc_TRUE);	// Abort the enumeration (nothing gets returned from the Ni_Enumerate() function
 
-	Export_IO_Inquire_Texture(texture_defn_name, &txtr_info);
+	Export_IO_Inquire_Texture((char *) texture_defn_name, &txtr_info);
 
 	/* Next, we'll print out the values returned from the texture */
 	/* inquiry function to show what can be done with them. */
@@ -133,7 +133,7 @@ NI_Exporter_List_Texture_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 			OPTIONAL_FPRINTF(ofp, "\tThere is no valid texture image associated\n");
 			OPTIONAL_FPRINTF(ofp, "\twith the texture definition.\n");
 		} else {
-			char	processed_image_filename[512];
+			char	processed_image_filename[4096];	// Need extra space for RFC1738 conversion
 
 			OPTIONAL_FPRINTF(ofp, "\tOriginal image filename = '%s', filetype = '%s'\n", 
 				txtr_info.Nv_Image_Filename, txtr_info.Nv_Image_Filetype);
@@ -194,14 +194,14 @@ NI_Exporter_List_Texture_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 		OPTIONAL_FPRINTF(ofp, "\t\tParameter 6 = %g\n", txtr_info.Nv_Param[5]);
 		OPTIONAL_FPRINTF(ofp, "\tTurbulence scale factor = %g\n", txtr_info.Nv_Turbulence_Scale);
 
-		Ni_Inquire_Texture(texture_defn_name, (Nd_Token *) &txtr_info.Nv_Type,
+		Ni_Inquire_Texture((char *) texture_defn_name, (Nd_Token *) &txtr_info.Nv_Type,
 			Nt_MATRIX, Nv_Texture_Matrix, Nt_CMDEND);
 		OPTIONAL_FPRINTF(ofp, "\tTexture's current transformation matrix:\n");
 		OPTIONAL_DISPLAY_MATRIX(ofp, Nv_Texture_Matrix, 2);
 	} 
 
 	// Output any meta data associated with this texture definition
-	NI_Exporter_Output_Meta_Data(ofp, Nt_TEXTURE, texture_defn_name);
+	NI_Exporter_Output_Meta_Data(ofp, Nt_TEXTURE, (char *) texture_defn_name);
 
 	return(Nc_FALSE);	/* Do not terminate the enumeration */
 }
@@ -217,7 +217,7 @@ NI_Exporter_MakeValidTextureBitmapFilename(char *in_filename, char *out_unique_n
 	Exporter_TxtrFileName_Info *ptr;
 	Nd_Token export_image_filetype;
 	char    orig_filename[300], extension[300], *save_path;
-	long    result, len;
+	Nd_Int 	result, len;
 	short   found, do_auto_convert;
 
 	extension[0] = '\0';
@@ -274,7 +274,7 @@ NI_Exporter_MakeValidTextureBitmapFilename(char *in_filename, char *out_unique_n
 			/* Make sure the directory exists */
 			Ni_File_Exists(save_path, &result);
 			if (!result)
-				mkdir(save_path);
+				_mkdir(save_path);
 
 			/* Prepend the path on the output filename */
 			Ni_ExtractBaseFileName(out_unique_name, temp_buf, Nc_FALSE);
@@ -504,7 +504,7 @@ NI_Exporter_Convert_Bitmap_Files(char *input_filename)
 			if (!Nv_FileFormatDescription)
 				break;
 
-			if (Nv_FileFormatGUID && !stricmp(Nv_FileFormatGUID, ptr->export_converter_guid)) {
+			if (Nv_FileFormatGUID && !_stricmp(Nv_FileFormatGUID, ptr->export_converter_guid)) {
 				handles_colormapped_output = Nv_HandlesColorMappedOutput;
 				break;
 			} if (Nv_FileFormatToolkitToken && !strcmp(ptr->export_image_filetype, Nv_FileFormatToolkitToken)) {
@@ -519,6 +519,13 @@ NI_Exporter_Convert_Bitmap_Files(char *input_filename)
 		else
 			option_str[0] = '\0';
 
+		// Choose which directory to save the output files
+		char *save_path = NULL;
+		if (export_options->bitmap_saveto_directory_type == SAVE_BITMAPS_TO_ORIGINAL_DIRECTORY && export_options->export_directory && strlen(export_options->export_directory))
+			save_path = export_options->export_directory;
+		else if (export_options->bitmap_saveto_directory_type == SAVE_BITMAPS_TO_SPECIFIC_DIRECTORY && export_options->save_bitmaps_to_specific_directory && strlen(export_options->save_bitmaps_to_specific_directory))
+			save_path = export_options->save_bitmaps_to_specific_directory;
+
 		if (ptr->export_converter_guid) {
 			char	*Nv_File_Extension_List;
 			char	file_extension[256];
@@ -532,10 +539,10 @@ NI_Exporter_Convert_Bitmap_Files(char *input_filename)
 				strcpy(file_extension, ".tif");	// Should not happen
 
 			// Choose the exporter based on its GUID
-			Ni_Convert_Image_File_Format(ptr->orig_filename, ptr->unique_filename, export_options->export_directory, ptr->export_converter_guid, file_extension, option_str, Nc_TRUE, export_options->txtr_x_res, export_options->txtr_y_res, do_image_quantize, Nt_CMDEND);
+			Ni_Convert_Image_File_Format(ptr->orig_filename, ptr->unique_filename, save_path, ptr->export_converter_guid, file_extension, option_str, Nc_TRUE, export_options->txtr_x_res, export_options->txtr_y_res, do_image_quantize, Nt_CMDEND);
 		} else
 			// Choose the exporter based on its file extension
-			Ni_Convert_Image_File_Format(ptr->orig_filename, ptr->unique_filename, export_options->export_directory, ptr->export_image_filetype, export_options->autoconvert_bitmap_format, option_str, Nc_TRUE, export_options->txtr_x_res, export_options->txtr_y_res, do_image_quantize, Nt_CMDEND);
+			Ni_Convert_Image_File_Format(ptr->orig_filename, ptr->unique_filename, save_path, ptr->export_image_filetype, export_options->autoconvert_bitmap_format, option_str, Nc_TRUE, export_options->txtr_x_res, export_options->txtr_y_res, do_image_quantize, Nt_CMDEND);
 
 		// Check for user abort
 		if (num_filenames) {
@@ -894,4 +901,4 @@ error:          Ni_Image_Load(&load_info, (char *) NULL, &status, Nt_CLOSE, Nt_C
 exit:   return(texture);
 }
 #endif
-
+

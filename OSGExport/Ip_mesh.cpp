@@ -10,7 +10,7 @@
 	----------------------------------------------------------------
 
 
-  Copyright (c) 1988, 2006 Okino Computer Graphics, Inc. All Rights Reserved.
+  Copyright (c) 1988, 2009 Okino Computer Graphics, Inc. All Rights Reserved.
 
 This file is proprietary source code of Okino Computer Graphics, Inc. and it 
 is not to be disclosed to third parties, published, adopted, distributed,
@@ -100,10 +100,16 @@ POSSIBILITY OF SUCH DAMAGES.
 	Nd_Bool
 NI_OutputMesh(FILE *ofp, Nd_Walk_Tree_Info *Nv_Info, char *master_object)
 {
+	Nd_Token	mesh_processing_use_shared_index_array;
+	Nd_Token	mesh_processing_negative_indices_allowed;
+	Nd_Token	mesh_processing_holes_allowed;
 	Nd_Token	mesh_processing_always_add_vertex_normals;
 	Nd_Token	mesh_processing_optimize_texture_coordinate_list;
 	Nd_Token	mesh_processing_duplicate_vertices_for_uv_texture_mapping;
 	Nd_Token	mesh_processing_explode_meshes_by_material_name;
+	Nd_Token	mesh_processing_want_convex_only;
+	Nd_Token	mesh_processing_want_quads_only;
+	Nd_Token	mesh_processing_want_triangles_only;
 	Nd_Token	mesh_processing_want_undeformed_mesh;
 	Nd_Token      	mesh_processing_want_planar_polygons_only;
 	Nd_Int		mesh_processing_status;
@@ -122,8 +128,12 @@ NI_OutputMesh(FILE *ofp, Nd_Walk_Tree_Info *Nv_Info, char *master_object)
 		// keyframe mode is in effect then temporary resampled keyframe lists
 		// will have been created and stored in the core toolkit after this
 		// function finishes and returns here.
-		if (export_options->ena_object_animation && export_options->ena_hierarchy)
-			animation_data_is_available = NI_Exporter_QueryAndSetup_Object_Animation_Keyframe_Data(ofp, Nv_Info->Nv_Handle_Name);
+		if (export_options->ena_object_animation && export_options->ena_hierarchy) {
+			Nd_Int Nv_Active_Channels_Found = Nc_FALSE;
+			Ni_NodeHasActiveChannels( Nt_INSTANCE, Nv_Info->Nv_Handle_Name, Nc_TRUE /* keyframe controllers only */, &Nv_Active_Channels_Found, Nt_CMDEND );
+			if ( Nv_Active_Channels_Found )
+				animation_data_is_available = NI_Exporter_QueryAndSetup_Object_Animation_Keyframe_Data(ofp, Nv_Info->Nv_Handle_Name);
+		}
 
         	// Developer Notice:: Normally the options to the Ni_ConvertandProcessRawPrimitive()
         	// function (see below) are hand set to Nt_ON or Nt_OFF when you write your custom
@@ -134,10 +144,16 @@ NI_OutputMesh(FILE *ofp, Nd_Walk_Tree_Info *Nv_Info, char *master_object)
         	// Ni_ConvertandProcessRawPrimitive() function call arguments entirely via the
         	// dialog box or else you can delete those checkboxes from the dialog box and
         	// statically set the parameters to Nt_ON or Nt_OFF in the function below.
+        	mesh_processing_use_shared_index_array = export_options->mesh_processing_use_shared_index_array ? Nt_ON : Nt_OFF;
+        	mesh_processing_negative_indices_allowed = export_options->mesh_processing_negative_indices_allowed ? Nt_ON : Nt_OFF;
+        	mesh_processing_holes_allowed = export_options->mesh_processing_holes_allowed ? Nt_ON : Nt_OFF;
         	mesh_processing_always_add_vertex_normals = export_options->mesh_processing_always_add_vertex_normals ? Nt_ON : Nt_OFF;
         	mesh_processing_optimize_texture_coordinate_list = export_options->mesh_processing_optimize_texture_coordinate_list ? Nt_ON : Nt_OFF;
         	mesh_processing_duplicate_vertices_for_uv_texture_mapping = export_options->mesh_processing_duplicate_vertices_for_uv_texture_mapping ? Nt_ON : Nt_OFF;
         	mesh_processing_explode_meshes_by_material_name = export_options->mesh_processing_explode_meshes_by_material_name ? Nt_ON : Nt_OFF;
+        	mesh_processing_want_convex_only = export_options->mesh_processing_want_convex_only ? Nt_ON : Nt_OFF;
+        	mesh_processing_want_quads_only = export_options->mesh_processing_want_quads_only ? Nt_ON : Nt_OFF;
+        	mesh_processing_want_triangles_only = export_options->mesh_processing_want_triangles_only ? Nt_ON : Nt_OFF;
 		mesh_processing_sort_polygons_by_material_assignments = export_options->mesh_processing_sort_polygons_by_material_assignments ? Nt_ON : Nt_OFF;
 		mesh_processing_want_planar_polygons_only = export_options->mesh_processing_want_planar_polygons_only ? Nt_ON : Nt_OFF;
 		// If we are outputting skinning weights (ie: deformation via bones and skeletons)
@@ -176,7 +192,7 @@ NI_OutputMesh(FILE *ofp, Nd_Walk_Tree_Info *Nv_Info, char *master_object)
         		// colors and UV tangent vectors will be (optionally) duplicated
         		// in place so that all share the same index array as the vertices.
         		// This is required, for example, by the 3D Studio (.3ds) and RIB exporters.
-        		Nt_USESHAREDINDICEARRAY, Nt_ENABLED, Nt_ON, Nt_CMDSEP,
+        		Nt_USESHAREDINDICEARRAY, Nt_ENABLED, mesh_processing_use_shared_index_array, Nt_CMDSEP,
 
         		// Set this option to Nt_ON if the exporter module can handle indices
         		// which are negative (for the normals, uv texture coordinates, vertex
@@ -187,7 +203,7 @@ NI_OutputMesh(FILE *ofp, Nd_Walk_Tree_Info *Nv_Info, char *master_object)
         		// Nt_OFF then the negative indices will be removed by having new
         		// geoemetric normals to be computed or dummy color/texture/tangent
         		// coords to be inserted into their respective lists.
-        		Nt_NEGATIVEINDICESALLOWED, Nt_ENABLED, Nt_OFF, Nt_CMDSEP,
+        		Nt_NEGATIVEINDICESALLOWED, Nt_ENABLED, mesh_processing_negative_indices_allowed, Nt_CMDSEP,
 
         		// Set this option to Nt_ON to have the geometric normal of a polygon
         		// assigned to a vertex if it does not have any vertex normals.
@@ -201,7 +217,7 @@ NI_OutputMesh(FILE *ofp, Nd_Walk_Tree_Info *Nv_Info, char *master_object)
         		// data. If set to Nt_OFF then the Nt_WANTTRIANGLESONLY option will
         		// automatically be overriden and set to Nt_ON so that all holes
         		// get triangulated.
-        		Nt_HOLESALLOWED, Nt_ENABLED, Nt_OFF, Nt_CMDSEP,
+        		Nt_HOLESALLOWED, Nt_ENABLED, mesh_processing_holes_allowed, Nt_CMDSEP,
 
         		// This routine inserts new vertices into a mesh if a shared vertex has
         		// (u,v) texture coordinates BUT each polygon has a different material
@@ -246,13 +262,13 @@ NI_OutputMesh(FILE *ofp, Nd_Walk_Tree_Info *Nv_Info, char *master_object)
 			Nt_SORTPOLYGONSBYMATERIALASSIGNMENTS, Nt_ENABLED, mesh_processing_sort_polygons_by_material_assignments, Nt_CMDSEP,
 
         		// Set to Nt_ON to cause non-convex polygons to become triangulated
-        		Nt_WANTCONVEXONLY, Nt_ENABLED, Nt_ON, Nt_CMDSEP,
+        		Nt_WANTCONVEXONLY, Nt_ENABLED, mesh_processing_want_convex_only, Nt_CMDSEP,
 
         		// Set to Nt_ON to cause 5 or more sided polygons to become triangulated
-        		Nt_WANTQUADSONLY, Nt_ENABLED, Nt_ON, Nt_CMDSEP,
+        		Nt_WANTQUADSONLY, Nt_ENABLED, mesh_processing_want_quads_only, Nt_CMDSEP,
 
         		// Set to Nt_ON to cause 4 or more sided polygons to become triangulated
-        		Nt_WANTTRIANGLESONLY, Nt_ENABLED, Nt_ON, Nt_CMDSEP,
+        		Nt_WANTTRIANGLESONLY, Nt_ENABLED, mesh_processing_want_triangles_only, Nt_CMDSEP,
 
 			// Set to Nt_ON to cause polygons which are not entirely planar to be triangulated.
 			// Polygons are deemed non-planar if any vertex (in object-space coordinates) is
@@ -826,7 +842,8 @@ NI_Exporter_List_Indice_Info__Original_API(
 	Nd_Matrix 	pivot_inverse_pivot_matrix;
 	Nd_Matrix 	normal_transform_matrix;
 	short		embed_pivot_axes_in_vertices = Nc_FALSE;
-	long		i, index_count, *indice_ptr;
+	long 		i, index_count; 
+	Nd_Int		*indice_ptr;
 	Nd_Struct_XYZ	*vp_ptr;
 
 	// If we are outputting animation data, then let's go examine the 
@@ -950,7 +967,8 @@ NI_Exporter_List_Indice_Info__New_Extended_API(
 	Nd_Matrix 	normal_transform_matrix;
 	short		embed_pivot_axes_in_vertices = Nc_FALSE;
 	Nd_Vector 	vec;
-	long		i, x, y, index_count, *indice_ptr;
+	long		i, x, y, index_count;
+	Nd_Int		*indice_ptr;
 	void		*vc;
 	Nd_Struct_XYZ	*vp_ptr;
 

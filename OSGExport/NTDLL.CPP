@@ -1715,7 +1715,7 @@ BitmapConversionPanel_Page_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam
 
 			// For v4.1.9 or newer, the 'autoconvert_bitmap_format' can either be the file's extension (.jpg)
 			// or the GUID for the 2D file exporter, such as 'Nc_NG_TOOLKIT_IMAGE_EXPORTER_GUID__JPEG'
-			if (Nv_FileFormatGUID && !stricmp(Nv_FileFormatGUID, export_options->autoconvert_bitmap_format))
+			if (Nv_FileFormatGUID && !_stricmp(Nv_FileFormatGUID, export_options->autoconvert_bitmap_format))
  				SendDlgItemMessage(hDlg, IDD_EXPORTER_BITMAP_FORMAT_COMBO, CB_SETCURSEL, count, 0L);
 			else if (!strncmp(Nv_FileFormatExtension, export_options->autoconvert_bitmap_format, 4))
  				SendDlgItemMessage(hDlg, IDD_EXPORTER_BITMAP_FORMAT_COMBO, CB_SETCURSEL, count, 0L);

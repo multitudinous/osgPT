@@ -4,7 +4,7 @@
                  Lights Parameter Query Functions for PolyTrans
 	----------------------------------------------------------------
 
-  Copyright (c) 1988, 2006 Okino Computer Graphics, Inc. All Rights Reserved.
+  Copyright (c) 1988, 2009 Okino Computer Graphics, Inc. All Rights Reserved.
 
 This file is proprietary source code of Okino Computer Graphics, Inc. and it 
 is not to be disclosed to third parties, published, adopted, distributed,
@@ -68,7 +68,7 @@ NI_Exporter_List_Light_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 {
 	FILE				*ofp;
 	Export_IO_LightParameters 	lp;
-	char				*light_name = cbi_ptr->Nv_Handle_Name1;
+	const char			*light_name = cbi_ptr->Nv_Handle_Name1;
 
 	ofp = (FILE *) cbi_ptr->Nv_User_Data_Ptr1;	// Pick up user-defined parameter #1; we're passing in the ASCII file output handle
 
@@ -83,14 +83,14 @@ NI_Exporter_List_Light_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 		return(Nc_FALSE);
 
 	// Update the status display with the current light definition being exported
-	Export_IO_UpdateStatusDisplay("light", light_name, "Exporting light definitions."); 
+	Export_IO_UpdateStatusDisplay("light", (char *) light_name, "Exporting light definitions."); 
 
 	// And check for user abort
 	if (Export_IO_Check_For_User_Interrupt_With_Stats(cbi_ptr->Nv_Call_Count, cbi_ptr->Nv_Matches_Made))
 		return(Nc_TRUE);	// Abort the enumeration (nothing gets returned from the Ni_Enumerate() function
 
 	// Inquire about all light parameters
-	Export_IO_Inquire_Light(light_name, &lp);
+	Export_IO_Inquire_Light((char *) light_name, &lp);
 
 	/* Next, we'll print out the values returned from the light */
 	/* inquiry function to show what can be done with them. */
@@ -112,11 +112,15 @@ NI_Exporter_List_Light_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 	OPTIONAL_FPRINTF(ofp, "\tSpecular enable toggle = '%s'\n", lp.Nv_Light_SpecularToggle);
 
 	// Output any meta data associated with this light
-	NI_Exporter_Output_Meta_Data(ofp, Nt_LIGHT, light_name);
+	NI_Exporter_Output_Meta_Data(ofp, Nt_LIGHT, (char *) light_name);
 
 	// If any animation is associated with this light definition then output it now
-	if (export_options->ena_light_animation)
-		NI_Exporter_Output_Light_Animation_Data(ofp, light_name);
+	if (export_options->ena_light_animation) {
+		Nd_Int Nv_Active_Channels_Found = Nc_FALSE;
+		Ni_NodeHasActiveChannels( Nt_LIGHT, (char *) light_name, Nc_TRUE /* keyframe controllers only */, &Nv_Active_Channels_Found, Nt_CMDEND );
+		if ( Nv_Active_Channels_Found )
+			NI_Exporter_Output_Light_Animation_Data(ofp, (char *) light_name);
+	}
 
 	return(Nc_FALSE);	/* Do not terminate the enumeration */
 }

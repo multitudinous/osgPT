@@ -55,7 +55,7 @@ createMaterialCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 {
 	Export_IO_SurfaceParameters 	surf_info;
 	Nd_Int				dummy;
-	char				*surface_name = cbi_ptr->Nv_Handle_Name1;
+	Nd_ConstString				surface_name = cbi_ptr->Nv_Handle_Name1;
 
 	if (cbi_ptr->Nv_Matches_Made == 0)
 		return(Nc_FALSE);
@@ -66,14 +66,14 @@ createMaterialCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 		return(Nc_FALSE);
 
 	// Update the status display with the current surface definition being exported
-	Export_IO_UpdateStatusDisplay("surface", surface_name, "Exporting surface definitions (materials)."); 
+	Export_IO_UpdateStatusDisplay("surface", (char*)surface_name, "Exporting surface definitions (materials)."); 
 
 	// And check for user abort
 	if (Export_IO_Check_For_User_Interrupt_With_Stats(cbi_ptr->Nv_Call_Count, cbi_ptr->Nv_Matches_Made))
 		return(Nc_TRUE);	// Abort the enumeration (nothing gets returned from the Ni_Enumerate() function
 
 	// Inquire about all of the surface parameters 
-	Export_IO_Inquire_Surface(surface_name, &surf_info);
+	Export_IO_Inquire_Surface( (char*) surface_name, &surf_info);
 
 
     SurfaceInfo si;
@@ -163,8 +163,8 @@ Nd_Int
 createTextureCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 {
 	Export_IO_TextureParameters	txtr_info;
-	Nd_Matrix			Nv_Texture_Matrix;
-	char				*texture_defn_name = cbi_ptr->Nv_Handle_Name1;
+	//Nd_Matrix			Nv_Texture_Matrix;
+	Nd_ConstString texture_defn_name = cbi_ptr->Nv_Handle_Name1;
 
 
 	if (cbi_ptr->Nv_Matches_Made == 0)
@@ -179,13 +179,13 @@ createTextureCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 	++export_options->total_texture_maps;
 
 	// Update the status display with the current texture definition being exported
-	Export_IO_UpdateStatusDisplay("texture", texture_defn_name, "Exporting texture definitions."); 
+	Export_IO_UpdateStatusDisplay("texture", (char*)texture_defn_name, "Exporting texture definitions."); 
 
 	// And check for user abort
 	if (Export_IO_Check_For_User_Interrupt_With_Stats(cbi_ptr->Nv_Call_Count, cbi_ptr->Nv_Matches_Made))
 		return(Nc_TRUE);	// Abort the enumeration (nothing gets returned from the Ni_Enumerate() function
 
-	Export_IO_Inquire_Texture( texture_defn_name, &txtr_info );
+	Export_IO_Inquire_Texture( (char*)texture_defn_name, &txtr_info );
 
 
     std::string nameStr( texture_defn_name );
@@ -294,8 +294,8 @@ static Nd_Int
 surfaceTextureCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 {
 	Export_IO_SurfTxtrParameters	surftxtr_info;
-	char				*surface_name = cbi_ptr->Nv_Handle_Name1;
-	char				*texture_layer_name = cbi_ptr->Nv_Handle_Name2;
+	Nd_ConstString surface_name = cbi_ptr->Nv_Handle_Name1;
+	Nd_ConstString texture_layer_name = cbi_ptr->Nv_Handle_Name2;
 
 	SurfaceInfo* si = (SurfaceInfo*) cbi_ptr->Nv_User_Data_Ptr1;	// Pick up user-defined parameter #1; we're passing in the ASCII file output handle
 
@@ -305,7 +305,7 @@ surfaceTextureCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 	if (cbi_ptr->Nv_Call_Count == 0)
         return(Nc_FALSE);
 
-	Export_IO_Inquire_SurfaceTextureLayerParameters(surface_name, texture_layer_name, &surftxtr_info);
+	Export_IO_Inquire_SurfaceTextureLayerParameters( (char*)surface_name, (char*)texture_layer_name, &surftxtr_info);
 
     si->_tex = lookupTexture( surftxtr_info.Nv_Texture_Texturelink_Name );
 

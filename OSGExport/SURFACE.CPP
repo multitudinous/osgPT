@@ -11,7 +11,7 @@
 	a Texture Definition (see texture.cpp).
 	----------------------------------------------------------------
 
-  Copyright (c) 1988, 2006 Okino Computer Graphics, Inc. All Rights Reserved.
+  Copyright (c) 1988, 2009 Okino Computer Graphics, Inc. All Rights Reserved.
 
 This file is proprietary source code of Okino Computer Graphics, Inc. and it 
 is not to be disclosed to third parties, published, adopted, distributed,
@@ -78,7 +78,7 @@ NI_Exporter_List_Surface_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 	FILE				*ofp;
 	Export_IO_SurfaceParameters 	surf_info;
 	Nd_Int				dummy;
-	char				*surface_name = cbi_ptr->Nv_Handle_Name1;
+	const char			*surface_name = cbi_ptr->Nv_Handle_Name1;
 
 	ofp = (FILE *) cbi_ptr->Nv_User_Data_Ptr1;	// Pick up user-defined parameter #1; we're passing in the ASCII file output handle
 
@@ -93,7 +93,7 @@ NI_Exporter_List_Surface_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 		return(Nc_FALSE);
 
 	// Update the status display with the current surface definition being exported
-	Export_IO_UpdateStatusDisplay("surface", surface_name, "Exporting surface definitions (materials)."); 
+	Export_IO_UpdateStatusDisplay("surface", (char *) surface_name, "Exporting surface definitions (materials)."); 
 
 	// Update the statistics
 	++export_options->total_materials;
@@ -103,7 +103,7 @@ NI_Exporter_List_Surface_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 		return(Nc_TRUE);	// Abort the enumeration (nothing gets returned from the Ni_Enumerate() function
 
 	// Inquire about all of the surface parameters 
-	Export_IO_Inquire_Surface(surface_name, &surf_info);
+	Export_IO_Inquire_Surface((char *) surface_name, &surf_info);
 
 	/* Next, we'll print out the values returned from the surface */
 	/* inquiry function to show what can be done with them. */
@@ -201,7 +201,7 @@ NI_Exporter_List_Surface_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 		surf_info.Nv_Specular_Color[Na_BLUE]);
 
 	// Output any meta data associated with this surface definition
-	NI_Exporter_Output_Meta_Data(ofp, Nt_SURFACE, surface_name);
+	NI_Exporter_Output_Meta_Data(ofp, Nt_SURFACE, (char *) surface_name);
 
 	/* Call 'List_SurfTxtr_Callback()' for every surface texture */
 	/* that is currently defined in the surface. */
@@ -211,8 +211,12 @@ NI_Exporter_List_Surface_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 			Nt_SURFACE, Nt_TEXTURE, Nt_CMDEND);
 
 	// If any animation is associated with this surface definition then output it now
-	if (export_options->ena_material_animation)
-		NI_Exporter_Output_Material_Animation_Data(ofp, surface_name);
+	if (export_options->ena_material_animation) {
+		Nd_Int Nv_Active_Channels_Found = Nc_FALSE;
+		Ni_NodeHasActiveChannels( Nt_SURFACE, (char *) surface_name, Nc_TRUE /* keyframe controllers only */, &Nv_Active_Channels_Found, Nt_CMDEND );
+		if ( Nv_Active_Channels_Found )
+			NI_Exporter_Output_Material_Animation_Data(ofp, (char *) surface_name);
+	}
 
 	return(Nc_FALSE);	/* Do not terminate the enumeration */
 }
@@ -228,8 +232,8 @@ NI_Exporter_List_SurfTxtr_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 {
 	FILE				*ofp;
 	Export_IO_SurfTxtrParameters	surftxtr_info;
-	char				*surface_name = cbi_ptr->Nv_Handle_Name1;
-	char				*texture_layer_name = cbi_ptr->Nv_Handle_Name2;
+	const char			*surface_name = cbi_ptr->Nv_Handle_Name1;
+	const char			*texture_layer_name = cbi_ptr->Nv_Handle_Name2;
 
 	ofp = (FILE *) cbi_ptr->Nv_User_Data_Ptr1;	// Pick up user-defined parameter #1; we're passing in the ASCII file output handle
 
@@ -241,7 +245,7 @@ NI_Exporter_List_SurfTxtr_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 	if (cbi_ptr->Nv_Call_Count == 1)
 		OPTIONAL_FPRINTF(ofp, "\tTexture layers associated with surface:\n");
 
-	Export_IO_Inquire_SurfaceTextureLayerParameters(surface_name, texture_layer_name, &surftxtr_info);
+	Export_IO_Inquire_SurfaceTextureLayerParameters((char *) surface_name, (char *) texture_layer_name, &surftxtr_info);
 
 	/* Next, we'll print out the values returned from the surface */
 	/* texture inquiry function to show what can be done with them. */

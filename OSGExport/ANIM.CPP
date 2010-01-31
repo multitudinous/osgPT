@@ -1,21 +1,10 @@
-// RCL: See the XSI exporter for a slightly newer idea of how to output
-// animation data. It basically just uses the 'resampled' method and not
-// the 'raw' keyframe method as well (the following file uses both methods).
-// When the user chooses 'original' interpolation mode from the UI dialog
-// box then the resampler will try to return to us the original, raw, 
-// un-resampled keys in most cases, unless it really has to go and resample
-// the keys. This, the resampler query API can now return either the original
-// raw keys or the new resampled keys, depending on whether it decides that
-// the data needs to be resampled.
-
-
 /*****************************************************************************
 
 	----------------------------------------------------------------
                 Animatiom Query & Output Functions for PolyTrans
 	----------------------------------------------------------------
 
-  Copyright (c) 1988, 2006 Okino Computer Graphics, Inc. All Rights Reserved.
+  Copyright (c) 1988, 2009 Okino Computer Graphics, Inc. All Rights Reserved.
 
 This file is proprietary source code of Okino Computer Graphics, Inc. and it 
 is not to be disclosed to third parties, published, adopted, distributed,
@@ -179,7 +168,7 @@ static Export_IO_Anim_Controller_Info 	x_scale_kf, y_scale_kf, z_scale_kf;
 static Export_IO_Anim_Controller_Info 	x_euler_kf, y_euler_kf, z_euler_kf;
 static Export_IO_Anim_Controller_Info 	quat_kf;
 // This is the order being used by the current Euler rotation controller queried from NuGraf
-static Nd_Int				curr_euler_rotation_controller_order;
+static Nd_EulerRotationOrder		curr_euler_rotation_controller_order;
 
 // This is raw queried camera animation data from the toolkit
 static Export_IO_Anim_Controller_Info x_lookat_kf, y_lookat_kf, z_lookat_kf;
@@ -338,7 +327,7 @@ NI_Exporter_QueryAndSetup_Object_Animation_Keyframe_Data( FILE *ofp, char *insta
 
 		// Globalize the Euler rotation order which was optionally queried from the NuGraf Euler rotation controller (if not Quat rot controller).
 		// An export converter developer may need this info later on during the export process.
-		curr_euler_rotation_controller_order = Export_IO_GetInstanceAnimEulerRotationOrder(instance_name);
+		curr_euler_rotation_controller_order = (Nd_EulerRotationOrder) Export_IO_GetInstanceAnimEulerRotationOrder(instance_name);
 
 		// Go retrieve all the raw keyframes and related information for the controllers we need
 		Export_IO_Anim_RetrieveControllerinfo(NULL, anim_ptrs.x_translate_ctrlr_ptr, &x_trans_kf, Nc_TRUE);
@@ -381,7 +370,7 @@ NI_Exporter_QueryAndSetup_Object_Animation_Keyframe_Data( FILE *ofp, char *insta
 		//    use a fixed Euler rotation order. For example, set it to 'Nc_EulerRotationOrder_XYZ'
 		//    (the various orders are listed in the ni4_aux.h header file)
 		//
-		curr_euler_rotation_controller_order = export_options->ena_object_anim_resampled_rot_order;
+		curr_euler_rotation_controller_order = (Nd_EulerRotationOrder) export_options->ena_object_anim_resampled_rot_order;
 
         	if (export_options->rotation_controller_type_to_use_during_export == Nc_NRS_ROTATION_CONTROLLER_AS_PER_NRS_TOOLKIT && instance_uses_quaternion_controller)
 	        	// If dialog box is set to "as-per-toolkit rotation export method" then set the resampled
@@ -1134,7 +1123,7 @@ NI_Exporter_Output_Light_Animation_Data( FILE *ofp, char *light_name)
 		//    use a fixed Euler rotation order. For example, set it to 'Nc_EulerRotationOrder_XYZ'
 		//    (the various orders are listed in the ni4_aux.h header file)
 		//
-		curr_euler_rotation_controller_order = export_options->ena_object_anim_resampled_rot_order;
+		curr_euler_rotation_controller_order = (Nd_EulerRotationOrder) export_options->ena_object_anim_resampled_rot_order;
 
         	if (Nv_Light_Type == Nt_DIRECTION && export_options->rotation_controller_type_to_use_during_export == Nc_NRS_ROTATION_CONTROLLER_AS_PER_NRS_TOOLKIT && light_uses_quaternion_controller)
 	        	// If dialog box is set to "as-per-toolkit rotation export method" then set the resampled
@@ -2497,20 +2486,27 @@ NI_Exporter_SetControllerOutofRangeType(FILE *ofp, Nd_Token mode, Nd_Token inter
 	OPTIONAL_FPRINTF(ofp, "\t\t\t%s type = '%s'\n", mode, interpolation_method);
 
 	if (interpolation_method == Nt_CONSTANT)
-    {}	// Value remains constant before/after keyframe list extents
+		// Value remains constant before/after keyframe list extents
+		;
 	else if (interpolation_method == Nt_LOOP)
-    {}	// Loops from the end back to the front. Performs a
+		// Loops from the end back to the front. Performs a
 		// smooth transition from the last value to the first value.
+		;
 	else if (interpolation_method == Nt_CYCLE)
-    {}	// Loops from the end back to the front. If values don't match then an abrupt change will occur.
+		// Loops from the end back to the front. If values don't match then an abrupt change will occur.
+		;
 	else if (interpolation_method == Nt_PINGPONG)
-    {}	// Alternate back and forth
+		// Alternate back and forth
+		;
 	else if (interpolation_method == Nt_LINEAR)
-    {}	// Continues the function curve along a linear tangent line.
+		// Continues the function curve along a linear tangent line.
+		;
 	else if (interpolation_method == Nt_GRADIENT)
-    {}	// (Relative repeat). Repeats the animation, but offset relative to the last value (escalates from loop to loop)
+		// (Relative repeat). Repeats the animation, but offset relative to the last value (escalates from loop to loop)
+		;
 	else if (interpolation_method == Nt_RESET)
-    {}	// Reset controller output to 0 (for Lightwave end behaviour)
+		// Reset controller output to 0 (for Lightwave end behaviour)
+		;
 }
 
 // This returns TRUE if the instance is associated with a quaternion controller instead of a Euler controller
@@ -2564,4 +2560,3 @@ NI_Exporter_DoesLightUseAQuaternionControllerForDirection(char *light_name)
 	return (quaternion_rotate_chan_ptr != NULL);
 }
 
-

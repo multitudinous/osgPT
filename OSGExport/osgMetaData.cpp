@@ -29,9 +29,9 @@ collectMetaDataCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 		return(Nc_FALSE);
 
     Ni_User_Data_Format_DataElements_Into_Standardized_String2(
-        cbi_ptr->Nv_Handle_Name1, 		// This is the ID name of the user data item
+        (char*)cbi_ptr->Nv_Handle_Name1, 		// This is the ID name of the user data item
 		&Nv_BDF_Save_Flag, &Nv_Num_Items, &Nv_Data_Type, (Nd_Char **) &Nv_Data_Ptr,	// These are the returned meta data item contents
-		cbi_ptr->Nv_Handle_Type2, cbi_ptr->Nv_Handle_Name2, 	// This is the handle type and name, such as 'Nt_INSTANCE, "world"' 
+		cbi_ptr->Nv_Handle_Type2, (char*)cbi_ptr->Nv_Handle_Name2, 	// This is the handle type and name, such as 'Nt_INSTANCE, "world"' 
 		Nt_CMDEND );
 
     MetaDataCollector* mdc = (MetaDataCollector*) cbi_ptr->Nv_User_Data_Ptr1;
@@ -47,7 +47,7 @@ MetaDataCollector::MetaDataCollector( Nd_Token Nv_Handle_Type, char *Nv_Handle_N
   : _handleType( Nv_Handle_Type ),
     _handleName( Nv_Handle_Name )
 {
-	long	num_output = 0;
+	Nd_Int	num_output = 0;
 
 	Ni_Enumerate( &num_output, _handleName, Nc_FALSE,
 		(Nd_Void *) this, (Nd_Void *) NULL,

@@ -4,7 +4,7 @@
                  Camera Parameter Query Functions for PolyTrans
 	----------------------------------------------------------------
 
-  Copyright (c) 1988, 2006 Okino Computer Graphics, Inc. All Rights Reserved.
+  Copyright (c) 1988, 2009 Okino Computer Graphics, Inc. All Rights Reserved.
 
 This file is proprietary source code of Okino Computer Graphics, Inc. and it 
 is not to be disclosed to third parties, published, adopted, distributed,
@@ -70,7 +70,7 @@ NI_Exporter_List_Camera_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 {
 	FILE				*ofp;
 	Export_IO_CameraParameters	cam_info;
-	char				*camera_name = cbi_ptr->Nv_Handle_Name1;
+	const char			*camera_name = cbi_ptr->Nv_Handle_Name1;
 	float				x_scale, y_scale;
 	float				horiz_fov, vert_fov;
 
@@ -87,17 +87,17 @@ NI_Exporter_List_Camera_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 		return(Nc_FALSE);		
 
 	// Update the status display with the current camera definition being exported
-	Export_IO_UpdateStatusDisplay("camera", camera_name, "Exporting camera definitions."); 
+	Export_IO_UpdateStatusDisplay("camera", (char *) camera_name, "Exporting camera definitions."); 
 
 	// And check for user abort
 	if (Export_IO_Check_For_User_Interrupt_With_Stats(cbi_ptr->Nv_Call_Count, cbi_ptr->Nv_Matches_Made))
 		return(Nc_TRUE);	// Abort the enumeration (nothing gets returned from the Ni_Enumerate() function
 
 	// Inquire about all of the camera parameters
-	Export_IO_Inquire_Camera(camera_name, &cam_info);
+	Export_IO_Inquire_Camera((char *) camera_name, &cam_info);
 
 	// Calculate the horizontal and vertical field of views
-	NI_Exporter_Compute_Window_Scale_Values(camera_name, &x_scale, &y_scale);
+	NI_Exporter_Compute_Window_Scale_Values((char *) camera_name, &x_scale, &y_scale);
 	horiz_fov = 2.0*atan2(cam_info.window_params[Na_X_VALUE]*x_scale/2.0, (double) cam_info.focal_length);
 	vert_fov = 2.0*atan2(cam_info.window_params[Na_Y_VALUE]*y_scale/2.0, (double) cam_info.focal_length);
 
@@ -139,11 +139,15 @@ NI_Exporter_List_Camera_Callback(Nd_Enumerate_Callback_Info *cbi_ptr)
 //	}
 
 	// Output any meta data associated with this camera
-	NI_Exporter_Output_Meta_Data(ofp, Nt_CAMERA, camera_name);
+	NI_Exporter_Output_Meta_Data(ofp, Nt_CAMERA, (char *) camera_name);
 
 	// Output camera animation data, if there is any associated with the camera
-	if (export_options->ena_camera_animation)
-		NI_Exporter_Output_Camera_Animation_Data(ofp, camera_name);
+	if (export_options->ena_camera_animation) {
+		Nd_Int Nv_Active_Channels_Found = Nc_FALSE;
+		Ni_NodeHasActiveChannels( Nt_CAMERA, (char *) camera_name, Nc_TRUE /* keyframe controllers only */, &Nv_Active_Channels_Found, Nt_CMDEND );
+		if ( Nv_Active_Channels_Found )
+			NI_Exporter_Output_Camera_Animation_Data(ofp, (char *) camera_name);
+	}
 
 	return(Nc_FALSE);	/* Do not terminate the enumeration */
 }
