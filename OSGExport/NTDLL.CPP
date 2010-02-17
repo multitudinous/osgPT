@@ -46,7 +46,12 @@ INC., OR ANY AGENT OF OKINO COMPUTER GRAPHICS, INC. HAS BEEN ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGES.
 
 *****************************************************************************/
-
+//////////////////////////////////////////
+//////////////////////////////////////////
+//THIS FILE HAS A BUNCH OF OSG CODE IN IT
+//DO NOT THROW IT AWAY UNTIL CHANGES FROM OKINO ARE MERGED WITH THIS FILES CONTENTS
+//////////////////////////////////////////
+//////////////////////////////////////////
 // Standard Windows includes
 #include	<stdio.h>
 #include 	<windows.h>
