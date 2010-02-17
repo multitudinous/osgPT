@@ -80,6 +80,14 @@ static	short	updating_edit_control;
 
 // ------------------>>>>  Function Prototypes <<<<--------------------------
 
+static BOOL APIENTRY 	OSG1_DlgProc(HWND hDlg, UINT message, UINT wParam, LONG lParam);
+static BOOL APIENTRY 	OSG2_DlgProc(HWND hDlg, UINT message, UINT wParam, LONG lParam);
+static BOOL APIENTRY 	OSG3_DlgProc(HWND hDlg, UINT message, UINT wParam, LONG lParam);
+
+
+
+
+
 static INT_PTR CALLBACK 	EnablesPanel1_Page_DlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 static INT_PTR CALLBACK 	EnablesPanel2_Page_DlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 static INT_PTR CALLBACK 	CurvesPanel_Page_DlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
@@ -360,6 +368,15 @@ ShowOptionsDialogBox(HINSTANCE hDLLinstance, HWND hwndOwner)
 
 	// Create the property sheet panels
 	next_offset = 0;
+	FillInPropertyPage(&psp[next_offset++], "OptionsDialogOSG1", TEXT(""), (DLGPROC)OSG1_DlgProc);
+	FillInPropertyPage(&psp[next_offset++], "OptionsDialogOSG2", TEXT(""), (DLGPROC)OSG2_DlgProc);
+	FillInPropertyPage(&psp[next_offset++], "OptionsDialogOSG3", TEXT(""), (DLGPROC)OSG3_DlgProc);
+
+
+
+
+
+
 	FillInPropertyPage(&psp[next_offset++], "OptionsDialogEnablesPanel1", TEXT(""), (DLGPROC) EnablesPanel1_Page_DlgProc);
 	FillInPropertyPage(&psp[next_offset++], "OptionsDialogEnablesPanel2", TEXT(""), (DLGPROC) EnablesPanel2_Page_DlgProc);
 	FillInPropertyPage(&psp[next_offset++], "OptionsDialogCurvePanel", TEXT(""), (DLGPROC) CurvesPanel_Page_DlgProc);
@@ -433,6 +450,425 @@ FillInPropertyPage(PROPSHEETPAGE *psp, char *dlg_id_name, LPSTR pszProc,
 	psp->pszTitle = pszProc;
 	psp->lParam = 0;
 }
+
+static BOOL APIENTRY 
+OSG1_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
+{
+	static PROPSHEETPAGE *ps;
+	LPPSHNOTIFY	lppsn;
+	short		cmd_id, user_clicked_apply_button;
+
+	switch (msg) {
+	case WM_INITDIALOG:
+		// Save the PROPSHEETPAGE information.
+		ps = (PROPSHEETPAGE *) (LPARAM) lParam;
+
+		// Center the window
+		Import_IO_Center_Window(parent_hwnd, GetParent(hDlg));
+
+		SendMessage(hDlg, WM_UPDATE_DIALOG_PARAMETERS, 0, 0L);
+		return (TRUE);
+	case WM_UPDATE_DIALOG_PARAMETERS:
+		CheckDlgButton(hDlg, IDD_OSG_STRIP_TEXTURE_PATHS, export_options->osgStripTexturePaths);
+		CheckDlgButton(hDlg, IDD_OSG_NORMALIZATION, export_options->osgNormalization);
+		CheckDlgButton(hDlg, IDD_OSG_BACKFACE_CULLING, export_options->osgBackfaceCulling);
+		CheckDlgButton(hDlg, IDD_OSG_DEBUG_TEXT_FILE, export_options->osgDebugTextFile);
+		CheckDlgButton(hDlg, IDD_OSG_WRITE_HIDDEN_NODES, export_options->osgWriteHiddenNodes);
+
+		/* Update the enable state of the controls */
+		SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+
+		return (TRUE);
+	case WM_UPDATE_DIALOG_ENABLES:
+		return(TRUE);
+	case WM_NOTIFY:
+    		switch (((NMHDR FAR *)  (LPARAM) lParam)->code) {
+		case PSN_KILLACTIVE:
+			// The page is either losing the activation, or the user pressed OK.
+           		// SetWindowLong(hDlg, DWL_MSGRESULT, FALSE);	// No error
+			break;
+                case PSN_APPLY:
+			// The Apply button was pressed, or the OK button was pressed
+			// and this message is being sent to all panels to have it send
+			// the control values to the toolkit.
+                OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, PSNRET_INVALID);	// Error initially
+
+			/* Only update the UI if the user clicked the 'Apply' button and not the 'Ok' button */
+			lppsn = (LPPSHNOTIFY)  (LPARAM) lParam;
+			user_clicked_apply_button = !lppsn->lParam;
+			if (!user_clicked_apply_button)
+				property_sheet_return_value = IDOK;
+
+           		OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
+			return(TRUE);
+		case PSN_QUERYCANCEL:
+			// The user has pressed CANCEL. Return FALSE to allow canceling, or TRUE to prevent it
+           		OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, FALSE);
+			property_sheet_return_value = IDCANCEL;
+			return(FALSE);
+		case PSN_RESET:
+			// User has pressed CANCEL and property sheet is about to be destroyed
+           		OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, FALSE);
+			property_sheet_return_value = IDCANCEL;
+			break;
+		case PSN_SETACTIVE:
+			// Property sheet is about to be activated. We set up the values of the controls here
+
+			/* Enable the 'Apply' button */
+			SendMessage(GetParent(hDlg), PSM_CHANGED, (WPARAM) hDlg, 0L);
+
+			/* Update the enable state of the controls */
+			SendMessage(hDlg, WM_UPDATE_DIALOG_PARAMETERS, 0, 0L);
+			SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+
+			break;
+                case PSN_HELP:
+			// The Help button was pressed
+			Import_IO_DisplayHelpTopic(hDlg, plugin_directory, HELP_FILENAME, "main");
+			break;
+		default:
+			return FALSE;
+	    	}
+		break;
+	case WM_COMMAND:
+		cmd_id = LOWORD(wParam);
+		switch (cmd_id) {
+			case IDD_BUTTON_ABOUT:
+				DialogBox(hDLLinstance, "AboutBox", parent_hwnd, AboutDlgProc);
+				return(TRUE);
+			case IDD_BUTTON_RESET:
+				if (IDYES == MessageBox(hDlg, "This will reset the values of this dialog box to their power-up defaults.\n\nAre you sure you want to do this?", "Confirmation Request", MB_APPLMODAL | MB_YESNO | MB_DEFBUTTON1 | MB_ICONQUESTION)) {
+					export_options->options_initialized = FALSE;
+					NI_Exporter_InitExportOptionVariables();
+					SendMessage(hDlg, WM_UPDATE_DIALOG_PARAMETERS, 0, 0L);
+				}
+				return(TRUE);
+
+			case IDD_OSG_STRIP_TEXTURE_PATHS:
+				export_options->osgStripTexturePaths = !export_options->osgStripTexturePaths;
+				CheckDlgButton(hDlg, IDD_OSG_STRIP_TEXTURE_PATHS, export_options->osgStripTexturePaths);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+			case IDD_OSG_NORMALIZATION:
+				export_options->osgNormalization = !export_options->osgNormalization;
+				CheckDlgButton(hDlg, IDD_OSG_NORMALIZATION, export_options->osgNormalization);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+			case IDD_OSG_BACKFACE_CULLING:
+				export_options->osgBackfaceCulling = !export_options->osgBackfaceCulling;
+				CheckDlgButton(hDlg, IDD_OSG_BACKFACE_CULLING, export_options->osgBackfaceCulling);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+			case IDD_OSG_DEBUG_TEXT_FILE:
+				export_options->osgDebugTextFile = !export_options->osgDebugTextFile;
+				CheckDlgButton(hDlg, IDD_OSG_DEBUG_TEXT_FILE, export_options->osgDebugTextFile);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+			case IDD_OSG_WRITE_HIDDEN_NODES:
+				export_options->osgWriteHiddenNodes = !export_options->osgWriteHiddenNodes;
+				CheckDlgButton(hDlg, IDD_OSG_WRITE_HIDDEN_NODES, export_options->osgWriteHiddenNodes);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+
+			default:
+				break;
+		}
+	}
+	return (FALSE);
+}
+
+static BOOL APIENTRY 
+OSG2_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
+{
+	static PROPSHEETPAGE *ps;
+	LPPSHNOTIFY	lppsn;
+	short		cmd_id, user_clicked_apply_button;
+
+	switch (msg) {
+	case WM_INITDIALOG:
+		// Save the PROPSHEETPAGE information.
+		ps = (PROPSHEETPAGE *) (LPARAM) lParam;
+
+		// Center the window
+		Import_IO_Center_Window(parent_hwnd, GetParent(hDlg));
+
+		SendMessage(hDlg, WM_UPDATE_DIALOG_PARAMETERS, 0, 0L);
+		return (TRUE);
+	case WM_UPDATE_DIALOG_PARAMETERS:
+		CheckDlgButton(hDlg, IDD_OSG_RUN_OPTIMIZER, export_options->osgRunOptimizer);
+		CheckDlgButton(hDlg, IDD_OSG_MERGE_GEODES, export_options->osgMergeGeodes);
+		CheckDlgButton(hDlg, IDD_OSG_SHARE_STATE, export_options->osgShareState);
+        CheckDlgButton(hDlg, IDD_OSG_MERGE_GEOMETRY, export_options->osgMergeGeometry);
+        CheckDlgButton(hDlg, IDD_OSG_CREATE_TRIANGLE_STRIPS, export_options->osgCreateTriangleStrips);
+        CheckDlgButton(hDlg, IDD_OSG_REMOVE_REDUNDANT_NODES, export_options->osgRemoveRedundantNodes);
+        CheckDlgButton(hDlg, IDD_OSG_STRIP_IMPLICIT_NAMES, export_options->osgStripImplicitNames);
+
+		/* Update the enable state of the controls */
+		SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+
+		return (TRUE);
+	case WM_UPDATE_DIALOG_ENABLES:
+        Import_IO_Set_Control_Enable(hDlg, IDD_OSG_MERGE_GEODES, export_options->osgRunOptimizer);
+        Import_IO_Set_Control_Enable(hDlg, IDD_OSG_SHARE_STATE, export_options->osgRunOptimizer);
+        Import_IO_Set_Control_Enable(hDlg, IDD_OSG_MERGE_GEOMETRY, export_options->osgRunOptimizer);
+        Import_IO_Set_Control_Enable(hDlg, IDD_OSG_CREATE_TRIANGLE_STRIPS, export_options->osgRunOptimizer);
+        Import_IO_Set_Control_Enable(hDlg, IDD_OSG_REMOVE_REDUNDANT_NODES, export_options->osgRunOptimizer);
+        Import_IO_Set_Control_Enable(hDlg, IDD_OSG_STRIP_IMPLICIT_NAMES, export_options->osgRunOptimizer);
+
+        return(TRUE);
+	case WM_NOTIFY:
+    		switch (((NMHDR FAR *)  (LPARAM) lParam)->code) {
+		case PSN_KILLACTIVE:
+			// The page is either losing the activation, or the user pressed OK.
+           		// SetWindowLong(hDlg, DWL_MSGRESULT, FALSE);	// No error
+			break;
+                case PSN_APPLY:
+			// The Apply button was pressed, or the OK button was pressed
+			// and this message is being sent to all panels to have it send
+			// the control values to the toolkit.
+           		OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, PSNRET_INVALID);	// Error initially
+
+			/* Only update the UI if the user clicked the 'Apply' button and not the 'Ok' button */
+			lppsn = (LPPSHNOTIFY)  (LPARAM) lParam;
+			user_clicked_apply_button = !lppsn->lParam;
+			if (!user_clicked_apply_button)
+				property_sheet_return_value = IDOK;
+
+           		OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
+			return(TRUE);
+		case PSN_QUERYCANCEL:
+			// The user has pressed CANCEL. Return FALSE to allow canceling, or TRUE to prevent it
+           		OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, FALSE);
+			property_sheet_return_value = IDCANCEL;
+			return(FALSE);
+		case PSN_RESET:
+			// User has pressed CANCEL and property sheet is about to be destroyed
+           		OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, FALSE);
+			property_sheet_return_value = IDCANCEL;
+			break;
+		case PSN_SETACTIVE:
+			// Property sheet is about to be activated. We set up the values of the controls here
+
+			/* Enable the 'Apply' button */
+			SendMessage(GetParent(hDlg), PSM_CHANGED, (WPARAM) hDlg, 0L);
+
+			/* Update the enable state of the controls */
+			SendMessage(hDlg, WM_UPDATE_DIALOG_PARAMETERS, 0, 0L);
+			SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+
+			break;
+                case PSN_HELP:
+			// The Help button was pressed
+			Import_IO_DisplayHelpTopic(hDlg, plugin_directory, HELP_FILENAME, "main");
+			break;
+		default:
+			return FALSE;
+	    	}
+		break;
+	case WM_COMMAND:
+		cmd_id = LOWORD(wParam);
+		switch (cmd_id) {
+			case IDD_BUTTON_ABOUT:
+				DialogBox(hDLLinstance, "AboutBox", parent_hwnd, AboutDlgProc);
+				return(TRUE);
+			case IDD_BUTTON_RESET:
+				if (IDYES == MessageBox(hDlg, "This will reset the values of this dialog box to their power-up defaults.\n\nAre you sure you want to do this?", "Confirmation Request", MB_APPLMODAL | MB_YESNO | MB_DEFBUTTON1 | MB_ICONQUESTION)) {
+					export_options->options_initialized = FALSE;
+					NI_Exporter_InitExportOptionVariables();
+					SendMessage(hDlg, WM_UPDATE_DIALOG_PARAMETERS, 0, 0L);
+				}
+				return(TRUE);
+
+            case IDD_OSG_RUN_OPTIMIZER:
+				export_options->osgRunOptimizer = !export_options->osgRunOptimizer;
+				CheckDlgButton(hDlg, IDD_OSG_RUN_OPTIMIZER, export_options->osgRunOptimizer);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+
+            case IDD_OSG_MERGE_GEODES:
+				export_options->osgMergeGeodes = !export_options->osgMergeGeodes;
+				CheckDlgButton(hDlg, IDD_OSG_MERGE_GEODES, export_options->osgMergeGeodes);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+
+            case IDD_OSG_SHARE_STATE:
+				export_options->osgShareState = !export_options->osgShareState;
+				CheckDlgButton(hDlg, IDD_OSG_SHARE_STATE, export_options->osgShareState);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+
+            case IDD_OSG_MERGE_GEOMETRY:
+				export_options->osgMergeGeometry = !export_options->osgMergeGeometry;
+				CheckDlgButton(hDlg, IDD_OSG_MERGE_GEOMETRY, export_options->osgMergeGeometry);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+
+            case IDD_OSG_CREATE_TRIANGLE_STRIPS:
+                export_options->osgCreateTriangleStrips = !export_options->osgCreateTriangleStrips;
+                CheckDlgButton(hDlg, IDD_OSG_CREATE_TRIANGLE_STRIPS, export_options->osgCreateTriangleStrips);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+
+            case IDD_OSG_REMOVE_REDUNDANT_NODES:
+				export_options->osgRemoveRedundantNodes = !export_options->osgRemoveRedundantNodes;
+				CheckDlgButton(hDlg, IDD_OSG_REMOVE_REDUNDANT_NODES, export_options->osgRemoveRedundantNodes);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+
+            case IDD_OSG_STRIP_IMPLICIT_NAMES:
+				export_options->osgStripImplicitNames = !export_options->osgStripImplicitNames;
+				CheckDlgButton(hDlg, IDD_OSG_STRIP_IMPLICIT_NAMES, export_options->osgStripImplicitNames);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+
+            default:
+				break;
+		}
+	}
+	return (FALSE);
+}
+
+static BOOL APIENTRY 
+OSG3_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
+{
+	static PROPSHEETPAGE *ps;
+	LPPSHNOTIFY	lppsn;
+	short		cmd_id, val, user_clicked_apply_button;
+
+	switch (msg) {
+	case WM_INITDIALOG:
+		// Save the PROPSHEETPAGE information.
+		ps = (PROPSHEETPAGE *) (LPARAM) lParam;
+
+		// Center the window
+		Import_IO_Center_Window(parent_hwnd, GetParent(hDlg));
+
+		SendMessage(hDlg, WM_UPDATE_DIALOG_PARAMETERS, 0, 0L);
+		return (TRUE);
+	case WM_UPDATE_DIALOG_PARAMETERS:
+		if ( export_options->osgInstanceFile )
+			val = IDD_OSG_INSTANCE_FILE_RB;
+		else if ( export_options->osgInstanceShared )
+			val = IDD_OSG_INSTANCE_SHARED_RB;
+		else
+			val = IDD_OSG_INSTANCE_IGNORE_RB;
+		CheckRadioButton( hDlg, IDD_OSG_INSTANCE_FILE_RB, IDD_OSG_INSTANCE_IGNORE_RB, val );
+
+        /* Update the enable state of the controls */
+		SendMessage( hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L );
+
+		return (TRUE);
+	case WM_UPDATE_DIALOG_ENABLES:
+		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_INSTANCE_FILE_RB, 1);
+		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_INSTANCE_SHARED_RB, 1);
+		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_INSTANCE_IGNORE_RB, 1);
+
+        return(TRUE);
+	case WM_NOTIFY:
+    		switch (((NMHDR FAR *)  (LPARAM) lParam)->code) {
+		case PSN_KILLACTIVE:
+			// The page is either losing the activation, or the user pressed OK.
+           		// SetWindowLong(hDlg, DWL_MSGRESULT, FALSE);	// No error
+			break;
+                case PSN_APPLY:
+			// The Apply button was pressed, or the OK button was pressed
+			// and this message is being sent to all panels to have it send
+			// the control values to the toolkit.
+           		OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, PSNRET_INVALID);	// Error initially
+
+			/* Only update the UI if the user clicked the 'Apply' button and not the 'Ok' button */
+			lppsn = (LPPSHNOTIFY)  (LPARAM) lParam;
+			user_clicked_apply_button = !lppsn->lParam;
+			if (!user_clicked_apply_button)
+				property_sheet_return_value = IDOK;
+
+           		OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
+			return(TRUE);
+		case PSN_QUERYCANCEL:
+			// The user has pressed CANCEL. Return FALSE to allow canceling, or TRUE to prevent it
+           		OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, FALSE);
+			property_sheet_return_value = IDCANCEL;
+			return(FALSE);
+		case PSN_RESET:
+			// User has pressed CANCEL and property sheet is about to be destroyed
+           		OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, FALSE);
+			property_sheet_return_value = IDCANCEL;
+			break;
+		case PSN_SETACTIVE:
+			// Property sheet is about to be activated. We set up the values of the controls here
+
+			/* Enable the 'Apply' button */
+			SendMessage(GetParent(hDlg), PSM_CHANGED, (WPARAM) hDlg, 0L);
+
+			/* Update the enable state of the controls */
+			SendMessage(hDlg, WM_UPDATE_DIALOG_PARAMETERS, 0, 0L);
+			SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+
+			break;
+                case PSN_HELP:
+			// The Help button was pressed
+			Import_IO_DisplayHelpTopic(hDlg, plugin_directory, HELP_FILENAME, "main");
+			break;
+		default:
+			return FALSE;
+	    	}
+		break;
+	case WM_COMMAND:
+		cmd_id = LOWORD(wParam);
+		switch (cmd_id) {
+			case IDD_BUTTON_ABOUT:
+				DialogBox(hDLLinstance, "AboutBox", parent_hwnd, AboutDlgProc);
+				return(TRUE);
+			case IDD_BUTTON_RESET:
+				if (IDYES == MessageBox(hDlg, "This will reset the values of this dialog box to their power-up defaults.\n\nAre you sure you want to do this?", "Confirmation Request", MB_APPLMODAL | MB_YESNO | MB_DEFBUTTON1 | MB_ICONQUESTION)) {
+					export_options->options_initialized = FALSE;
+					NI_Exporter_InitExportOptionVariables();
+					SendMessage(hDlg, WM_UPDATE_DIALOG_PARAMETERS, 0, 0L);
+				}
+				return(TRUE);
+
+			case IDD_OSG_INSTANCE_FILE_RB:
+				export_options->osgInstanceFile = TRUE;
+                export_options->osgInstanceShared = export_options->osgInstanceIgnore = FALSE;
+				CheckRadioButton( hDlg, IDD_OSG_INSTANCE_FILE_RB, IDD_OSG_INSTANCE_IGNORE_RB, IDD_OSG_INSTANCE_FILE_RB );
+				/* Update the enable state of the controls */
+				SendMessage( hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L );
+				return(TRUE);
+
+            case IDD_OSG_INSTANCE_SHARED_RB:
+				export_options->osgInstanceShared = TRUE;
+                export_options->osgInstanceFile = export_options->osgInstanceIgnore = FALSE;
+				CheckRadioButton( hDlg, IDD_OSG_INSTANCE_FILE_RB, IDD_OSG_INSTANCE_IGNORE_RB, IDD_OSG_INSTANCE_SHARED_RB );
+				/* Update the enable state of the controls */
+				SendMessage( hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L );
+				return(TRUE);
+
+            case IDD_OSG_INSTANCE_IGNORE_RB:
+				export_options->osgInstanceIgnore = TRUE;
+                export_options->osgInstanceShared = export_options->osgInstanceFile = FALSE;
+				CheckRadioButton( hDlg, IDD_OSG_INSTANCE_FILE_RB, IDD_OSG_INSTANCE_IGNORE_RB, IDD_OSG_INSTANCE_IGNORE_RB );
+				/* Update the enable state of the controls */
+				SendMessage( hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L );
+
+			default:
+				break;
+		}
+	}
+	return (FALSE);
+}
+
 
 /* Enables Panel # 1*/
 
@@ -1326,7 +1762,7 @@ BitmapConversionPanel_Page_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lP
 
 			// For v4.1.9 or newer, the 'autoconvert_bitmap_format' can either be the file's extension (.jpg)
 			// or the GUID for the 2D file exporter, such as 'Nc_NG_TOOLKIT_IMAGE_EXPORTER_GUID__JPEG'
-			if (Nv_FileFormatGUID && !stricmp(Nv_FileFormatGUID, export_options->autoconvert_bitmap_format))
+			if (Nv_FileFormatGUID && !_stricmp(Nv_FileFormatGUID, export_options->autoconvert_bitmap_format))
  				SendDlgItemMessage(hDlg, IDD_EXPORTER_BITMAP_FORMAT_COMBO, CB_SETCURSEL, count, 0L);
 			else if (!strncmp(Nv_FileFormatExtension, export_options->autoconvert_bitmap_format, 4))
  				SendDlgItemMessage(hDlg, IDD_EXPORTER_BITMAP_FORMAT_COMBO, CB_SETCURSEL, count, 0L);
@@ -2149,6 +2585,10 @@ AboutDlgProc(HWND hDlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	switch (msg) {
 	case WM_INITDIALOG:
 		Import_IO_Center_Window(parent_hwnd, hDlg);
+		SendMessage(hDlg, WM_UPDATE_DIALOG_PARAMETERS, 0, 0L);
+		return (TRUE);
+	case WM_UPDATE_DIALOG_PARAMETERS:
+		SetDlgItemText( hDlg, IDD_OSG_EXPORTER_VERSION, export_options->osgExporterVersion );
 		return (TRUE);
 	case WM_COMMAND:
 		if (LOWORD(wparam) == IDOK) {
