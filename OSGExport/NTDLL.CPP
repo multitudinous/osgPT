@@ -70,7 +70,7 @@ POSSIBILITY OF SUCH DAMAGES.
 // ----------------------->>>>  Definitions   <<<<--------------------------
 
 // Title for this options dialog box
-#define	PROPERTY_SHEET_TITLE    "Okino 3D Database Text Dumper"
+#define	PROPERTY_SHEET_TITLE    "ISU OpenSceneGraph Exporter"
 
 // ----------------------->>>>  Local Variables  <<<<--------------------------
 
@@ -381,14 +381,14 @@ ShowOptionsDialogBox(HINSTANCE hDLLinstance, HWND hwndOwner)
 
 
 
-
-	FillInPropertyPage(&psp[next_offset++], "OptionsDialogEnablesPanel1", TEXT(""), (DLGPROC) EnablesPanel1_Page_DlgProc);
-	FillInPropertyPage(&psp[next_offset++], "OptionsDialogEnablesPanel2", TEXT(""), (DLGPROC) EnablesPanel2_Page_DlgProc);
-	FillInPropertyPage(&psp[next_offset++], "OptionsDialogCurvePanel", TEXT(""), (DLGPROC) CurvesPanel_Page_DlgProc);
-	FillInPropertyPage(&psp[next_offset++], "OptionsDialogMeshProcessingPanel", TEXT(""), (DLGPROC) MeshProcessingPanel_Page_DlgProc);
-	FillInPropertyPage(&psp[next_offset++], "OptionsDialogBitmapConversionPanel", TEXT(""), (DLGPROC) BitmapConversionPanel_Page_DlgProc);
-	FillInPropertyPage(&psp[next_offset++], "OptionsDialogBitmapFilePathPanel", TEXT(""), (DLGPROC) PathsPanel_Page_DlgProc);
-	FillInPropertyPage(&psp[next_offset++], "OptionsDialogAnimationExportPanel", TEXT(""), (DLGPROC) AnimationPanel_Page_DlgProc);
+    //These lines must be commented out or else there is a crash related to memory - mccdo
+	//FillInPropertyPage(&psp[next_offset++], "OptionsDialogEnablesPanel1", TEXT(""), (DLGPROC) EnablesPanel1_Page_DlgProc);
+	//FillInPropertyPage(&psp[next_offset++], "OptionsDialogEnablesPanel2", TEXT(""), (DLGPROC) EnablesPanel2_Page_DlgProc);
+	//FillInPropertyPage(&psp[next_offset++], "OptionsDialogCurvePanel", TEXT(""), (DLGPROC) CurvesPanel_Page_DlgProc);
+	//FillInPropertyPage(&psp[next_offset++], "OptionsDialogMeshProcessingPanel", TEXT(""), (DLGPROC) MeshProcessingPanel_Page_DlgProc);
+	//FillInPropertyPage(&psp[next_offset++], "OptionsDialogBitmapConversionPanel", TEXT(""), (DLGPROC) BitmapConversionPanel_Page_DlgProc);
+	//FillInPropertyPage(&psp[next_offset++], "OptionsDialogBitmapFilePathPanel", TEXT(""), (DLGPROC) PathsPanel_Page_DlgProc);
+	//FillInPropertyPage(&psp[next_offset++], "OptionsDialogAnimationExportPanel", TEXT(""), (DLGPROC) AnimationPanel_Page_DlgProc);
 
 	// Set up the main property sheet window
 	psh.dwSize = sizeof(PROPSHEETHEADER);
