@@ -281,9 +281,9 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "Comments", "Contact information: Email: info@oskew-matrix.com, WEB: http://www.skew-matrix.com, Phone: 303-859-9466.\0"
+            VALUE "Comments", "Contact information: Email: info@skew-matrix.com, WEB: http://www.skew-matrix.com, Phone: 303-859-9466.\0"
             VALUE "CompanyName", "Skew Matrix Software LLC\0"
-            VALUE "FileDescription", "exp_isu_osg.dll - ISU-funded OpenSceneGraph export converter DLL\0"
+            VALUE "FileDescription", "exp_isu_osg.dll - OpenSceneGraph export converter DLL\0"
             VALUE "FileVersion", "3, 0, 0, 0\0"
             VALUE "InternalName", "exp_isu_osg.dll\0"
             VALUE "LegalCopyright", "Copyright © 2008 Skew Matrix Software LLC, All Rights Reserved\0"
