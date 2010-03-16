@@ -70,7 +70,7 @@ POSSIBILITY OF SUCH DAMAGES.
 // ----------------------->>>>  Definitions   <<<<--------------------------
 
 // Title for this options dialog box
-#define	PROPERTY_SHEET_TITLE    "ISU OpenSceneGraph Exporter"
+#define	PROPERTY_SHEET_TITLE    "OpenSceneGraph Exporter"
 
 // ----------------------->>>>  Local Variables  <<<<--------------------------
 
