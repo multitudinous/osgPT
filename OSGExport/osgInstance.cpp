@@ -62,7 +62,7 @@ writeInstancesAsFiles( const std::string& extension, const osgDB::ReaderWriter::
         const std::string fileName = iInfo._fileName;
         osg::ref_ptr< osg::Node > node = iInfo._subgraph.get();
 
-        node = performSceneGraphOptimizations( node );
+        node = performSceneGraphOptimizations( node.get() );
 
         Export_IO_UpdateStatusDisplay( "instance", (char *)(fileName.c_str()), "Exporting instance as file." );
         bool success = osgDB::writeNodeFile( *node, fileName, opt );
