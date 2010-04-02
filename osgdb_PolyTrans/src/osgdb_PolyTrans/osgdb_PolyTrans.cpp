@@ -25,7 +25,7 @@ public:
         _optionShowExportOptions( "ShowExportOptions" ),
         _optionRejectExtensions( "RejectExtensions" ),
         _optionPolyTransPluginPreference( "PolyTransPluginPreference" ),
-        _intermediateFileNameExt( "flt" ),
+        _intermediateFileNameExt( "ive" ),
         _deleteIntermediateFile( false ),
         _cachedLoad( true ),
         _showImportOptions( true ),
@@ -42,18 +42,13 @@ public:
 		std::string envStr( "OSG_POLYTRANS_CONFIG_FILE" );
         char* charPtr = getenv( envStr.c_str() );
         std::string osgPolytransConfigName;
-        if ( charPtr )
-        {
-            osgPolytransConfigName.assign( charPtr );
-        }
+        if( charPtr != NULL )
+            osgPolytransConfigName = std::string( charPtr );
         else
-        {
-            osgPolytransConfigName = "ptconfigfile.txt";
-        }
+            osgPolytransConfigName = std::string( "ptconfigfile.txt" );
         
-		//if (char* charPtr = getenv( envStr.c_str() ))
 		{
-			std::string fullName = osgDB::findDataFile( std::string( charPtr ) );
+			std::string fullName = osgDB::findDataFile( osgPolytransConfigName );
 			if (!fullName.empty())
             {
 				osg::notify( osg::INFO ) << "osgdb_PolyTrans: Loading " << envStr << ": \"" << fullName << "\"." << std::endl;
@@ -289,10 +284,10 @@ public:
 			}
 
 
-			//This function will export the model that is currently loaded in PolyTrans into an 
-			// OpenFlight file. The default behavior is to use the same filename as the file being
-			// imported, but with the extension .flt.  You can use a COMHelper config file property
-			// to set a .flt filename.
+			//This function will export the model that is currently loaded in PolyTrans into the
+			// intermediate file. The default behavior is to use the same filename as the file being
+			// imported, but with the extension .ive.  You can use a COMHelper config file property
+			// to set a different base filename or intermediate type.
 			if ( !polyTransComHelper.ExportPolyTransModelToIntermediateFile())
 			{
 				osg::notify(osg::FATAL) << "osgdb_PolyTrans:: Failed PolyTrans conversion. Can't export to intermediate file." << std::endl;

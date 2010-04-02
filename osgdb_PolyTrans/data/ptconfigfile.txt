@@ -34,9 +34,9 @@
 // NAME CHANGE. Formerly: COMHelper_BaseIntermediateFileName
 
 // Used to control the exporter that will be used for the intermediate file that is generated.
-// Set to flt for OpenFlight and obj for WaveFront.
-// Default if not specified: flt
-IntermediateFileNameExt obj
+// Set to flt for OpenFlight, obj for WaveFront, or osg/ive for OSG native.
+// Default if not specified: ive
+// IntermediateFileNameExt obj
 // NAME CHANGE. Formerly: COMHelper_IntermediateFileType
 
 // If set to "Y" or "true", the intermediate file will be deleted after loading.

@@ -25,11 +25,14 @@ Examples:
 
 Property: COMHelper_IntermediateFileType
 Required: no
-Purpose: Used to control the exporter that will be used for the intermediate file that is generated.  Use flt for
-         OpenFlight and obj for WaveFront.
+Purpose: Used to control the exporter that will be used for the intermediate file that is generated.
+         Supported: flt, obj, osg, ive
+Default: ive
 Examples:
          COMHelper_IntermediateFileType flt
          COMHelper_IntermediateFileType obj
+         COMHelper_IntermediateFileType osg
+         COMHelper_IntermediateFileType ive
 
 Property: COMHelper_ShowExportOptions:
 Required: no
@@ -57,7 +60,8 @@ Example: PolyTransImporter igs IGES v5.3
 
 Property: COMHelper_PolyTransINIFileName:
 Required: no
-Purpose: The .flt file that is generated could be put in a new folder, depending on that value set in the 
+Purpose: If flt is used as the intermediate file type,
+         the .flt file that is generated could be put in a new folder, depending on that value set in the 
          OpenFlight Export options window.  PolyTrans saves this value in its .ini file.  In the current version
 		 of PolyTrans, this file is located in the Windows folder (ie. c:\Windows\\polytrans.ini). Our code
 		 uses GetWindowsDirectory() to find this folder and look for a file named polytrans.ini.  If this is not
@@ -106,8 +110,6 @@ public:
     bool AttachToPolyTransCom( HINSTANCE anAppInstance );
     void DetachFromPolyTransCOM();
     bool ExportPolyTransModelToIntermediateFile();
-    bool ExportPolyTransModelToOpenFlight();
-    bool ExportPolyTransModelToWaveFront();
     bool ImportModelIntoPolyTrans( const std::string& aFileNameAndPathToImport );
     bool ResetPolyTrans();
 
