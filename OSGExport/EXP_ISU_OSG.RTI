@@ -36,7 +36,7 @@ Has_About_Dialog_Box		= 1
 Plugin_Descriptive_Name		= "OpenSceneGraph export plugin, funded by ISU and developed by Skew Matrix Software LLC"
 
 # An ASCII string added to the plug-ins main execution menu
-Menu_Description		= "OpenSceneGraph .ive/.osg"
+Menu_Description		= "OpenSceneGraph (.ive,.osg)"
 
 # The filter specification used for the Windows File-Save dialog box
 FileOpen_Filter_Spec		= "OpenSceneGraph Binary Files (*.ive)|*.ive|OpenSceneGraph Text Files (*.osg)|*.osg|"
