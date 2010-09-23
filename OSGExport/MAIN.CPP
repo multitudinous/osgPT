@@ -53,6 +53,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #include "main.h"	// Main includes for all modules
 
 #include "osg.h"
+#include <osg/Version>
 
 #include <windows.h>	// Only needed for the MessageBox() call
 
@@ -231,6 +232,8 @@ ExportConverter_Main(char *tokens[], char *data[], long *return_result, void *au
         OPTIONAL_FPRINTF(ofp, "OSG Filename = %s\n", osgFilename);
         OPTIONAL_FPRINTF(ofp, "#\n");
 
+        OPTIONAL_FPRINTF(ofp, "OSG Version = %d %d %d\n", OPENSCENEGRAPH_MAJOR_VERSION,
+            OPENSCENEGRAPH_MINOR_VERSION, OPENSCENEGRAPH_PATCH_VERSION );
         OPTIONAL_FPRINTF(ofp, "osgExporterVersion = %s\n", export_options->osgExporterVersion );
         OPTIONAL_FPRINTF(ofp, "#\n");
 
