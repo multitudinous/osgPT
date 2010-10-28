@@ -12,7 +12,7 @@
 	to derive a new export converter from the files contained in
 	this directory are provided in the online API documentation.
 
-  Copyright (c) 1988, 2006 Okino Computer Graphics, Inc. All Rights Reserved.
+  Copyright (c) 1988, 2009 Okino Computer Graphics, Inc. All Rights Reserved.
 
 This file is proprietary source code of Okino Computer Graphics, Inc. and it 
 is not to be disclosed to third parties, published, adopted, distributed,
@@ -84,7 +84,8 @@ static Nd_Void	NI_Exporter_WalkTree_Main_Callback(Nd_Walk_Tree_Info *wt_ptr, Nd_
 static Nd_Void	NI_Exporter_StartEnd_Hierarchy_Level_Callback(Nd_Token Nv_Parent_Type, char *Nv_Parent_Handle_Name, Nd_Short Nv_Current_Hierarchy_Level, Nd_Short Nv_Starting_New_Level);
 
 // Utility routines
-Nd_Void	NI_Exporter_DAGPath_UserDataMemoryFreeRoutine(void *data);
+static Nd_Void	NI_Exporter_DAGPath_UserDataMemoryFreeRoutine(void *data);
+
 /* ------------------------------------------------------------------------ */
 
 // Main entry point to perform the actual export conversion.
@@ -93,7 +94,6 @@ Nd_Void	NI_Exporter_DAGPath_UserDataMemoryFreeRoutine(void *data);
 
 #undef CURR_FN_NAME
 #define CURR_FN_NAME    "ExportConverter_Main()"
-
 
 	Nd_Void
 ExportConverter_Main(char *tokens[], char *data[], long *return_result, void *aux_ptr)
@@ -712,6 +712,9 @@ NI_Exporter_WalkTree_Main_Callback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status
 		// will have been created and stored in the core toolkit after this 
 		// function finishes and returns here. 
 	 	if (export_options->ena_object_animation) {
+			Nd_Int Nv_Active_Channels_Found = Nc_FALSE;
+			Ni_NodeHasActiveChannels( Nt_INSTANCE, handle_name, Nc_TRUE /* keyframe controllers only */, &Nv_Active_Channels_Found, Nt_CMDEND );
+			if ( Nv_Active_Channels_Found )
 			animation_data_is_available = NI_Exporter_QueryAndSetup_Object_Animation_Keyframe_Data( ofp, handle_name);
 
 			// If we are outputting animation data, then let's go examine the 
@@ -1080,7 +1083,7 @@ NI_Exporter_StartEnd_Hierarchy_Level_Callback(Nd_Token Nv_Parent_Type, char *Nv_
 // Ni_FreeHierarchyDAGPathLists() function is called at the end of the export
 // process. You don't ever have to touch or modify this function.
 
-	Nd_Void
+	static Nd_Void
 NI_Exporter_DAGPath_UserDataMemoryFreeRoutine(void *data)
 {
 	Ni_Free_Memory((char *) data);

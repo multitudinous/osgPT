@@ -4,10 +4,9 @@
                    Main Header File For a PolyTrans Exporter
 	----------------------------------------------------------------
 
-  Copyright (c) 1988, 2006 Okino Computer Graphics, Inc. All Rights Reserved.
+  Copyright (c) 1988, 2009 Okino Computer Graphics, Inc. All Rights Reserved.
 	  See the file main.cpp for Copyright and Ownership Descriptions
 
-	Last change:  RCL  17 Jan 2006    8:56 am
 *****************************************************************************/
 
 #ifndef __OSG_MAIN_H__
