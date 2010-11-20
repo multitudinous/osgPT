@@ -461,7 +461,7 @@ OSG1_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 {
 	static PROPSHEETPAGE *ps;
 	LPPSHNOTIFY	lppsn;
-	short		cmd_id, user_clicked_apply_button;
+	short		val, cmd_id, user_clicked_apply_button;
 
 	switch (msg) {
 	case WM_INITDIALOG:
@@ -480,11 +480,24 @@ OSG1_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 		CheckDlgButton(hDlg, IDD_OSG_DEBUG_TEXT_FILE, export_options->osgDebugTextFile);
 		CheckDlgButton(hDlg, IDD_OSG_WRITE_HIDDEN_NODES, export_options->osgWriteHiddenNodes);
 
+		if ( export_options->osgWriteFormat == 0 )
+			val = IDD_OSG_WRITE_FORMAT_OSG;
+		else if ( export_options->osgWriteFormat == 1 )
+			val = IDD_OSG_WRITE_FORMAT_IVE;
+		else
+		{ // unknown
+			export_options->osgWriteFormat = 0;
+			val = IDD_OSG_WRITE_FORMAT_OSG;
+		}
+		CheckRadioButton( hDlg, IDD_OSG_WRITE_FORMAT_OSG, IDD_OSG_WRITE_FORMAT_IVE, val );
+
 		/* Update the enable state of the controls */
 		SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
 
 		return (TRUE);
 	case WM_UPDATE_DIALOG_ENABLES:
+		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_WRITE_FORMAT_OSG, 1);
+		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_WRITE_FORMAT_IVE, 1);
 		return(TRUE);
 	case WM_NOTIFY:
     		switch (((NMHDR FAR *)  (LPARAM) lParam)->code) {
@@ -578,6 +591,20 @@ OSG1_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 				CheckDlgButton(hDlg, IDD_OSG_WRITE_HIDDEN_NODES, export_options->osgWriteHiddenNodes);
 				/* Update the enable state of the controls */
 				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+
+			case IDD_OSG_WRITE_FORMAT_OSG:
+				export_options->osgWriteFormat = 0;
+				CheckRadioButton( hDlg, IDD_OSG_WRITE_FORMAT_OSG, IDD_OSG_WRITE_FORMAT_IVE, IDD_OSG_WRITE_FORMAT_OSG );
+				/* Update the enable state of the controls */
+				SendMessage( hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L );
+				return(TRUE);
+
+            case IDD_OSG_WRITE_FORMAT_IVE:
+				export_options->osgWriteFormat = 1;
+				CheckRadioButton( hDlg, IDD_OSG_WRITE_FORMAT_OSG, IDD_OSG_WRITE_FORMAT_IVE, IDD_OSG_WRITE_FORMAT_IVE );
+				/* Update the enable state of the controls */
+				SendMessage( hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L );
 				return(TRUE);
 
 			default:
@@ -771,7 +798,7 @@ OSG3_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 			val = IDD_OSG_INSTANCE_IGNORE_RB;
 		CheckRadioButton( hDlg, IDD_OSG_INSTANCE_FILE_RB, IDD_OSG_INSTANCE_IGNORE_RB, val );
 
-        /* Update the enable state of the controls */
+		/* Update the enable state of the controls */
 		SendMessage( hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L );
 
 		return (TRUE);

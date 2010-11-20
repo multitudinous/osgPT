@@ -1,4 +1,4 @@
-
+#include <windows.h>
 #include "main.h"
 #include "osg.h"
 #include "osgSurface.h"
@@ -21,6 +21,7 @@
 
 
 #define	IGNORE_RED_FOLDERS_IN_HIERARCHY	Nc_TRUE
+#define POLYTRANS_OSG_EXPORTER_STATIC_GROUPS // make all groups have STATIC DataVariance to facilitate forced optimization
 
 Nd_Bool osgProcessMesh( Nd_Walk_Tree_Info *Nv_Info, char *master_object, osg::Geode* geode );
 
@@ -171,7 +172,7 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
     std::string handleNameStr( handleName );
     std::string extension( (char *)( Nv_Info->Nv_User_Data_Ptr1 ) );
 
-    Export_IO_UpdateStatusDisplay( "node", handleName, "Creating OSG scene graph data." );
+	Export_IO_UpdateStatusDisplay( "node", handleName, ": Creating OSG scene graph data." );
 
     // For instancing, the key name is the handle name with "#<n>" stripped off the end.
     std::string keyName = getKeyName( handleNameStr );
@@ -293,6 +294,9 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
             {
                 // Empty (no geometry) so create a Group to hold the children
                 newNode = (osg::Node*) new osg::Group;
+#ifdef POLYTRANS_OSG_EXPORTER_STATIC_GROUPS
+				newNode->setDataVariance(osg::Object::STATIC);
+#endif // POLYTRANS_OSG_EXPORTER_STATIC_GROUPS
             }
             else
                 // Create a Geode to hold the geometry.
@@ -345,6 +349,9 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
             // Ha! Overwrite _lastNode with a new Group. This will be
             //   the root of the shared subgraph.
             _lastNode = new osg::Group;
+#ifdef POLYTRANS_OSG_EXPORTER_STATIC_GROUPS
+			_lastNode->setDataVariance(osg::Object::STATIC);
+#endif // POLYTRANS_OSG_EXPORTER_STATIC_GROUPS
             _lastNode->setName( keyName );
         }
 
@@ -482,8 +489,36 @@ writeOSG( const char* out_filename, long *return_result )
 
         // Set OSG .ive/.osg export plugin Options.
         osgDB::ReaderWriter::Options* opt = new osgDB::ReaderWriter::Options;
-        const bool isIVE = osgDB::equalCaseInsensitive( extension, "ive" );
-        if (isIVE)
+
+		// <<<>> This block of code is commented out in favor of the following block,
+		// as this behavior seemed not to be what the requirements specified
+		// force file format from default if not specified
+        //bool isIVE = osgDB::equalCaseInsensitive( extension, "ive" );
+        //bool isOSG = osgDB::equalCaseInsensitive( extension, "osg" );
+		//if(!isIVE && !isOSG)
+
+		// strip any existing extension and force new one
+		bool isIVE = false, isOSG = false;
+	    std::string nameLessExtension = osgDB::getNameLessExtension( fileName );
+		fileName = nameLessExtension;
+
+		{ // no format indicated, use default from options
+			// this could be a switch case, but seems clearer and more flexible this way
+			if     (export_options->osgWriteFormat == 0) isOSG = true;
+			else if(export_options->osgWriteFormat == 1) isIVE = true;
+			else isOSG = true; // default to OSG if unrecognized
+
+			if(isOSG)
+			{
+				fileName.append(".osg");
+			} // if
+			else if(isIVE)
+			{
+				fileName.append(".ive");
+			} // if
+		} // if
+
+		if (isIVE)
             // Writing a .ive file. Tell it we don't have any texture image data.
             // When the .ive gets loaded, this forces the plugin to read the texture image file.
             opt->setOptionString( "noTexturesInIVEFile" );

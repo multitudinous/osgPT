@@ -12,7 +12,7 @@ FONT 8, "HELV"
  LTEXT "vX.x", IDD_OSG_EXPORTER_VERSION, 20, 20, 63, 8
  LTEXT "By Paul Martz", -1, 20, 30, 63, 8
 
- LTEXT "Copyright (c) 2008 Skew Matrix Software LLC.", -1, 10, 50, 163, 8
+ LTEXT "Copyright (c) 2008-2011 Skew Matrix Software LLC.", -1, 10, 50, 163, 8
  LTEXT "Portions Copyright (c) 2006 Okino Computer Graphics, Inc.", -1, 10, 60, 185, 8
  LTEXT "All Rights Reserved.", -1, 10, 70, 68, 8
 
@@ -35,6 +35,8 @@ FONT 8, "Helv"
  CHECKBOX "Backface culling", IDD_OSG_BACKFACE_CULLING, 24, 40, 156, 12
  CHECKBOX "Write debug text file", IDD_OSG_DEBUG_TEXT_FILE, 24, 52, 156, 12
  CHECKBOX "Write hidden nodes", IDD_OSG_WRITE_HIDDEN_NODES, 24, 64, 156, 12
+ RADIOBUTTON "Write to .osg file format", IDD_OSG_WRITE_FORMAT_OSG, 24, 76, 156, 12
+ RADIOBUTTON "Write to .ive file format", IDD_OSG_WRITE_FORMAT_IVE, 24, 88, 156, 12
  PUSHBUTTON "&Reset", IDD_BUTTON_RESET, 101, 111, 50, 14
  PUSHBUTTON "&About", IDD_BUTTON_ABOUT, 156, 111, 50, 14
 }
@@ -81,7 +83,13 @@ FONT 8, "Helv"
 #ifdef RC_INVOKED
 #ifndef _INC_WINDOWS2
 #define _INC_WINDOWS2
-	#include "winres.h"
+
+//#include "winres.h
+#ifndef IDC_STATIC
+	#include "winresrc.h"
+	#define IDC_STATIC 1000
+#endif //!IDC_STATIC
+
 #endif
 #endif
 
