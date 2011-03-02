@@ -920,16 +920,16 @@ OSG4_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 
         return(TRUE);
 	case WM_NOTIFY:
-    		switch (((NMHDR FAR *)  (LPARAM) lParam)->code) {
+    	switch (((NMHDR FAR *)  (LPARAM) lParam)->code) {
 		case PSN_KILLACTIVE:
 			// The page is either losing the activation, or the user pressed OK.
            		// SetWindowLong(hDlg, DWL_MSGRESULT, FALSE);	// No error
 			break;
-                case PSN_APPLY:
+        case PSN_APPLY:
 			// The Apply button was pressed, or the OK button was pressed
 			// and this message is being sent to all panels to have it send
 			// the control values to the toolkit.
-           		OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, PSNRET_INVALID);	// Error initially
+        	OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, PSNRET_INVALID);	// Error initially
 
 			/* Only update the UI if the user clicked the 'Apply' button and not the 'Ok' button */
 			lppsn = (LPPSHNOTIFY)  (LPARAM) lParam;
@@ -937,16 +937,16 @@ OSG4_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 			if (!user_clicked_apply_button)
 				property_sheet_return_value = IDOK;
 
-           		OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
+            OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
 			return(TRUE);
 		case PSN_QUERYCANCEL:
 			// The user has pressed CANCEL. Return FALSE to allow canceling, or TRUE to prevent it
-           		OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, FALSE);
+            OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, FALSE);
 			property_sheet_return_value = IDCANCEL;
 			return(FALSE);
 		case PSN_RESET:
 			// User has pressed CANCEL and property sheet is about to be destroyed
-           		OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, FALSE);
+            OKINO_SetWindowLong(hDlg, DWLP_MSGRESULT, FALSE);
 			property_sheet_return_value = IDCANCEL;
 			break;
 		case PSN_SETACTIVE:
@@ -960,7 +960,7 @@ OSG4_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 			SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
 
 			break;
-                case PSN_HELP:
+        case PSN_HELP:
 			// The Help button was pressed
 			Import_IO_DisplayHelpTopic(hDlg, plugin_directory, HELP_FILENAME, "main");
 			break;
@@ -985,23 +985,23 @@ OSG4_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 			case IDD_OSG_TEXT_OSGTEXT_RB:
 				export_options->osgTextOSGText = TRUE;
                 export_options->osgTextPolygons = export_options->osgTextDiscard = FALSE;
-				CheckRadioButton( hDlg, IDD_OSG_TEXT_OSGTEXT_RB, IDD_OSG_TEXT_DISCARD_RB, IDD_OSG_INSTANCE_FILE_RB );
+				CheckRadioButton( hDlg, IDD_OSG_TEXT_OSGTEXT_RB, IDD_OSG_TEXT_DISCARD_RB, IDD_OSG_TEXT_OSGTEXT_RB );
 				/* Update the enable state of the controls */
 				SendMessage( hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L );
 				return(TRUE);
 
-            case IDD_OSG_INSTANCE_SHARED_RB:
+            case IDD_OSG_TEXT_POLYGONS_RB:
 				export_options->osgTextPolygons = TRUE;
                 export_options->osgTextOSGText = export_options->osgTextDiscard = FALSE;
-				CheckRadioButton( hDlg, IDD_OSG_TEXT_OSGTEXT_RB, IDD_OSG_TEXT_DISCARD_RB, IDD_OSG_INSTANCE_FILE_RB );
+				CheckRadioButton( hDlg, IDD_OSG_TEXT_OSGTEXT_RB, IDD_OSG_TEXT_DISCARD_RB, IDD_OSG_TEXT_POLYGONS_RB );
 				/* Update the enable state of the controls */
 				SendMessage( hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L );
 				return(TRUE);
 
-            case IDD_OSG_INSTANCE_IGNORE_RB:
+            case IDD_OSG_TEXT_DISCARD_RB:
 				export_options->osgTextDiscard = TRUE;
                 export_options->osgTextOSGText = export_options->osgTextPolygons = FALSE;
-				CheckRadioButton( hDlg, IDD_OSG_TEXT_OSGTEXT_RB, IDD_OSG_TEXT_DISCARD_RB, IDD_OSG_INSTANCE_FILE_RB );
+				CheckRadioButton( hDlg, IDD_OSG_TEXT_OSGTEXT_RB, IDD_OSG_TEXT_DISCARD_RB, IDD_OSG_TEXT_DISCARD_RB );
 				/* Update the enable state of the controls */
 				SendMessage( hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L );
 

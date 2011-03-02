@@ -23,6 +23,7 @@
 #define	IGNORE_RED_FOLDERS_IN_HIERARCHY	Nc_TRUE
 
 Nd_Bool osgProcessMesh( Nd_Walk_Tree_Info *Nv_Info, char *master_object, osg::Geode* geode );
+Nd_Bool osgProcessText( Nd_Walk_Tree_Info *Nv_Info, char *master_object, osg::Geode* geode );
 
 extern Nd_Void	NI_Exporter_DAGPath_UserDataMemoryFreeRoutine(void *data);
 
@@ -417,10 +418,17 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 		/* NURBS curves or spline shapes. */
 		Ni_Inquire_Primitive( Nt_OBJECT, master_object, jdx, (Nd_Token *) &primitive_type, Nt_CMDEND );
 
-		// Special case: this is a spline shape primitive. Let's see what we should do with it.
-		if( primitive_type == Nt_TEXT3D )
+        if( !( export_options->osgTextPolygons ) &&
+		    ( primitive_type == Nt_TEXT3D ) )
         {
-            //Ni_Report_Error_printf( Nc_ERR_WARNING, "walkTreeCallback: Unsupported Ni_TEXT3D.\n" );
+            if( export_options->osgTextOSGText )
+            {
+                osgProcessText( Nv_Info, masterObject, geode );
+            }
+            else
+            {
+                // osgTextDiscard -- Do nothing.
+            }
         }
         else if( osgProcessMesh( Nv_Info, masterObject, geode ) )
         {
