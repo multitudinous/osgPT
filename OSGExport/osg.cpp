@@ -23,7 +23,9 @@
 #define	IGNORE_RED_FOLDERS_IN_HIERARCHY	Nc_TRUE
 
 Nd_Bool osgProcessMesh( Nd_Walk_Tree_Info *Nv_Info, char *master_object, osg::Geode* geode );
-Nd_Bool osgProcessText( Nd_Walk_Tree_Info *Nv_Info, char *master_object, osg::Geode* geode );
+Nd_Void osgProcessText( Nd_Walk_Tree_Info* Nv_Walk_Tree_Info_Ptr,
+	char* Nv_Master_Object, Nd_Int Nv_Primitive_Number,
+    char* instance_name, osg::Geode* geode );
 
 extern Nd_Void	NI_Exporter_DAGPath_UserDataMemoryFreeRoutine(void *data);
 
@@ -423,7 +425,7 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
         {
             if( export_options->osgTextOSGText )
             {
-                osgProcessText( Nv_Info, masterObject, geode );
+                osgProcessText( Nv_Info, masterObject, jdx, handleName, geode );
             }
             else
             {
