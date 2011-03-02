@@ -2,10 +2,12 @@
 
 #include "main.h"
 
+#include <osg/Geode>
+
 
 
 Nd_Bool
 osgProcessText( Nd_Walk_Tree_Info *Nv_Info, char *master_object, osg::Geode* geode )
 {
-    return( Ni_TRUE );
+    return( Nc_TRUE );
 }
