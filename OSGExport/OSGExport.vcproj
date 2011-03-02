@@ -552,6 +552,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\osgText.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\osgMetaData.cpp"
 				>
 			</File>
