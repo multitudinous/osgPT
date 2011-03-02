@@ -124,10 +124,6 @@ typedef struct Exporter_Options {
     char osgDebugTextFile;
     char osgWriteHiddenNodes;
 
-    char osgInstanceFile;
-    char osgInstanceShared;
-    char osgInstanceIgnore;
-
     char osgRunOptimizer;
     char osgMergeGeodes;
     char osgShareState;
@@ -135,6 +131,14 @@ typedef struct Exporter_Options {
     char osgCreateTriangleStrips;
     char osgRemoveRedundantNodes;
     char osgStripImplicitNames;
+
+    char osgInstanceFile;
+    char osgInstanceShared;
+    char osgInstanceIgnore;
+
+    char osgTextOSGText;
+    char osgTextPolygons;
+    char osgTextDiscard;
 
     char* osgExporterVersion;
     // END OSG

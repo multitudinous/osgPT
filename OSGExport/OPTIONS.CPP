@@ -91,10 +91,6 @@ NI_Exporter_SaveExportConvertOptions(char *ini_filepath)
     fprintf(fp, "Debug-Text-File = %d\n", export_options->osgDebugTextFile);
     fprintf(fp, "Write-Hidden-Nodes = %d\n", export_options->osgWriteHiddenNodes);
 
-    fprintf(fp, "Instance-File = %d\n", export_options->osgInstanceFile);
-    fprintf(fp, "Instance-Shared = %d\n", export_options->osgInstanceShared);
-    fprintf(fp, "Instance-Ignore = %d\n", export_options->osgInstanceIgnore);
-
     fprintf(fp, "Run-Optimizer = %d\n", export_options->osgRunOptimizer);
     fprintf(fp, "Merge-Geodes = %d\n", export_options->osgMergeGeodes);
     fprintf(fp, "Share-State = %d\n", export_options->osgShareState);
@@ -102,6 +98,14 @@ NI_Exporter_SaveExportConvertOptions(char *ini_filepath)
     fprintf(fp, "Create-Triangle-Strips = %d\n", export_options->osgCreateTriangleStrips);
     fprintf(fp, "Remove-Redundant-Nodes = %d\n", export_options->osgRemoveRedundantNodes);
     fprintf(fp, "Strip-Implicit-Names = %d\n", export_options->osgStripImplicitNames);
+
+    fprintf(fp, "Instance-File = %d\n", export_options->osgInstanceFile);
+    fprintf(fp, "Instance-Shared = %d\n", export_options->osgInstanceShared);
+    fprintf(fp, "Instance-Ignore = %d\n", export_options->osgInstanceIgnore);
+
+    fprintf(fp, "Text-OSGText = %d\n", export_options->osgTextOSGText );
+    fprintf(fp, "Text-Polygons = %d\n", export_options->osgTextPolygons);
+    fprintf(fp, "Text-Discard = %d\n", export_options->osgTextDiscard);
 
     fprintf(fp, "# Non-OSG options...\n");
 	fprintf(fp, "Output-Mesh-Data = %d\n", export_options->ena_mesh_data);
@@ -231,13 +235,6 @@ NI_Exporter_RestoreExportConvertOptions(char *ini_filepath)
 		else if (!strcmp(token, "Write-Hidden-Nodes"))
             export_options->osgWriteHiddenNodes = atoi(data);
 
-		else if (!strcmp(token, "Instance-File"))
-            export_options->osgInstanceFile = atoi(data);
-		else if (!strcmp(token, "Instance-Shared"))
-            export_options->osgInstanceShared = atoi(data);
-		else if (!strcmp(token, "Instance-Ignore"))
-            export_options->osgInstanceIgnore = atoi(data);
-
 		else if (!strcmp(token, "Run-Optimizer"))
             export_options->osgRunOptimizer = atoi(data);
 		else if (!strcmp(token, "Merge-Geodes"))
@@ -252,6 +249,20 @@ NI_Exporter_RestoreExportConvertOptions(char *ini_filepath)
             export_options->osgRemoveRedundantNodes = atoi(data);
 		else if (!strcmp(token, "Strip-Implicit-Names"))
             export_options->osgStripImplicitNames = atoi(data);
+
+		else if (!strcmp(token, "Instance-File"))
+            export_options->osgInstanceFile = atoi(data);
+		else if (!strcmp(token, "Instance-Shared"))
+            export_options->osgInstanceShared = atoi(data);
+		else if (!strcmp(token, "Instance-Ignore"))
+            export_options->osgInstanceIgnore = atoi(data);
+
+		else if (!strcmp(token, "Text-OSGText"))
+            export_options->osgTextOSGText = atoi(data);
+		else if (!strcmp(token, "Text-Polygons"))
+            export_options->osgTextPolygons = atoi(data);
+		else if (!strcmp(token, "Text-Discard"))
+            export_options->osgTextDiscard = atoi(data);
 
         // Non-OSG...
 		else if (!strcmp(token, "Output-Mesh-Data"))
@@ -445,10 +456,6 @@ NI_Exporter_InitExportOptionVariables()
         export_options->osgDebugTextFile = Nc_FALSE;
         export_options->osgWriteHiddenNodes = Nc_FALSE;
 
-        export_options->osgInstanceFile = Nc_FALSE; // write them as separate files
-        export_options->osgInstanceShared = Nc_TRUE; // share instances within a single-file scene graph
-        export_options->osgInstanceIgnore = Nc_FALSE; // ignore (copy) instances.
-
         export_options->osgRunOptimizer = Nc_TRUE;
         export_options->osgMergeGeodes = Nc_TRUE;
         export_options->osgShareState = Nc_TRUE;
@@ -456,6 +463,14 @@ NI_Exporter_InitExportOptionVariables()
         export_options->osgCreateTriangleStrips = Nc_TRUE;
         export_options->osgRemoveRedundantNodes = Nc_TRUE;
         export_options->osgStripImplicitNames = Nc_TRUE;
+
+        export_options->osgInstanceFile = Nc_FALSE; // write them as separate files
+        export_options->osgInstanceShared = Nc_TRUE; // share instances within a single-file scene graph
+        export_options->osgInstanceIgnore = Nc_FALSE; // ignore (copy) instances.
+
+        export_options->osgTextOSGText = Nc_TRUE; // Use osgText
+        export_options->osgTextPolygons = Nc_FALSE; // Convert text to polygons
+        export_options->osgTextDiscard = Nc_FALSE; // Discard text promitives
 
         char* expVersion = new char[ 32 ];
         sprintf( expVersion, "v%d.%d.%d%c", OSGEXP_MAJOR_VERSION, OSGEXP_MINOR_VERSION, OSGEXP_SUB_VERSION, 0 );

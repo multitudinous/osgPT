@@ -28,8 +28,13 @@
 #define IDD_OSG_INSTANCE_SHARED_RB 5201
 #define IDD_OSG_INSTANCE_IGNORE_RB 5202
 
+// OSG Panel 4, Text handling
+#define IDD_OSG_TEXT_OSGTEXT_RB 5300
+#define IDD_OSG_TEXT_POLYGONS_RB 5301
+#define IDD_OSG_TEXT_DISCARD_RB 5302
+
 // "About" dialog
-#define IDD_OSG_EXPORTER_VERSION 5300
+#define IDD_OSG_EXPORTER_VERSION 5400
 
 
 /* Enables panel # 1 */
