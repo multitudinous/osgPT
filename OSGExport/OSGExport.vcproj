@@ -75,7 +75,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib vc4_imp.lib vc4_nu.lib osgDBd.lib osgUtild.lib osgd.lib OpenThreadsd.lib"
+				AdditionalDependencies="comctl32.lib vc4_imp.lib vc4_nu.lib osgTextd.lib osgDBd.lib osgUtild.lib osgd.lib OpenThreadsd.lib"
 				OutputFile="C:\Program Files\polytrans\vcplugin\exp_isu_osg.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -177,7 +177,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib vc4_imp.lib vc4_nu.lib osgDB.lib osgUtil.lib osg.lib OpenThreads.lib"
+				AdditionalDependencies="comctl32.lib vc4_imp.lib vc4_nu.lib osgText.lib osgDB.lib osgUtil.lib osg.lib OpenThreads.lib"
 				OutputFile="C:\Program Files\polytrans\vcplugin\exp_isu_osg.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
