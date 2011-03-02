@@ -120,6 +120,7 @@ typedef struct Exporter_Options {
     char osgStripTexturePaths;
     char osgNormalization;
     char osgBackfaceCulling;
+    char osgUseBufferObjects;
     char osgDebugTextFile;
     char osgWriteHiddenNodes;
 

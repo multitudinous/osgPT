@@ -477,6 +477,7 @@ OSG1_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 		CheckDlgButton(hDlg, IDD_OSG_STRIP_TEXTURE_PATHS, export_options->osgStripTexturePaths);
 		CheckDlgButton(hDlg, IDD_OSG_NORMALIZATION, export_options->osgNormalization);
 		CheckDlgButton(hDlg, IDD_OSG_BACKFACE_CULLING, export_options->osgBackfaceCulling);
+		CheckDlgButton(hDlg, IDD_OSG_USE_BUFFER_OBJECTS, export_options->osgUseBufferObjects);
 		CheckDlgButton(hDlg, IDD_OSG_DEBUG_TEXT_FILE, export_options->osgDebugTextFile);
 		CheckDlgButton(hDlg, IDD_OSG_WRITE_HIDDEN_NODES, export_options->osgWriteHiddenNodes);
 
@@ -564,6 +565,12 @@ OSG1_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 			case IDD_OSG_BACKFACE_CULLING:
 				export_options->osgBackfaceCulling = !export_options->osgBackfaceCulling;
 				CheckDlgButton(hDlg, IDD_OSG_BACKFACE_CULLING, export_options->osgBackfaceCulling);
+				/* Update the enable state of the controls */
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+			case IDD_OSG_USE_BUFFER_OBJECTS:
+				export_options->osgUseBufferObjects = !export_options->osgUseBufferObjects;
+				CheckDlgButton(hDlg, IDD_OSG_USE_BUFFER_OBJECTS, export_options->osgUseBufferObjects);
 				/* Update the enable state of the controls */
 				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
 				return(TRUE);

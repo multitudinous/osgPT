@@ -123,7 +123,11 @@ countNodesCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 static Nd_Void
 walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 {
-	// In case there are 'red folders' (empty objects) in the hierarchy
+	Nd_Token 		primitive_type;
+	Nd_Int			Nv_Num_Defined_Primitives, jdx;
+	char			*handle_name, *master_object;
+
+    // In case there are 'red folders' (empty objects) in the hierarchy
 	// tree (cases of object instancing) we have to keep track of each
 	// instance in the tree based on DAG Paths (see explanation in the 
 	// file ni4_aux.h). This function adds a new DAG Path to this current
@@ -388,8 +392,41 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
     osg::Geode* geode = dynamic_cast< osg::Geode* >( newNode.get() );
     if( geode == NULL )
         Ni_Report_Error_printf( Nc_ERR_RAW_MSG, "Geode is NULL." );
-    if (osgProcessMesh( Nv_Info, masterObject, geode ))
-        Ni_Report_Error_printf( Nc_ERR_WARNING, "walkTreeCallback: Error return from osgProcessMesh.\n" );
+
+	handle_name = Nv_Info->Nv_Handle_Name;
+	if( !Nv_Info->Nv_Empty_Instance && !Nv_Info->Nv_Empty_Object )
+    {
+		/* Get the master object from which this instance was derived */
+		Ni_Inquire_Instance(handle_name,
+			Nt_MASTEROBJECT, (char **) &master_object, Nt_CMDSEP,
+			Nt_CMDEND);
+
+		/* Determine how many primitives this object has (should only be 1 in all modern cases) */
+		Ni_Inquire_Object(master_object,
+			Nt_NUMPRIMITIVES, (Nd_Int *) &Nv_Num_Defined_Primitives, Nt_CMDSEP,
+			Nt_CMDEND);
+	} else
+    {
+		Nv_Num_Defined_Primitives = 0;
+		master_object = NULL;
+	}
+
+    for( jdx=0; jdx<Nv_Num_Defined_Primitives; ++jdx )
+    {
+		/* Get the type of primitive. Most will be indexed polygon meshes, NURBS surfaces, */
+		/* NURBS curves or spline shapes. */
+		Ni_Inquire_Primitive( Nt_OBJECT, master_object, jdx, (Nd_Token *) &primitive_type, Nt_CMDEND );
+
+		// Special case: this is a spline shape primitive. Let's see what we should do with it.
+		if( primitive_type == Nt_TEXT3D )
+        {
+            //Ni_Report_Error_printf( Nc_ERR_WARNING, "walkTreeCallback: Unsupported Ni_TEXT3D.\n" );
+        }
+        else if( osgProcessMesh( Nv_Info, masterObject, geode ) )
+        {
+            Ni_Report_Error_printf( Nc_ERR_WARNING, "walkTreeCallback: Error return from osgProcessMesh.\n" );
+        }
+    }
 }
 
 static Nd_Void

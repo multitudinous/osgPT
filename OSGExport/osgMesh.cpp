@@ -488,6 +488,11 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
 	child_num = 0;
 
     Ni_Inquire_Primitive( Nt_OBJECT, object_name, child_num, &primitive_type, Nt_CMDEND );	// Get the type of this primitive
+    if( primitive_type == Nt_TEXT3D )
+    {
+        Ni_Report_Error_printf( Nc_ERR_WARNING, "osgProcessRawMeshPrimitiveCB: Skipping TEXT3D.", primitive_type );
+        return;
+    }
     if ( primitive_type != Nt_INDEXEDPOLYGONS)
     {
         // Currently experiencing a crash exporting some jt files and suspect it's
@@ -759,6 +764,17 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
             // Create a new Geometry.
             newGeom = new osg::Geometry;
             sgMap[ surfaceName ] = newGeom;
+
+            if( export_options->osgUseBufferObjects )
+            {
+                newGeom->setUseDisplayList( false );
+                newGeom->setUseVertexBufferObjects( true );
+            }
+            else
+            {
+                newGeom->setUseDisplayList( true );
+                newGeom->setUseVertexBufferObjects( false );
+            }
 
             newGeom->setVertexArray( v.get() );
             if (tc0.valid())

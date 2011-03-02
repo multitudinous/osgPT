@@ -87,6 +87,7 @@ NI_Exporter_SaveExportConvertOptions(char *ini_filepath)
     fprintf(fp, "Strip-Texture-Paths = %d\n", export_options->osgStripTexturePaths);
     fprintf(fp, "Normalization = %d\n", export_options->osgNormalization);
     fprintf(fp, "Backface-Culling = %d\n", export_options->osgBackfaceCulling);
+    fprintf(fp, "Use-Buffer-Objects = %d\n", export_options->osgUseBufferObjects);
     fprintf(fp, "Debug-Text-File = %d\n", export_options->osgDebugTextFile);
     fprintf(fp, "Write-Hidden-Nodes = %d\n", export_options->osgWriteHiddenNodes);
 
@@ -223,6 +224,8 @@ NI_Exporter_RestoreExportConvertOptions(char *ini_filepath)
             export_options->osgNormalization = atoi(data);
 		else if (!strcmp(token, "Backface-Culling"))
             export_options->osgBackfaceCulling = atoi(data);
+		else if (!strcmp(token, "Use-Buffer-Objects"))
+            export_options->osgUseBufferObjects = atoi(data);
 		else if (!strcmp(token, "Debug-Text-File"))
             export_options->osgDebugTextFile = atoi(data);
 		else if (!strcmp(token, "Write-Hidden-Nodes"))
@@ -438,6 +441,7 @@ NI_Exporter_InitExportOptionVariables()
         export_options->osgStripTexturePaths = Nc_TRUE;
         export_options->osgNormalization = Nc_TRUE;
         export_options->osgBackfaceCulling = Nc_TRUE;
+        export_options->osgUseBufferObjects = Nc_TRUE;
         export_options->osgDebugTextFile = Nc_FALSE;
         export_options->osgWriteHiddenNodes = Nc_FALSE;
 

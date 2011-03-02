@@ -240,6 +240,7 @@ ExportConverter_Main(char *tokens[], char *data[], long *return_result, void *au
         OPTIONAL_FPRINTF(ofp, "osgStripTexturePaths = %d\n", export_options->osgStripTexturePaths );
 	    OPTIONAL_FPRINTF(ofp, "osgNormalization = %d\n", export_options->osgNormalization );
 	    OPTIONAL_FPRINTF(ofp, "osgBackfaceCulling = %d\n", export_options->osgBackfaceCulling );
+	    OPTIONAL_FPRINTF(ofp, "osgUseBufferObjects = %d\n", export_options->osgUseBufferObjects );
 	    OPTIONAL_FPRINTF(ofp, "osgDebugTextFile = %d\n", export_options->osgDebugTextFile );
 	    OPTIONAL_FPRINTF(ofp, "osgWriteHiddenNodes = %d\n", export_options->osgWriteHiddenNodes );
         OPTIONAL_FPRINTF(ofp, "#\n");
