@@ -914,7 +914,7 @@ OSG4_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
 
 		return (TRUE);
 	case WM_UPDATE_DIALOG_ENABLES:
-		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_TEXT_OSGTEXT_RB, 1);
+		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_TEXT_OSGTEXT_RB, 0); // TBD text support.
 		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_TEXT_POLYGONS_RB, 1);
 		Import_IO_Set_Control_Enable(hDlg, IDD_OSG_TEXT_DISCARD_RB, 1);
 

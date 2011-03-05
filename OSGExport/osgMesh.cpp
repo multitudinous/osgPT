@@ -156,7 +156,7 @@ osgProcessMesh( Nd_Walk_Tree_Info *Nv_Info, char *master_object, osg::Geode* geo
 			Nv_TransformByDefaultCTM = Nt_OFF;
 		else
 			// Else, transform to world-space based on the option set on the options dialog box
-			Nv_TransformByDefaultCTM = (export_options->mesh_processing_transform_to_worldspace ? Nt_ON : Nt_OFF);
+			Nv_TransformByDefaultCTM = Nt_OFF;//(export_options->mesh_processing_transform_to_worldspace ? Nt_ON : Nt_OFF);
 
         	// This is the monster of all cover functions. It processes the geometric
         	// primitives associated with the current instance (usually only one).
@@ -765,16 +765,9 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
             newGeom = new osg::Geometry;
             sgMap[ surfaceName ] = newGeom;
 
-            if( export_options->osgUseBufferObjects )
-            {
-                newGeom->setUseDisplayList( false );
-                newGeom->setUseVertexBufferObjects( true );
-            }
-            else
-            {
-                newGeom->setUseDisplayList( true );
-                newGeom->setUseVertexBufferObjects( false );
-            }
+            const bool useVBO = ( export_options->osgUseBufferObjects != 0 );
+            newGeom->setUseVertexBufferObjects( useVBO );
+            newGeom->setUseDisplayList( !useVBO );
 
             newGeom->setVertexArray( v.get() );
             if (tc0.valid())

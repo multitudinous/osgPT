@@ -252,7 +252,7 @@ ExportConverter_Main(char *tokens[], char *data[], long *return_result, void *au
 	    OPTIONAL_FPRINTF(ofp, "osgCreateTriangleStrips = %d\n", export_options->osgCreateTriangleStrips );
 	    OPTIONAL_FPRINTF(ofp, "osgRemoveRedundantNodes = %d\n", export_options->osgRemoveRedundantNodes );
 	    OPTIONAL_FPRINTF(ofp, "osgStripImplicitNames = %d\n", export_options->osgStripImplicitNames );
-        OPTIONAL_FPRINTF(ofp, "#\n\n\n");
+        OPTIONAL_FPRINTF(ofp, "#\n");
 
 	    OPTIONAL_FPRINTF(ofp, "osgInstanceFile = %d\n", export_options->osgInstanceFile );
 	    OPTIONAL_FPRINTF(ofp, "osgInstanceShared = %d\n", export_options->osgInstanceShared );
@@ -262,7 +262,7 @@ ExportConverter_Main(char *tokens[], char *data[], long *return_result, void *au
 	    OPTIONAL_FPRINTF(ofp, "osgTextOSGText = %d\n", export_options->osgTextOSGText );
 	    OPTIONAL_FPRINTF(ofp, "osgTextPolygons = %d\n", export_options->osgTextPolygons );
 	    OPTIONAL_FPRINTF(ofp, "osgTextDiscard = %d\n", export_options->osgTextDiscard );
-        OPTIONAL_FPRINTF(ofp, "#\n");
+        OPTIONAL_FPRINTF(ofp, "#\n\n\n");
 
         // END OSG control values
         //
