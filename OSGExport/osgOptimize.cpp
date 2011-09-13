@@ -8,6 +8,7 @@
 #include <osgUtil/Optimizer>
 #include <osg/NodeVisitor>
 #include <osg/MatrixTransform>
+#include <sstream>
 
 #define POLYTRANS_OSG_EXPORTER_STRIP_ALL_NAMES // strips all human-recognizable names and replaces with generic name/number
 #define POLYTRANS_OSG_EXPORTER_FORCIBLY_OPTIMIZE // optimize everything heavily
