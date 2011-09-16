@@ -158,12 +158,12 @@ NI_Exporter_Output_Skin_Weights_By_Bone_Name(FILE *ofp,
 	char *instance_handle_name, char *master_object)
 {
 	Nd_Int 		Nv_NumWeightedVertices;
-	Nd_Int  	Nv_NumUniqueBones; 	// Number of unique bone names in the list
-	char 	 	**Nv_BoneNameList; 	// An array of string pointers, each pointer to the unique bone name
+	Nd_Int  	Nv_NumUniqueBones = NULL; 	// Number of unique bone names in the list
+	char 	 	**Nv_BoneNameList = NULL; 	// An array of string pointers, each pointer to the unique bone name
 	short		bone_num;
 	Nd_Int 		Nv_Num_Vertices_With_Weights;
-	Nd_Int 		*Nv_Vertex_Offsets;
-	Nd_Double  	*Nv_Weight_Array;
+	Nd_Int 		*Nv_Vertex_Offsets = NULL;
+	Nd_Double  	*Nv_Weight_Array = NULL;
 	Nd_Int		i;
 
 	// See if this mesh or NURBS patch has any skinned/weighted vertices

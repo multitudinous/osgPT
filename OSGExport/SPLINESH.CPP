@@ -194,6 +194,9 @@ NI_Exporter_List_Spline_Shape_Primitive(
 	// will have been created and stored in the core toolkit after this 
 	// function finishes and returns here. 
 	if (export_options->ena_object_animation && export_options->ena_hierarchy) {
+		Nd_Int Nv_Active_Channels_Found = Nc_FALSE;
+		Ni_NodeHasActiveChannels( Nt_INSTANCE, instance_name, Nc_TRUE /* keyframe controllers only */, &Nv_Active_Channels_Found, Nt_CMDEND );
+		if ( Nv_Active_Channels_Found )
 		animation_data_is_available = NI_Exporter_QueryAndSetup_Object_Animation_Keyframe_Data(ofp, instance_name);
 
 		// If we are outputting animation data, then let's go examine the 
