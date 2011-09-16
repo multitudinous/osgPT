@@ -9,7 +9,7 @@
 	   as the routines to save/load these options to an .ini file.
 	----------------------------------------------------------------
 
-  Copyright (c) 1988, 2006 Okino Computer Graphics, Inc. All Rights Reserved.
+  Copyright (c) 1988, 2009 Okino Computer Graphics, Inc. All Rights Reserved.
 
 This file is proprietary source code of Okino Computer Graphics, Inc. and it 
 is not to be disclosed to third parties, published, adopted, distributed,
@@ -45,7 +45,6 @@ SOFTWARE AND ITS ACCOMPANYING DOCUMENTATION, EVEN IF OKINO COMPUTER GRAPHICS,
 INC., OR ANY AGENT OF OKINO COMPUTER GRAPHICS, INC. HAS BEEN ADVISED OF THE   
 POSSIBILITY OF SUCH DAMAGES.
 
-	Last change:  RCL  20 May 2001    4:28 am
 *****************************************************************************/
 
 #include "main.h"	// Main include file for a PolyTrans exporter

@@ -6,7 +6,7 @@
 	     This module receives all the data of a 2D/3D PointSets.
 	----------------------------------------------------------------
 
-  Copyright (c) 1988, 2006 Okino Computer Graphics, Inc. All Rights Reserved.
+  Copyright (c) 1988, 2009 Okino Computer Graphics, Inc. All Rights Reserved.
 
 This file is proprietary source code of Okino Computer Graphics, Inc. and it 
 is not to be disclosed to third parties, published, adopted, distributed,

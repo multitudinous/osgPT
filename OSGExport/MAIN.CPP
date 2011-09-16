@@ -12,7 +12,7 @@
 	to derive a new export converter from the files contained in
 	this directory are provided in the online API documentation.
 
-  Copyright (c) 1988, 2006 Okino Computer Graphics, Inc. All Rights Reserved.
+  Copyright (c) 1988, 2009 Okino Computer Graphics, Inc. All Rights Reserved.
 
 This file is proprietary source code of Okino Computer Graphics, Inc. and it 
 is not to be disclosed to third parties, published, adopted, distributed,
@@ -85,6 +85,7 @@ static Nd_Void	NI_Exporter_StartEnd_Hierarchy_Level_Callback(Nd_Token Nv_Parent_
 
 // Utility routines
 Nd_Void	NI_Exporter_DAGPath_UserDataMemoryFreeRoutine(void *data);
+
 /* ------------------------------------------------------------------------ */
 
 // Main entry point to perform the actual export conversion.
@@ -93,7 +94,6 @@ Nd_Void	NI_Exporter_DAGPath_UserDataMemoryFreeRoutine(void *data);
 
 #undef CURR_FN_NAME
 #define CURR_FN_NAME    "ExportConverter_Main()"
-
 
 	Nd_Void
 ExportConverter_Main(char *tokens[], char *data[], long *return_result, void *aux_ptr)
