@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 
+//#define POLYTRANS_OSG_EXPORTER_STRIP_METADATA
 
 const std::string MetaDataCollector::LODCenterName( "FLT-LOD-NODE-CENTER" );
 const std::string MetaDataCollector::LODInName( "FLT-LOD-NODE-SWITCH-IN-DISTANCE" );
@@ -152,6 +153,7 @@ MetaDataCollector::getMetaData( const std::string& name, osg::Vec3& ret )
 void
 MetaDataCollector::store( osg::Node* node )
 {
+#ifndef POLYTRANS_OSG_EXPORTER_STRIP_METADATA
     MetaDataMap::const_iterator it = _map.begin();
     while (it != _map.end())
     {
@@ -159,4 +161,5 @@ MetaDataCollector::store( osg::Node* node )
         node->addDescription( it->second );
         it++;
     }
+#endif // !POLYTRANS_OSG_EXPORTER_STRIP_METADATA
 }

@@ -1,4 +1,4 @@
-
+#include <windows.h>
 #include "main.h"
 #include "osg.h"
 #include "osgSurface.h"
@@ -21,6 +21,7 @@
 
 
 #define	IGNORE_RED_FOLDERS_IN_HIERARCHY	Nc_TRUE
+//#define POLYTRANS_OSG_EXPORTER_STATIC_GROUPS // make all groups have STATIC DataVariance to facilitate forced optimization
 
 Nd_Bool osgProcessMesh( Nd_Walk_Tree_Info *Nv_Info, char *master_object, osg::Geode* geode );
 Nd_Void osgProcessText( Nd_Walk_Tree_Info* Nv_Walk_Tree_Info_Ptr,
@@ -300,6 +301,9 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
             {
                 // Empty (no geometry) so create a Group to hold the children
                 newNode = (osg::Node*) new osg::Group;
+#ifdef POLYTRANS_OSG_EXPORTER_STATIC_GROUPS
+				newNode->setDataVariance(osg::Object::STATIC);
+#endif // POLYTRANS_OSG_EXPORTER_STATIC_GROUPS
             }
             else
                 // Create a Geode to hold the geometry.
@@ -352,6 +356,9 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
             // Ha! Overwrite _lastNode with a new Group. This will be
             //   the root of the shared subgraph.
             _lastNode = new osg::Group;
+#ifdef POLYTRANS_OSG_EXPORTER_STATIC_GROUPS
+			_lastNode->setDataVariance(osg::Object::STATIC);
+#endif // POLYTRANS_OSG_EXPORTER_STATIC_GROUPS
             _lastNode->setName( keyName );
         }
 

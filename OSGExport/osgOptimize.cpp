@@ -8,6 +8,81 @@
 #include <osgUtil/Optimizer>
 #include <osg/NodeVisitor>
 #include <osg/MatrixTransform>
+#include <sstream>
+
+//#define POLYTRANS_OSG_EXPORTER_STRIP_ALL_NAMES // strips all human-recognizable names and replaces with generic name/number
+//#define POLYTRANS_OSG_EXPORTER_FORCIBLY_OPTIMIZE // optimize everything heavily
+
+
+// This NodeVisitor removes all node names 
+class StripAllNames : public osg::NodeVisitor
+{
+public:
+    StripAllNames( bool numberStrippedNames = true, osg::NodeVisitor::TraversalMode mode = osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN )
+      : osg::NodeVisitor( mode ),
+	  _groupNameBase("Group"), _nodeNameBase("Node"), _geodeNameBase("Geode"), _lodNameBase("LOD"),
+	  _groupCount(0), _nodeCount(0), _geodeCount(0), _lodCount(0), _numberStrippedNames(numberStrippedNames)
+    {}
+    ~StripAllNames() {}
+
+	void setGroupNameBase(const std::string newName) {_groupNameBase = newName;}
+	void setNodeNameBase(const std::string newName) {_nodeNameBase = newName;}
+	void setGeodeNameBase(const std::string newName) {_geodeNameBase = newName;}
+	void setLODNameBase(const std::string newName) {_lodNameBase = newName;}
+
+    void apply( osg::Node& node )
+    {
+		std::ostringstream formatter;
+		formatter << _nodeNameBase;
+		if(_numberStrippedNames)
+		{
+			formatter << " #" << _nodeCount++;
+		} // if
+        node.setName( formatter.str() );
+        traverse( node );
+    } // apply Node
+
+	void apply( osg::Geode& node )
+    {
+		std::ostringstream formatter;
+		formatter << _geodeNameBase;
+		if(_numberStrippedNames)
+		{
+			formatter << " #" << _nodeCount++;
+		} // if
+        node.setName( formatter.str() );
+        traverse( node );
+    } // apply Geode
+
+	void apply( osg::Group& node )
+    {
+		std::ostringstream formatter;
+		formatter << _groupNameBase;
+		if(_numberStrippedNames)
+		{
+			formatter << " #" << _nodeCount++;
+		} // if
+        node.setName( formatter.str() );
+        traverse( node );
+    } // apply Group
+
+	void apply( osg::LOD& node )
+    {
+		std::ostringstream formatter;
+		formatter << _lodNameBase;
+		if(_numberStrippedNames)
+		{
+			formatter << " #" << _nodeCount++;
+		} // if
+        node.setName( formatter.str() );
+        traverse( node );
+    } // apply LOD
+
+private:
+	std::string _groupNameBase, _nodeNameBase, _geodeNameBase, _lodNameBase;
+	unsigned _groupCount, _nodeCount, _geodeCount, _lodCount;
+	bool _numberStrippedNames;
+}; // StripAllNames
 
 
 
@@ -48,7 +123,7 @@ public:
 //  3. If the Group's name is not empty, then the child's name must either
 //     be empty, or wholly contain the Group name.
 //  4. If the Group's description list is not empty, then the child's description
-//     list must either be empty of identical to the Group's description list.
+//     list must either be empty or identical to the Group's description list.
 bool
 redundant( osg::Group* grp, osg::Node* child, std::string& preserveName, osg::Node::DescriptionList& preserveDL )
 {
@@ -150,6 +225,7 @@ performSceneGraphOptimizations( osg::Node* model )
     osgUtil::Optimizer uOpt;
 
     osg::Node* newRoot( model );
+
     if (export_options->osgRunOptimizer)
     {
         // Remove some PolyTrans-inserted node names
@@ -161,7 +237,7 @@ performSceneGraphOptimizations( osg::Node* model )
 
 
         // Share StateSets and merge the Geometry objects.
-        // Must use statis object detection to detect static StateSets.
+        // Must use static object detection to detect static StateSets.
         unsigned int flags = osgUtil::Optimizer::STATIC_OBJECT_DETECTION;
         if( export_options->osgShareState )
             flags |= osgUtil::Optimizer::SHARE_DUPLICATE_STATE;
@@ -201,6 +277,27 @@ performSceneGraphOptimizations( osg::Node* model )
         if( flags != 0 )
             uOpt.optimize( newRoot, flags );
     }
+
+// this operation is done after optimization, so as not to interfere with
+// the legitimate StripNames functionality which could break due to every
+// node acquiring a unique name during StripAllNames
+#ifdef POLYTRANS_OSG_EXPORTER_STRIP_ALL_NAMES
+	// this is set at compile time, not as a runtime option
+    StripAllNames stripAllNames(false);
+    model->accept( stripAllNames );
+#endif // POLYTRANS_OSG_EXPORTER_STRIP_ALL_NAMES
+
+// do another round of forcible optimizationg to lean down the structure
+// as much as possible
+#ifdef POLYTRANS_OSG_EXPORTER_FORCIBLY_OPTIMIZE
+	osgUtil::Optimizer fOpt;
+    unsigned int flags = osgUtil::Optimizer::DEFAULT_OPTIMIZATIONS;
+	uOpt.optimize( newRoot, flags );
+	// now spatialize any remaining groups
+	flags = osgUtil::Optimizer::SPATIALIZE_GROUPS;
+	uOpt.optimize( newRoot, flags );
+#endif // POLYTRANS_OSG_EXPORTER_FORCIBLY_OPTIMIZE
+
 
     return( newRoot );
 }
