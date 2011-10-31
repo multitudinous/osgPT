@@ -8,6 +8,8 @@
 #include <string>
 #include <map>
 
+#define POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE // modify the name field of Texture2D to mention how PolyTrans intended the texture to be utilized (diffuse, normal, etc)
+#define POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG // report excessive amounts of extra info
 
 // Forward declarations
 static Nd_Int surfaceTextureCB( Nd_Enumerate_Callback_Info *cbi_ptr );
@@ -20,11 +22,89 @@ TextureMap _textureMap;
 typedef std::map< std::string, SurfaceInfo > SurfaceMap;
 SurfaceMap _surfaceMap;
 
-
+// name is written to during execution
+void annotateTextureName( std::string& name, Export_IO_SurfTxtrParameters *surftxtr_info )
+{
+	std::string newName, usageString;
+	newName = "name=\'" + name + "'";
+	if(!strcmp(surftxtr_info->Nv_DiffuseColorBlendMask, "on"))
+	{
+		usageString += "[Nv_DiffuseColorBlendMask],";
+	} // if
+	if(!strcmp(surftxtr_info->Nv_AmbientColorBlendMask, "on"))
+	{
+		usageString += "[Nv_AmbientColorBlendMask],";
+	} // if
+	if(!strcmp(surftxtr_info->Nv_LuminousColorBlendMask, "on"))
+	{
+		usageString += "[Nv_LuminousColorBlendMask],";
+	} // if
+	if(!strcmp(surftxtr_info->Nv_SpecularColorBlendMask, "on"))
+	{
+		usageString += "[Nv_SpecularColorBlendMask],";
+	} // if
+	if(!strcmp(surftxtr_info->Nv_ModulateDiffuseColorToggle, "on"))
+	{
+		usageString += "[Nv_ModulateDiffuseColorToggle],";
+	} // if
+	if(!strcmp(surftxtr_info->Nv_ModulateAmbientColorToggle, "on"))
+	{
+		usageString += "[Nv_ModulateAmbientColorToggle],";
+	} // if
+	if(!strcmp(surftxtr_info->Nv_ModulateLuminousColorToggle, "on"))
+	{
+		usageString += "[Nv_ModulateLuminousColorToggle],";
+	} // if
+	if(!strcmp(surftxtr_info->Nv_ModulateSpecularColorToggle, "on"))
+	{
+		usageString += "[Nv_ModulateSpecularColorToggle],";
+	} // if
+	if(!strcmp(surftxtr_info->Nv_ModulateBumpToggle, "on"))
+	{
+		usageString += "[Nv_ModulateBumpToggle],";
+	} // if
+	if(!strcmp(surftxtr_info->Nv_ModulateFaceOpacityInvertToggle, "on"))
+	{
+		usageString += "[Nv_ModulateFaceOpacityInvertToggle],";
+	} // if
+	if(!strcmp(surftxtr_info->Nv_ModulateFaceOpacityToggle, "on"))
+	{
+		usageString += "[Nv_ModulateFaceOpacityToggle],";
+	} // if
+	if(!strcmp(surftxtr_info->Nv_ModulateDiffuseCoeffToggle, "on"))
+	{
+		usageString += "[Nv_ModulateDiffuseCoeffToggle],";
+	} // if
+	if(!strcmp(surftxtr_info->Nv_ModulateAmbientCoeffToggle, "on"))
+	{
+		usageString += "[Nv_ModulateAmbientCoeffToggle],";
+	} // if
+	if(!strcmp(surftxtr_info->Nv_ModulateLuminousCoeffToggle, "on"))
+	{
+		usageString += "[Nv_ModulateLuminousCoeffToggle],";
+	} // if
+	if(!strcmp(surftxtr_info->Nv_ModulateSpecularCoeffToggle, "on"))
+	{
+		usageString += "[Nv_ModulateSpecularCoeffToggle],";
+	} // if
+	if(!strcmp(surftxtr_info->Nv_ModulateReflectCoeffToggle, "on"))
+	{
+		usageString += "[Nv_ModulateReflectCoeffToggle],";
+	} // if
+	if(!usageString.empty())
+	{
+		newName += " usage=\'" + usageString + "'";
+	}
+	Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: annotateTextureName: original name %s", name.c_str());
+	name=newName; // this is how we return the result
+	Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: annotateTextureName: usageString %s", usageString.c_str());
+	Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: annotateTextureName: newName %s", newName.c_str());
+} // annotateTextureName
 
 osg::Texture2D*
 lookupTexture( const std::string& name )
 {
+	Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "lookupTexture: %s", name.c_str());
     TextureMap::const_iterator it = _textureMap.find( name );
     if (it != _textureMap.end())
         return (*it).second.get();
@@ -60,7 +140,7 @@ createMaterialCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 	if (cbi_ptr->Nv_Matches_Made == 0)
 		return(Nc_FALSE);
 
-	// Camera names prefixed with "NUGRAF___" are used internally in the
+	// Surface names prefixed with "NUGRAF___" are used internally in the
 	// Okino PolyTrans & NuGraf user interface. Ignore them. 
 	if (!strncmp(surface_name, "NUGRAF___", 9))
 		return(Nc_FALSE);
@@ -153,6 +233,16 @@ createMaterialCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 
     _surfaceMap[ nameStr ] = si;
 
+	// iterate all the textures defined for this surface
+	for(int textureNum(0); textureNum < si._tex.size(); textureNum++)
+	{
+		if (si._tex[textureNum].valid())
+		{
+			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "_surfaceMap[ %s ][%d] = %s.", nameStr.c_str(), textureNum, si._tex[textureNum]->getName().c_str());
+		} // if
+	} // for
+
+
 	return(Nc_FALSE);	/* Do not terminate the enumeration */
 }
 
@@ -188,12 +278,18 @@ createTextureCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 	Export_IO_Inquire_Texture( (char*)texture_defn_name, &txtr_info );
 
 
-    std::string nameStr( texture_defn_name );
+    // here we create the 'prototype' texture. If texture usage annotation is
+	// enabled, we will not use this texture directly, but rather in surfaceTextureCB
+	// we will clone it and rename it to reflect the per-surface-usage
+	std::string nameStr( texture_defn_name );
     osg::ref_ptr< osg::Texture2D > tex = new osg::Texture2D;
     _textureMap[ nameStr ] = tex.get();
 
     tex->setName( nameStr );
 
+#ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+	Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: Export createTextureCB: %s [%s]", nameStr.c_str(), txtr_info.Nv_Image_Filename);
+#endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
 
 	if (txtr_info.Nv_Image_Filename != (char *) 0)
     {
@@ -307,7 +403,82 @@ surfaceTextureCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 
 	Export_IO_Inquire_SurfaceTextureLayerParameters( (char*)surface_name, (char*)texture_layer_name, &surftxtr_info);
 
-    si->_tex = lookupTexture( surftxtr_info.Nv_Texture_Texturelink_Name );
+	// solve the many-to-one texture to surface mapping
+	osg::ref_ptr<osg::Texture2D> surfaceTexture;
+	std::string searchString(surftxtr_info.Nv_Texture_Texturelink_Name);
+#ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE
+	std::string annotatedString(searchString); // provide base name for annotating code
+	annotateTextureName(annotatedString, &surftxtr_info); // annotate this string for specialization
+
+#ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+	Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: Annotated name %s.", annotatedString.c_str());
+#endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+
+	// is there already a texture specialized to this usage?
+	surfaceTexture = lookupTexture( annotatedString );
+	if(surfaceTexture.valid())
+	{ // yes there is, use it
+		// at this point, no code is necessary here, but this "if" is preserved to make structure clearer
+#ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+		Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: Using specialized texture %s.", annotatedString.c_str());
+#endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+	} // if
+#endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE
+	if(!surfaceTexture.valid()) // this is not an else so that it works if the above code is ifdef'ed out
+	{ // not doing annotation, or no specialized texture found, so look for basic or prototypical texture
+		surfaceTexture = lookupTexture( searchString );
+	}
+	if(surfaceTexture.valid())
+	{
+#ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE
+		// if usage annotation is enabled, use this as a prototype texture to
+		// create a copy, rename the copy to embed the usage metadata, and then write
+		// (and store for caching) the specialized texture
+#ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+		Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: cloning.");
+#endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+		osg::ref_ptr<osg::Texture2D> specializedSurfaceTexture = new osg::Texture2D(*(surfaceTexture.get())); // clone prototype texture
+		if(specializedSurfaceTexture.valid())
+		{
+#ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: cloning successful.");
+#endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+			// rename specialized texture with annotation
+			specializedSurfaceTexture->setName(annotatedString);
+			// add to _textureMap under specialized name so we can cache and use it again later if needed
+			_textureMap[ annotatedString ] = specializedSurfaceTexture.get();
+			surfaceTexture = specializedSurfaceTexture.get(); // set up so that the rest of the code works with this specialized texture
+		} // if
+		else
+		{
+#ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: failed to clone prototype texture %s into specialized texture.", surfaceTexture->getName().c_str());
+#endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+		}
+#endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE
+		if(!strcmp(surftxtr_info.Nv_ModulateDiffuseColorToggle, "on"))
+		{ // Color Toggle=yes: use as diffuse (unit 0)
+#ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: Reordering diffuse texture to slot 0.");
+#endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+			// this doesn't know how to deal with multiple diffuse layers, the last one encountered one will win slot 0
+			si->_tex.insert(si->_tex.begin(), surfaceTexture); // place diffuse as Unit 0 at the head of the vector
+			// <<<>>> we may need to handle rearranging texcoords too, see osgProcessRawMeshPrimitiveCB() in osgSurface.cpp
+		} // if
+		else
+		{ // Color Toggle=no: leave as some other unit number
+			si->_tex.push_back(surfaceTexture); // <<<>>> this should be done in some kind of more controlled order, but what?
+		} // else
+#ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+		Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: lookupTexture succeeded. Assigned %s to %d.", surftxtr_info.Nv_Texture_Texturelink_Name, si);
+#endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+	} // if
+	else
+	{
+#ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+		Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: lookupTexture failed.");
+#endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+	} // else
 
 #if 0
 	Export_IO_Inquire_SurfaceTextureLayerParameters(surface_name, texture_layer_name, &surftxtr_info);

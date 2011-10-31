@@ -630,7 +630,7 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
         coords++;
     }
 
-    osg::ref_ptr< osg::Vec2Array > tc0;
+    osg::ref_ptr< osg::Vec2Array > tc0; // <<<>>> this would need to be extended to handle multiple texture layers of UV coords
     osg::ref_ptr< osg::Vec3Array > normal;
     osg::ref_ptr< osg::Vec4Array > color;
 
@@ -678,7 +678,7 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
 						user_defined_arrays__indices, user_defined_arrays__shared_with_vertices_enable == Nt_ON, Nc_TRUE, "Texture", animation_data_is_available, instance_name,
 						user_defined_arrays__handle_name, user_defined_arrays__guid, user_defined_arrays__flags, user_defined_arrays__datatype, user_defined_arrays__size_of_each_element_in_coord_array, 0L);
 
-                    tc0 = new osg::Vec2Array;
+                    tc0 = new osg::Vec2Array; // <<<>>> this would need to be extended to handle multiple texture layers of UV coords
                     Nd_Struct_XYZ* texcoords = (Nd_Struct_XYZ*)user_defined_arrays__element_list;
                     tc0->resize( user_defined_arrays__num_coords );
                     int idx;
@@ -771,7 +771,7 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
 
             newGeom->setVertexArray( v.get() );
             if (tc0.valid())
-                newGeom->setTexCoordArray( 0, tc0.get() );
+                newGeom->setTexCoordArray( 0, tc0.get() ); // <<<>>> this would need to be extended to handle multiple texture layers of UV coords (avoid hardcoded 0)
             if (normal.valid())
             {
                 newGeom->setNormalArray( normal.get() );
@@ -792,8 +792,15 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
                 osg::Material* mat = new osg::Material( *( si._mat ) );
                 ss->setAttribute( mat );
             }
-            if (si._tex.valid())
-                ss->setTextureAttributeAndModes( 0, si._tex.get() );
+
+			// iterate all the textures defined for this surface
+			for(int textureNum(0); textureNum < si._tex.size(); textureNum++)
+			{
+				if (si._tex[textureNum].valid())
+				{
+					ss->setTextureAttributeAndModes( textureNum, si._tex[textureNum].get() );
+				} // if
+			} // for
 
             if (si._faceAlpha != 1.0)
             {

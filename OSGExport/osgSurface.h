@@ -19,7 +19,7 @@ struct SurfaceInfo
     SurfaceInfo( const SurfaceInfo& si )
     {
         _mat = si._mat.get();
-        _tex = si._tex.get();
+        _tex = si._tex; // copy whole container
         _faceAlpha = si._faceAlpha;
         _reflectAlpha = si._reflectAlpha;
     }
@@ -27,7 +27,7 @@ struct SurfaceInfo
     {}
 
     osg::ref_ptr< osg::Material > _mat;
-    osg::ref_ptr< osg::Texture2D > _tex;
+	std::vector< osg::ref_ptr< osg::Texture2D > > _tex; // vector to permit multiple texture layers per surface
 
     float _faceAlpha;
     float _reflectAlpha;
