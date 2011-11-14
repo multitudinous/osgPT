@@ -11,6 +11,15 @@
 #define POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE // modify the name field of Texture2D to mention how PolyTrans intended the texture to be utilized (diffuse, normal, etc)
 #define POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG // report excessive amounts of extra info
 
+// If this option is set, the three options below seem mostly irrelevant,
+// but for it to work, either PLACE_DIFFUSE_FIRST or _LAST must be chosen
+//#define POLYTRANS_OSG_EXPORTER_ONLY_DIFFUSE // Only export textures believed to be diffuse maps
+
+// define ONE of the following three
+#define POLYTRANS_OSG_EXPORTER_NO_REORDER // leave textures in their original order
+//#define POLYTRANS_OSG_EXPORTER_PLACE_DIFFUSE_FIRST // move diffuse texture to first texture unit
+//#define POLYTRANS_OSG_EXPORTER_PLACE_DIFFUSE_LAST // move diffuse texture to last texture unit
+
 // Forward declarations
 static Nd_Int surfaceTextureCB( Nd_Enumerate_Callback_Info *cbi_ptr );
 
@@ -456,6 +465,7 @@ surfaceTextureCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 #endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
 		}
 #endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE
+#ifdef POLYTRANS_OSG_EXPORTER_PLACE_DIFFUSE_FIRST
 		if(!strcmp(surftxtr_info.Nv_ModulateDiffuseColorToggle, "on"))
 		{ // Color Toggle=yes: use as diffuse (unit 0)
 #ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
@@ -467,8 +477,33 @@ surfaceTextureCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 		} // if
 		else
 		{ // Color Toggle=no: leave as some other unit number
-			si->_tex.push_back(surfaceTexture); // <<<>>> this should be done in some kind of more controlled order, but what?
+#ifndef POLYTRANS_OSG_EXPORTER_ONLY_DIFFUSE
+			si->_tex.push_back(surfaceTexture); // perhaps this should be done in some kind of more controlled order, but what?
+#endif // POLYTRANS_OSG_EXPORTER_ONLY_DIFFUSE
 		} // else
+#endif // POLYTRANS_OSG_EXPORTER_PLACE_DIFFUSE_FIRST
+#ifdef POLYTRANS_OSG_EXPORTER_PLACE_DIFFUSE_LAST
+			if(!strcmp(surftxtr_info.Nv_ModulateDiffuseColorToggle, "on"))
+			{ // Color Toggle=yes: use as diffuse (unit 0)
+#ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+				Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: Placing diffuse texture in last slot.");
+#endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+				// this doesn't know how to deal with multiple diffuse layers, the last one encountered one will win the last slot
+				si->_tex.push_back(surfaceTexture); // tack onto the end
+				// <<<>>> we may need to handle rearranging texcoords too, see osgProcessRawMeshPrimitiveCB() in osgSurface.cpp
+			} // if
+			else
+			{ // Color Toggle=no: leave as some other unit number
+#ifndef POLYTRANS_OSG_EXPORTER_ONLY_DIFFUSE
+				si->_tex.insert(si->_tex.begin(), surfaceTexture); // place at front to keep diffuse as last (reverses order)
+#endif // POLYTRANS_OSG_EXPORTER_ONLY_DIFFUSE
+			} // else
+#endif // POLYTRANS_OSG_EXPORTER_PLACE_DIFFUSE_LAST
+#ifdef POLYTRANS_OSG_EXPORTER_NO_REORDER // don't move diffuse to first or last
+		{ // Color Toggle=no: leave as some other unit number
+			si->_tex.push_back(surfaceTexture); // perhaps this should be done in some kind of more controlled order, but what?
+		} // else
+#endif // POLYTRANS_OSG_EXPORTER_NO_REORDER
 #ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
 		Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: lookupTexture succeeded. Assigned %s to %d.", surftxtr_info.Nv_Texture_Texturelink_Name, si);
 #endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
