@@ -794,35 +794,17 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
 
             newGeom->setVertexArray( v.get() );
             if (tc0.valid())
-			{
 				newGeom->setTexCoordArray( 0, tc0.get() );
-				Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "TEXDEBUG: Setting tc0.");
-			}
 			if (tc1.valid())
-			{
 				newGeom->setTexCoordArray( 1, tc1.get() );
-				Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "TEXDEBUG: Setting tc1.");
-			}
 			if (tc2.valid())
-			{
 				newGeom->setTexCoordArray( 2, tc2.get() );
-				Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "TEXDEBUG: Setting tc2.");
-			}
 			if (tc3.valid())
-			{
 				newGeom->setTexCoordArray( 3, tc3.get() );
-				Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "TEXDEBUG: Setting tc3.");
-			}
 			if (tc4.valid())
-			{
 				newGeom->setTexCoordArray( 4, tc4.get() );
-				Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "TEXDEBUG: Setting tc4.");
-			}
 			if (tc5.valid())
-			{
 				newGeom->setTexCoordArray( 5, tc5.get() );
-				Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "TEXDEBUG: Setting tc5.");
-			}
             if (normal.valid())
             {
                 newGeom->setNormalArray( normal.get() );
