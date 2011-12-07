@@ -92,6 +92,7 @@ POSSIBILITY OF SUCH DAMAGES.
 // version of Okino software.
 //
 
+#define POLYTRANS_OSG_EXPORTER_UV_ARRAYS_MAX 6 // See tc0-tc5
 
 /* ------------------>>>>  Function Prototypes  <<<<------------------------ */
 Nd_Void	osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Info, Nd_Int *Nv_Return_Status );
@@ -610,7 +611,7 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
     // PSEUDOCODE:
     // Get vertex array
     // Get normal, texcoord, color arrays
-    // Empty mao of surface names to Geometry objects.
+    // Empty map of surface names to Geometry objects.
     // Iterate over each primitive:
     //   Get surface name
     //   Get or create Geometry for this surface
@@ -630,9 +631,13 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
         coords++;
     }
 
-    osg::ref_ptr< osg::Vec2Array > tc0; // <<<>>> this would need to be extended to handle multiple texture layers of UV coords
+	// Too many arrays of arrays gets ugly, so we just have discrete tc0-tc5 vars
+	// this should correspond with POLYTRANS_OSG_EXPORTER_UV_ARRAYS_MAX
+	osg::ref_ptr< osg::Vec2Array > curTexCoordArray, tc0, tc1, tc2, tc3, tc4, tc5;
     osg::ref_ptr< osg::Vec3Array > normal;
     osg::ref_ptr< osg::Vec4Array > color;
+
+	unsigned int numTexCoordArrays(0);
 
     // Add additional data (normal, color, tex coords, etc
 	if (Nv_Num_User_Coords_Arrays && Nv_Coord_Array_Names) {
@@ -678,16 +683,34 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
 						user_defined_arrays__indices, user_defined_arrays__shared_with_vertices_enable == Nt_ON, Nc_TRUE, "Texture", animation_data_is_available, instance_name,
 						user_defined_arrays__handle_name, user_defined_arrays__guid, user_defined_arrays__flags, user_defined_arrays__datatype, user_defined_arrays__size_of_each_element_in_coord_array, 0L);
 
-                    tc0 = new osg::Vec2Array; // <<<>>> this would need to be extended to handle multiple texture layers of UV coords
-                    Nd_Struct_XYZ* texcoords = (Nd_Struct_XYZ*)user_defined_arrays__element_list;
-                    tc0->resize( user_defined_arrays__num_coords );
-                    int idx;
-                    for (idx=0; idx<user_defined_arrays__num_coords; idx++)
-                    {
-                        osg::Vec2& texcoord = (*tc0)[ idx ];
-                        texcoord.set( texcoords->x, texcoords->y );
-                        texcoords++;
-                    }
+                    if(numTexCoordArrays < POLYTRANS_OSG_EXPORTER_UV_ARRAYS_MAX)
+					{
+						curTexCoordArray = new osg::Vec2Array; // <<<>>> this would need to be extended to handle multiple texture layers of UV coords
+						Nd_Struct_XYZ* texcoords = (Nd_Struct_XYZ*)user_defined_arrays__element_list;
+						curTexCoordArray->resize( user_defined_arrays__num_coords );
+						int idx;
+						for (idx=0; idx<user_defined_arrays__num_coords; idx++)
+						{
+							osg::Vec2& texcoord = (*curTexCoordArray)[ idx ];
+							texcoord.set( texcoords->x, texcoords->y );
+							texcoords++;
+						}
+
+						// assign to proper tcn variable
+						switch(numTexCoordArrays)
+						{
+						case 0: tc0 = curTexCoordArray; break;
+						case 1: tc1 = curTexCoordArray; break;
+						case 2: tc2 = curTexCoordArray; break;
+						case 3: tc3 = curTexCoordArray; break;
+						case 4: tc4 = curTexCoordArray; break;
+						case 5: tc5 = curTexCoordArray; break;
+						default: break;
+						} // switch
+
+						numTexCoordArrays++; // record how many we have so far
+						curTexCoordArray = NULL; // prevent anything dangling
+					} // if numTexCoordArrays
                 }
 				else if (user_defined_arrays__type == Nt_COLOR)
                 {
@@ -771,7 +794,35 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
 
             newGeom->setVertexArray( v.get() );
             if (tc0.valid())
-                newGeom->setTexCoordArray( 0, tc0.get() ); // <<<>>> this would need to be extended to handle multiple texture layers of UV coords (avoid hardcoded 0)
+			{
+				newGeom->setTexCoordArray( 0, tc0.get() );
+				Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "TEXDEBUG: Setting tc0.");
+			}
+			if (tc1.valid())
+			{
+				newGeom->setTexCoordArray( 1, tc1.get() );
+				Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "TEXDEBUG: Setting tc1.");
+			}
+			if (tc2.valid())
+			{
+				newGeom->setTexCoordArray( 2, tc2.get() );
+				Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "TEXDEBUG: Setting tc2.");
+			}
+			if (tc3.valid())
+			{
+				newGeom->setTexCoordArray( 3, tc3.get() );
+				Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "TEXDEBUG: Setting tc3.");
+			}
+			if (tc4.valid())
+			{
+				newGeom->setTexCoordArray( 4, tc4.get() );
+				Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "TEXDEBUG: Setting tc4.");
+			}
+			if (tc5.valid())
+			{
+				newGeom->setTexCoordArray( 5, tc5.get() );
+				Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "TEXDEBUG: Setting tc5.");
+			}
             if (normal.valid())
             {
                 newGeom->setNormalArray( normal.get() );
