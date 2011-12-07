@@ -9,7 +9,7 @@
 #include <map>
 
 #define POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE // modify the name field of Texture2D to mention how PolyTrans intended the texture to be utilized (diffuse, normal, etc)
-#define POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG // report excessive amounts of extra info
+//#define POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG // report excessive amounts of extra info
 
 // If this option is set, the three options below seem mostly irrelevant,
 // but for it to work, either PLACE_DIFFUSE_FIRST or _LAST must be chosen
@@ -104,16 +104,22 @@ void annotateTextureName( std::string& name, Export_IO_SurfTxtrParameters *surft
 	{
 		newName += " usage=\'" + usageString + "'";
 	}
+#ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
 	Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: annotateTextureName: original name %s", name.c_str());
+#endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
 	name=newName; // this is how we return the result
+#ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
 	Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: annotateTextureName: usageString %s", usageString.c_str());
 	Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: annotateTextureName: newName %s", newName.c_str());
+#endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
 } // annotateTextureName
 
 osg::Texture2D*
 lookupTexture( const std::string& name )
 {
-	Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "lookupTexture: %s", name.c_str());
+#ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+	Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: lookupTexture: %s", name.c_str());
+#endif // POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
     TextureMap::const_iterator it = _textureMap.find( name );
     if (it != _textureMap.end())
         return (*it).second.get();
@@ -247,7 +253,9 @@ createMaterialCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 	{
 		if (si._tex[textureNum].valid())
 		{
-			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "_surfaceMap[ %s ][%d] = %s.", nameStr.c_str(), textureNum, si._tex[textureNum]->getName().c_str());
+#ifdef POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
+			Ni_Report_Error_printf(Nc_ERR_RAW_MSG, "DEBUG: _surfaceMap[ %s ][%d] = %s.", nameStr.c_str(), textureNum, si._tex[textureNum]->getName().c_str());
+#endif POLYTRANS_OSG_EXPORTER_ANNOTATE_TEXTURE_USAGE_DEBUG
 		} // if
 	} // for
 
