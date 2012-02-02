@@ -322,6 +322,16 @@ createTextureCB( Nd_Enumerate_Callback_Info *cbi_ptr )
         tex->setImage( image );
 	}
 
+	// Handle wrap/repeat
+	if(!strcmp(txtr_info.Nv_WrapU_EnableToggle, "on"))
+	{
+		tex->setWrap(osg::Texture2D::WRAP_S,osg::Texture2D::REPEAT);
+	}
+	if(!strcmp(txtr_info.Nv_WrapV_EnableToggle, "on"))
+	{
+		tex->setWrap(osg::Texture2D::WRAP_T,osg::Texture2D::REPEAT);
+	}
+
 #if 0
 	if (txtr_info.Nv_Type == Nt_IMAGE)  {
 		OPTIONAL_FPRINTF(ofp, "\nTexture definition '%s' uses a 2d Texture Image.\n", texture_defn_name);
