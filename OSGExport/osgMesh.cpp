@@ -793,18 +793,6 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
             newGeom->setUseDisplayList( !useVBO );
 
             newGeom->setVertexArray( v.get() );
-            if (tc0.valid())
-				newGeom->setTexCoordArray( 0, tc0.get() );
-			if (tc1.valid())
-				newGeom->setTexCoordArray( 1, tc1.get() );
-			if (tc2.valid())
-				newGeom->setTexCoordArray( 2, tc2.get() );
-			if (tc3.valid())
-				newGeom->setTexCoordArray( 3, tc3.get() );
-			if (tc4.valid())
-				newGeom->setTexCoordArray( 4, tc4.get() );
-			if (tc5.valid())
-				newGeom->setTexCoordArray( 5, tc5.get() );
             if (normal.valid())
             {
                 newGeom->setNormalArray( normal.get() );
@@ -815,9 +803,34 @@ osgProcessRawMeshPrimitiveCB( Nd_ConvertandProcessRawPrimitive_Info *Nv_Prp_Ptr,
             newGeom->setColorArray( color.get() );
             newGeom->setColorBinding( colorBinding );
 
-            osg::StateSet* ss = newGeom->getOrCreateStateSet();
+			
+			// look up surface so we can do special handling of texture units lacking their own UV array (so we'll assin them UV array 0)
+			const SurfaceInfo& si = lookupSurface( surfaceName );
+			if (tc0.valid())
+				newGeom->setTexCoordArray( 0, tc0.get() );
+			if (tc1.valid())
+				newGeom->setTexCoordArray( 1, tc1.get() );
+			else if(si._tex.size() > 1) // do we have a Texture #1, but no tc1?
+				newGeom->setTexCoordArray( 1, tc0.get() ); // sub in tc0 in slot 1
+			if (tc2.valid())
+				newGeom->setTexCoordArray( 2, tc2.get() );
+			else if(si._tex.size() > 2) // do we have a Texture #2, but no tc2?
+				newGeom->setTexCoordArray( 2, tc0.get() ); // sub in tc0 in slot 2
+			if (tc3.valid())
+				newGeom->setTexCoordArray( 3, tc3.get() );
+			else if(si._tex.size() > 3) // do we have a Texture #3, but no tc3?
+				newGeom->setTexCoordArray( 3, tc0.get() ); // sub in tc0 in slot 3
+			if (tc4.valid())
+				newGeom->setTexCoordArray( 4, tc4.get() );
+			else if(si._tex.size() > 4) // do we have a Texture #4, but no tc4?
+				newGeom->setTexCoordArray( 4, tc0.get() ); // sub in tc0 in slot 4
+			if (tc5.valid())
+				newGeom->setTexCoordArray( 5, tc5.get() );
+			else if(si._tex.size() > 5) // do we have a Texture #5, but no tc5?
+				newGeom->setTexCoordArray( 5, tc0.get() ); // sub in tc0 in slot 5
+
+			osg::StateSet* ss = newGeom->getOrCreateStateSet();
             ss->setDataVariance( osg::Object::STATIC ); // Facilitate StateSet sharing.
-            const SurfaceInfo& si = lookupSurface( surfaceName );
             if (si._mat.valid())
             {
                 // Must make a copy because app could possibly tweak this on
