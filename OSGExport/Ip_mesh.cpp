@@ -268,7 +268,7 @@ NI_OutputMesh(FILE *ofp, Nd_Walk_Tree_Info *Nv_Info, char *master_object)
         		Nt_WANTQUADSONLY, Nt_ENABLED, mesh_processing_want_quads_only, Nt_CMDSEP,
 
         		// Set to Nt_ON to cause 4 or more sided polygons to become triangulated
-        		Nt_WANTTRIANGLESONLY, Nt_ENABLED, mesh_processing_want_triangles_only, Nt_CMDSEP,
+        		Nt_WANTTRIANGLESONLY, Nt_ENABLED, Nt_ON, Nt_CMDSEP,
 
 			// Set to Nt_ON to cause polygons which are not entirely planar to be triangulated.
 			// Polygons are deemed non-planar if any vertex (in object-space coordinates) is

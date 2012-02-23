@@ -183,7 +183,7 @@ osgProcessMesh( Nd_Walk_Tree_Info *Nv_Info, char *master_object, osg::Geode* geo
         		// colors and UV tangent vectors will be (optionally) duplicated
         		// in place so that all share the same index array as the vertices.
         		// This is required, for example, by the 3D Studio (.3ds) and RIB exporters.
-        		Nt_USESHAREDINDICEARRAY, Nt_ENABLED, Nt_ON, Nt_CMDSEP,
+        		Nt_USESHAREDINDICEARRAY, Nt_ENABLED, Nt_ON, Nt_CMDSEP, // off
 
         		// Set this option to Nt_ON if the exporter module can handle indices
         		// which are negative (for the normals, uv texture coordinates, vertex
@@ -253,10 +253,10 @@ osgProcessMesh( Nd_Walk_Tree_Info *Nv_Info, char *master_object, osg::Geode* geo
 			    Nt_SORTPOLYGONSBYMATERIALASSIGNMENTS, Nt_ENABLED, mesh_processing_sort_polygons_by_material_assignments, Nt_CMDSEP,
 
         		// Set to Nt_ON to cause non-convex polygons to become triangulated
-        		Nt_WANTCONVEXONLY, Nt_ENABLED, Nt_ON, Nt_CMDSEP,
+        		Nt_WANTCONVEXONLY, Nt_ENABLED, Nt_ON, Nt_CMDSEP, // off
 
         		// Set to Nt_ON to cause 5 or more sided polygons to become triangulated
-        		Nt_WANTQUADSONLY, Nt_ENABLED, Nt_ON, Nt_CMDSEP,
+        		Nt_WANTQUADSONLY, Nt_ENABLED, Nt_OFF, Nt_CMDSEP,
 
         		// Set to Nt_ON to cause 4 or more sided polygons to become triangulated
         		Nt_WANTTRIANGLESONLY, Nt_ENABLED, Nt_ON, Nt_CMDSEP,
