@@ -182,24 +182,31 @@ createMaterialCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 
     mat->setName( nameStr );
 
-    osg::Vec3 diffuse( surf_info.Nv_Surface_Color[Na_RED], surf_info.Nv_Surface_Color[Na_GREEN], 
-		    surf_info.Nv_Surface_Color[Na_BLUE] );
-
-    osg::Vec3 ambient;
-    if ( !strncmp( surf_info.Nv_AmbientColorToggle, "on", 2) )
+    osg::Vec3 ambient, diffuse;
+    if( export_options->osgDiffAmbWhite )
     {
-        ambient.set( surf_info.Nv_Ambient_Color[Na_RED], surf_info.Nv_Ambient_Color[Na_GREEN], 
-		    surf_info.Nv_Ambient_Color[Na_BLUE] );
+        ambient = diffuse = osg::Vec3( 1., 1., 1. );
     }
     else
     {
-        ambient = diffuse;
-    }
-    mat->setAmbient( osg::Material::FRONT_AND_BACK,
-        osg::Vec4( ambient * surf_info.Nv_Ambient_Coeff, 1. ) );
+        diffuse.set( surf_info.Nv_Surface_Color[Na_RED], surf_info.Nv_Surface_Color[Na_GREEN], 
+		    surf_info.Nv_Surface_Color[Na_BLUE] );
+        diffuse *= surf_info.Nv_Diffuse_Coeff;
 
-    mat->setDiffuse( osg::Material::FRONT_AND_BACK,
-        osg::Vec4( diffuse * surf_info.Nv_Diffuse_Coeff, 1. ) );
+        if ( !strncmp( surf_info.Nv_AmbientColorToggle, "on", 2) )
+        {
+            ambient.set( surf_info.Nv_Ambient_Color[Na_RED], surf_info.Nv_Ambient_Color[Na_GREEN], 
+		        surf_info.Nv_Ambient_Color[Na_BLUE] );
+        }
+        else
+        {
+            ambient = diffuse;
+        }
+        ambient *= surf_info.Nv_Ambient_Coeff;
+    }
+
+    mat->setAmbient( osg::Material::FRONT_AND_BACK, osg::Vec4( ambient, 1. ) );
+    mat->setDiffuse( osg::Material::FRONT_AND_BACK, osg::Vec4( diffuse, 1. ) );
 
     osg::Vec3 emissive;
 	if ( !strncmp( surf_info.Nv_LuminousColorToggle, "on", 2) )

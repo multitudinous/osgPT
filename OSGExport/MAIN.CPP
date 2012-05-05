@@ -243,6 +243,7 @@ ExportConverter_Main(char *tokens[], char *data[], long *return_result, void *au
 	    OPTIONAL_FPRINTF(ofp, "osgUseBufferObjects = %d\n", export_options->osgUseBufferObjects );
 	    OPTIONAL_FPRINTF(ofp, "osgDebugTextFile = %d\n", export_options->osgDebugTextFile );
 	    OPTIONAL_FPRINTF(ofp, "osgWriteHiddenNodes = %d\n", export_options->osgWriteHiddenNodes );
+	    OPTIONAL_FPRINTF(ofp, "osgDiffAmbWhite = %d\n", export_options->osgDiffAmbWhite );
         OPTIONAL_FPRINTF(ofp, "#\n");
 
         OPTIONAL_FPRINTF(ofp, "osgRunOptimizer = %d\n", export_options->osgRunOptimizer );

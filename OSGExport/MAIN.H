@@ -123,6 +123,7 @@ typedef struct Exporter_Options {
     char osgUseBufferObjects;
     char osgDebugTextFile;
     char osgWriteHiddenNodes;
+    char osgDiffAmbWhite;
 
     char osgRunOptimizer;
     char osgMergeGeodes;

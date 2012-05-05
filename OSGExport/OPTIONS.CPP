@@ -89,6 +89,7 @@ NI_Exporter_SaveExportConvertOptions(char *ini_filepath)
     fprintf(fp, "Use-Buffer-Objects = %d\n", export_options->osgUseBufferObjects);
     fprintf(fp, "Debug-Text-File = %d\n", export_options->osgDebugTextFile);
     fprintf(fp, "Write-Hidden-Nodes = %d\n", export_options->osgWriteHiddenNodes);
+    fprintf(fp, "Diff-Amb-White = %d\n", export_options->osgDiffAmbWhite);
 
     fprintf(fp, "Run-Optimizer = %d\n", export_options->osgRunOptimizer);
     fprintf(fp, "Merge-Geodes = %d\n", export_options->osgMergeGeodes);
@@ -233,6 +234,8 @@ NI_Exporter_RestoreExportConvertOptions(char *ini_filepath)
             export_options->osgDebugTextFile = atoi(data);
 		else if (!strcmp(token, "Write-Hidden-Nodes"))
             export_options->osgWriteHiddenNodes = atoi(data);
+		else if (!strcmp(token, "Diff-Amb-White"))
+            export_options->osgDiffAmbWhite = atoi(data);
 
 		else if (!strcmp(token, "Run-Optimizer"))
             export_options->osgRunOptimizer = atoi(data);
@@ -454,6 +457,7 @@ NI_Exporter_InitExportOptionVariables()
         export_options->osgUseBufferObjects = Nc_TRUE;
         export_options->osgDebugTextFile = Nc_FALSE;
         export_options->osgWriteHiddenNodes = Nc_FALSE;
+        export_options->osgDiffAmbWhite = Nc_FALSE;
 
         export_options->osgRunOptimizer = Nc_TRUE;
         export_options->osgMergeGeodes = Nc_TRUE;
