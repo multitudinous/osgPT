@@ -1,7 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "resource.h"
-#define NG_DS_3DLOOK	DS_3DLOOK
+#define NG_DS_3DLOOK    DS_3DLOOK
 
 AboutBox DIALOG 40, 41, 226, 200
 STYLE DS_MODALFRAME | 0x4L | WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU
@@ -100,8 +100,8 @@ FONT 8, "Helv"
 
 //#include "winres.h
 #ifndef IDC_STATIC
-	#include "winresrc.h"
-	#define IDC_STATIC 1000
+    #include "winresrc.h"
+    #define IDC_STATIC 1000
 #endif //!IDC_STATIC
 
 #endif
@@ -113,9 +113,9 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #endif 
 
 // Version numbers (3.0.0) are in form:
-//	Major release 		(3)
-//	Minor release 		(0)
-//	One-off user fixes 	(0)
+//    Major release         (3)
+//    Minor release         (0)
+//    One-off user fixes     (0)
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION 3, 0, 0, 0

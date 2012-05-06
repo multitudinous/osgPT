@@ -27,7 +27,7 @@ struct SurfaceInfo
     {}
 
     osg::ref_ptr< osg::Material > _mat;
-	std::vector< osg::ref_ptr< osg::Texture2D > > _tex; // vector to permit multiple texture layers per surface
+    std::vector< osg::ref_ptr< osg::Texture2D > > _tex; // vector to permit multiple texture layers per surface
 
     float _faceAlpha;
     float _reflectAlpha;

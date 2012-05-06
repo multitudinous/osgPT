@@ -21,25 +21,25 @@ const std::string MetaDataCollector::SwitchMaskNName( "FLT-SWITCH-NODE-MASK" );
 static Nd_Int
 collectMetaDataCB( Nd_Enumerate_Callback_Info *cbi_ptr )
 {
-	Nd_UShort	Nv_BDF_Save_Flag;
-	Nd_Int		Nv_Num_Items;
-	Nd_UShort	Nv_Data_Type;
-	char	 	*Nv_Data_Ptr;
+    Nd_UShort    Nv_BDF_Save_Flag;
+    Nd_Int        Nv_Num_Items;
+    Nd_UShort    Nv_Data_Type;
+    char         *Nv_Data_Ptr;
 
-	if (!cbi_ptr->Nv_Matches_Made) 
-		return(Nc_FALSE);
+    if (!cbi_ptr->Nv_Matches_Made) 
+        return(Nc_FALSE);
 
     Ni_User_Data_Format_DataElements_Into_Standardized_String2(
-        (char*)cbi_ptr->Nv_Handle_Name1, 		// This is the ID name of the user data item
-		&Nv_BDF_Save_Flag, &Nv_Num_Items, &Nv_Data_Type, (Nd_Char **) &Nv_Data_Ptr,	// These are the returned meta data item contents
-		cbi_ptr->Nv_Handle_Type2, (char*)cbi_ptr->Nv_Handle_Name2, 	// This is the handle type and name, such as 'Nt_INSTANCE, "world"' 
-		Nt_CMDEND );
+        (char*)cbi_ptr->Nv_Handle_Name1,         // This is the ID name of the user data item
+        &Nv_BDF_Save_Flag, &Nv_Num_Items, &Nv_Data_Type, (Nd_Char **) &Nv_Data_Ptr,    // These are the returned meta data item contents
+        cbi_ptr->Nv_Handle_Type2, (char*)cbi_ptr->Nv_Handle_Name2,     // This is the handle type and name, such as 'Nt_INSTANCE, "world"' 
+        Nt_CMDEND );
 
     MetaDataCollector* mdc = (MetaDataCollector*) cbi_ptr->Nv_User_Data_Ptr1;
     mdc->add( std::string( cbi_ptr->Nv_Handle_Name1 ),
         std::string( Nv_Data_Ptr ) );
 
-	return Nc_FALSE;	/* Do not terminate the enumeration */
+    return Nc_FALSE;    /* Do not terminate the enumeration */
 }
 
 
@@ -48,12 +48,12 @@ MetaDataCollector::MetaDataCollector( Nd_Token Nv_Handle_Type, char *Nv_Handle_N
   : _handleType( Nv_Handle_Type ),
     _handleName( Nv_Handle_Name )
 {
-	Nd_Int	num_output = 0;
+    Nd_Int    num_output = 0;
 
-	Ni_Enumerate( &num_output, _handleName, Nc_FALSE,
-		(Nd_Void *) this, (Nd_Void *) NULL,
-		collectMetaDataCB,
-		_handleType, Nt_USERDATA, Nt_CMDEND );
+    Ni_Enumerate( &num_output, _handleName, Nc_FALSE,
+        (Nd_Void *) this, (Nd_Void *) NULL,
+        collectMetaDataCB,
+        _handleType, Nt_USERDATA, Nt_CMDEND );
 }
 
 MetaDataCollector::~MetaDataCollector()
@@ -105,16 +105,16 @@ MetaDataCollector::getMetaData( const std::string& name, double& ret )
     bool found( it != _map.end() );
     if (found)
     {
-	    Nd_UShort	Nv_BDF_Save_Flag;
-	    Nd_Int		Nv_Num_Items;
-	    Nd_UShort	Nv_Data_Type;
-	    Nd_Double   *Nv_Data_Ptr;
+        Nd_UShort    Nv_BDF_Save_Flag;
+        Nd_Int        Nv_Num_Items;
+        Nd_UShort    Nv_Data_Type;
+        Nd_Double   *Nv_Data_Ptr;
 
         Nd_UShort result = Ni_User_Data_Inquire2(
-            const_cast< char* >( name.c_str() ), 		// This is the ID name of the user data item
-		    &Nv_BDF_Save_Flag, &Nv_Num_Items, &Nv_Data_Type, (Nd_Void **) &Nv_Data_Ptr,	// These are the returned meta data item contents
-		    _handleType, _handleName, 	// This is the handle type and name, such as 'Nt_INSTANCE, "world"' 
-		    Nt_CMDEND );
+            const_cast< char* >( name.c_str() ),         // This is the ID name of the user data item
+            &Nv_BDF_Save_Flag, &Nv_Num_Items, &Nv_Data_Type, (Nd_Void **) &Nv_Data_Ptr,    // These are the returned meta data item contents
+            _handleType, _handleName,     // This is the handle type and name, such as 'Nt_INSTANCE, "world"' 
+            Nt_CMDEND );
         if (result == Nc_FALSE)
             return false;
 
@@ -130,16 +130,16 @@ MetaDataCollector::getMetaData( const std::string& name, osg::Vec3& ret )
     bool found( it != _map.end() );
     if (found)
     {
-	    Nd_UShort	Nv_BDF_Save_Flag;
-	    Nd_Int		Nv_Num_Items;
-	    Nd_UShort	Nv_Data_Type;
-	    Nd_DblVector *Nv_Data_Ptr;
+        Nd_UShort    Nv_BDF_Save_Flag;
+        Nd_Int        Nv_Num_Items;
+        Nd_UShort    Nv_Data_Type;
+        Nd_DblVector *Nv_Data_Ptr;
 
         Nd_UShort result = Ni_User_Data_Inquire2(
-            const_cast< char* >( name.c_str() ), 		// This is the ID name of the user data item
-		    &Nv_BDF_Save_Flag, &Nv_Num_Items, &Nv_Data_Type, (Nd_Void **) &Nv_Data_Ptr,	// These are the returned meta data item contents
-		    _handleType, _handleName, 	// This is the handle type and name, such as 'Nt_INSTANCE, "world"' 
-		    Nt_CMDEND );
+            const_cast< char* >( name.c_str() ),         // This is the ID name of the user data item
+            &Nv_BDF_Save_Flag, &Nv_Num_Items, &Nv_Data_Type, (Nd_Void **) &Nv_Data_Ptr,    // These are the returned meta data item contents
+            _handleType, _handleName,     // This is the handle type and name, such as 'Nt_INSTANCE, "world"' 
+            Nt_CMDEND );
         if (result == Nc_FALSE)
             return false;
 

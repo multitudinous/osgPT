@@ -20,15 +20,15 @@
 #include <map>
 
 
-#define	IGNORE_RED_FOLDERS_IN_HIERARCHY	Nc_TRUE
+#define    IGNORE_RED_FOLDERS_IN_HIERARCHY    Nc_TRUE
 //#define POLYTRANS_OSG_EXPORTER_STATIC_GROUPS // make all groups have STATIC DataVariance to facilitate forced optimization
 
 Nd_Bool osgProcessMesh( Nd_Walk_Tree_Info *Nv_Info, char *master_object, osg::Geode* geode );
 Nd_Void osgProcessText( Nd_Walk_Tree_Info* Nv_Walk_Tree_Info_Ptr,
-	char* Nv_Master_Object, Nd_Int Nv_Primitive_Number,
+    char* Nv_Master_Object, Nd_Int Nv_Primitive_Number,
     char* instance_name, osg::Geode* geode );
 
-extern Nd_Void	NI_Exporter_DAGPath_UserDataMemoryFreeRoutine(void *data);
+extern Nd_Void    NI_Exporter_DAGPath_UserDataMemoryFreeRoutine(void *data);
 
 
 osg::ref_ptr< osg::Group > _root;
@@ -118,8 +118,8 @@ static Nd_Void
 countNodesCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 {
 #if IGNORE_RED_FOLDERS_IN_HIERARCHY
-	if (Nv_Info->Nv_Empty_Object)
-		return;
+    if (Nv_Info->Nv_Empty_Object)
+        return;
 #endif
     _numNodes++;
 }
@@ -127,55 +127,55 @@ countNodesCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 static Nd_Void
 walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 {
-	Nd_Token 		primitive_type;
-	Nd_Int			Nv_Num_Defined_Primitives, jdx;
-	char			*handle_name, *master_object;
+    Nd_Token         primitive_type;
+    Nd_Int            Nv_Num_Defined_Primitives, jdx;
+    char            *handle_name, *master_object;
 
     // In case there are 'red folders' (empty objects) in the hierarchy
-	// tree (cases of object instancing) we have to keep track of each
-	// instance in the tree based on DAG Paths (see explanation in the 
-	// file ni4_aux.h). This function adds a new DAG Path to this current
-	// empty instance. To uniquely find the parent of this instance in the 
-	// the tree call the 'Ni_FindParentViaDAGPathLineage()' function (see above)
-	//
-	// NOTE: An exporter can associate its own local data with this newly
-	//       allocated DAG Path node by supplying its pointer to the 
-	//	'Nv_DAGPath_User_Data_Pointer' argument. If you allocate memory and pass in this memory pointer
-	// 	then you will have to specify the 'NI_Exporter_DAGPath_UserDataMemoryFreeRoutine'
-	//	argument which is the callback function called by the toolkit
-	//	to free up this memory at the end of the export process, otherwise
-	//	set the function pointer argument to NULL and no callbacks will be
-	// 	called by the toolkit.
-	Nd_Void			*Nv_DAGPath_User_Data_Pointer( NULL );
-	Nd_HierarchyDAGPath_Info *hierarchy_node =
+    // tree (cases of object instancing) we have to keep track of each
+    // instance in the tree based on DAG Paths (see explanation in the 
+    // file ni4_aux.h). This function adds a new DAG Path to this current
+    // empty instance. To uniquely find the parent of this instance in the 
+    // the tree call the 'Ni_FindParentViaDAGPathLineage()' function (see above)
+    //
+    // NOTE: An exporter can associate its own local data with this newly
+    //       allocated DAG Path node by supplying its pointer to the 
+    //    'Nv_DAGPath_User_Data_Pointer' argument. If you allocate memory and pass in this memory pointer
+    //     then you will have to specify the 'NI_Exporter_DAGPath_UserDataMemoryFreeRoutine'
+    //    argument which is the callback function called by the toolkit
+    //    to free up this memory at the end of the export process, otherwise
+    //    set the function pointer argument to NULL and no callbacks will be
+    //     called by the toolkit.
+    Nd_Void            *Nv_DAGPath_User_Data_Pointer( NULL );
+    Nd_HierarchyDAGPath_Info *hierarchy_node =
         Ni_AddHierarchyDAGPath(Nv_Info, NI_Exporter_DAGPath_UserDataMemoryFreeRoutine, (void *) Nv_DAGPath_User_Data_Pointer);
 
-	// If we don't care about "red folders" in the hierarchy then let's
-	// return now. The red folder will be added to the DAG Path lists
-	// above (via 'Ni_AddHierarchyDAGPath()') and the 'Nv_IgnoreEmptyObjectNodesInTree'
-	// option above will effectively make them invisible to this exporter.
-	// In general you would only want to deal with red folders if your
-	// exporter allows sub-sections of a hierarchy tree to be instantiated
-	// in some manner; normally no file formats allow this to happen.
+    // If we don't care about "red folders" in the hierarchy then let's
+    // return now. The red folder will be added to the DAG Path lists
+    // above (via 'Ni_AddHierarchyDAGPath()') and the 'Nv_IgnoreEmptyObjectNodesInTree'
+    // option above will effectively make them invisible to this exporter.
+    // In general you would only want to deal with red folders if your
+    // exporter allows sub-sections of a hierarchy tree to be instantiated
+    // in some manner; normally no file formats allow this to happen.
 #if IGNORE_RED_FOLDERS_IN_HIERARCHY
-	if (Nv_Info->Nv_Empty_Object)
-		return;
+    if (Nv_Info->Nv_Empty_Object)
+        return;
 #endif
 
     _nodeCount++;
     Export_IO_Check_For_User_Interrupt_With_Stats( _nodeCount, _numNodes );
 
-	// If instance's "hidden" flag turned on, or inherited hidden,
+    // If instance's "hidden" flag turned on, or inherited hidden,
     // then return.
     if( ( !export_options->osgWriteHiddenNodes ) &&
-	    ( Nv_Info->Nv_Hidden_Flag || Nv_Info->Nv_Inherited_Hidden_Flag ) )
+        ( Nv_Info->Nv_Hidden_Flag || Nv_Info->Nv_Inherited_Hidden_Flag ) )
     {
-		*Nv_Status = Nc_WALKTREE_IGNORE_SUBTREE;
-		return;
-	}
+        *Nv_Status = Nc_WALKTREE_IGNORE_SUBTREE;
+        return;
+    }
 
     // Get the instance's handleName
-	char* handleName = Nv_Info->Nv_Handle_Name;
+    char* handleName = Nv_Info->Nv_Handle_Name;
     std::string handleNameStr( handleName );
     std::string extension( (char *)( Nv_Info->Nv_User_Data_Ptr1 ) );
 
@@ -302,7 +302,7 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
                 // Empty (no geometry) so create a Group to hold the children
                 newNode = (osg::Node*) new osg::Group;
 #ifdef POLYTRANS_OSG_EXPORTER_STATIC_GROUPS
-				newNode->setDataVariance(osg::Object::STATIC);
+                newNode->setDataVariance(osg::Object::STATIC);
 #endif // POLYTRANS_OSG_EXPORTER_STATIC_GROUPS
             }
             else
@@ -357,7 +357,7 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
             //   the root of the shared subgraph.
             _lastNode = new osg::Group;
 #ifdef POLYTRANS_OSG_EXPORTER_STATIC_GROUPS
-			_lastNode->setDataVariance(osg::Object::STATIC);
+            _lastNode->setDataVariance(osg::Object::STATIC);
 #endif // POLYTRANS_OSG_EXPORTER_STATIC_GROUPS
             _lastNode->setName( keyName );
         }
@@ -395,7 +395,7 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
     }
     if (!numPrimitives)
         // No primitives to process. Continue walking the subgraph.
-		return;
+        return;
 
 
     // Add mesh data to this Geode.
@@ -403,32 +403,32 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
     if( geode == NULL )
         Ni_Report_Error_printf( Nc_ERR_RAW_MSG, "Geode is NULL." );
 
-	handle_name = Nv_Info->Nv_Handle_Name;
-	if( !Nv_Info->Nv_Empty_Instance && !Nv_Info->Nv_Empty_Object )
+    handle_name = Nv_Info->Nv_Handle_Name;
+    if( !Nv_Info->Nv_Empty_Instance && !Nv_Info->Nv_Empty_Object )
     {
-		/* Get the master object from which this instance was derived */
-		Ni_Inquire_Instance(handle_name,
-			Nt_MASTEROBJECT, (char **) &master_object, Nt_CMDSEP,
-			Nt_CMDEND);
+        /* Get the master object from which this instance was derived */
+        Ni_Inquire_Instance(handle_name,
+            Nt_MASTEROBJECT, (char **) &master_object, Nt_CMDSEP,
+            Nt_CMDEND);
 
-		/* Determine how many primitives this object has (should only be 1 in all modern cases) */
-		Ni_Inquire_Object(master_object,
-			Nt_NUMPRIMITIVES, (Nd_Int *) &Nv_Num_Defined_Primitives, Nt_CMDSEP,
-			Nt_CMDEND);
-	} else
+        /* Determine how many primitives this object has (should only be 1 in all modern cases) */
+        Ni_Inquire_Object(master_object,
+            Nt_NUMPRIMITIVES, (Nd_Int *) &Nv_Num_Defined_Primitives, Nt_CMDSEP,
+            Nt_CMDEND);
+    } else
     {
-		Nv_Num_Defined_Primitives = 0;
-		master_object = NULL;
-	}
+        Nv_Num_Defined_Primitives = 0;
+        master_object = NULL;
+    }
 
     for( jdx=0; jdx<Nv_Num_Defined_Primitives; ++jdx )
     {
-		/* Get the type of primitive. Most will be indexed polygon meshes, NURBS surfaces, */
-		/* NURBS curves or spline shapes. */
-		Ni_Inquire_Primitive( Nt_OBJECT, master_object, jdx, (Nd_Token *) &primitive_type, Nt_CMDEND );
+        /* Get the type of primitive. Most will be indexed polygon meshes, NURBS surfaces, */
+        /* NURBS curves or spline shapes. */
+        Ni_Inquire_Primitive( Nt_OBJECT, master_object, jdx, (Nd_Token *) &primitive_type, Nt_CMDEND );
 
         if( !( export_options->osgTextPolygons ) &&
-		    ( primitive_type == Nt_TEXT3D ) )
+            ( primitive_type == Nt_TEXT3D ) )
         {
             if( export_options->osgTextOSGText )
             {
@@ -448,11 +448,11 @@ walkTreeCallback(Nd_Walk_Tree_Info *Nv_Info, Nd_Int *Nv_Status)
 
 static Nd_Void
 changeLevelCallback(Nd_Token Nv_Parent_Type, char *Nv_Parent_Handle_Name, 
-	Nd_Short Nv_Current_Hierarchy_Level, Nd_Short Nv_Starting_New_Level)
+    Nd_Short Nv_Current_Hierarchy_Level, Nd_Short Nv_Starting_New_Level)
 {
 #if IGNORE_RED_FOLDERS_IN_HIERARCHY
-	if (Nv_Parent_Type == Nt_OBJECT)
-		return;
+    if (Nv_Parent_Type == Nt_OBJECT)
+        return;
 #endif
 
     if (Nv_Starting_New_Level != 0)
@@ -465,14 +465,14 @@ void
 writeOSG( const char* out_filename, long *return_result )
 {
     osg::ref_ptr< osg::Node > writeCandidate;
-	// Init the DAG Path hierarchy lists (used to uniquely identify any 
-	// instance or empty object (red folder) in the hierarchy tree)
+    // Init the DAG Path hierarchy lists (used to uniquely identify any 
+    // instance or empty object (red folder) in the hierarchy tree)
 #if IGNORE_RED_FOLDERS_IN_HIERARCHY
-	Nd_Int		Nv_IgnoreEmptyObjectNodesInTree = Nc_TRUE;
+    Nd_Int        Nv_IgnoreEmptyObjectNodesInTree = Nc_TRUE;
 #else
-	Nd_Int		Nv_IgnoreEmptyObjectNodesInTree = Nc_FALSE;
+    Nd_Int        Nv_IgnoreEmptyObjectNodesInTree = Nc_FALSE;
 #endif
-	Ni_InitHierarchyDAGPathLists(Nv_IgnoreEmptyObjectNodesInTree);
+    Ni_InitHierarchyDAGPathLists(Nv_IgnoreEmptyObjectNodesInTree);
 
     Nd_Int dummy;
 
@@ -480,8 +480,8 @@ writeOSG( const char* out_filename, long *return_result )
     std::string extension = osgDB::getFileExtension( fileName );
 
     // Create map of texture definitions to osg::Texture objects.
-	Ni_Enumerate( &dummy, "*", Nc_FALSE, (Nd_Void *) NULL, (Nd_Void *) 0,
-		createTextureCB, Nt_TEXTURE, Nt_CMDEND);
+    Ni_Enumerate( &dummy, "*", Nc_FALSE, (Nd_Void *) NULL, (Nd_Void *) 0,
+        createTextureCB, Nt_TEXTURE, Nt_CMDEND);
     // Must iterate over textures before surfaces. Surface definitions
     //   reference texture definitions.
 
@@ -490,34 +490,34 @@ writeOSG( const char* out_filename, long *return_result )
         createMaterialCB, Nt_SURFACE, Nt_CMDEND);
 
     Nd_Int returnStatus;
-	try {
+    try {
         Nd_Token ena_instancing_detection_counts = (export_options->ena_instancing) ? Nt_ON : Nt_OFF;
 
         Export_IO_UpdateStatusDisplay( "", "", "Counting nodes." );
         _numNodes = 0;
         _nodeCount = 0;
-		Ni_Walk_Tree(NULL, (Nd_Ptr)( extension.c_str() ), (Nd_Void *) NULL, countNodesCallback,
-			Nt_RETURNSTATUS, (Nd_Int *) &returnStatus, Nt_CMDSEP,
-			Nt_CMDEND);
+        Ni_Walk_Tree(NULL, (Nd_Ptr)( extension.c_str() ), (Nd_Void *) NULL, countNodesCallback,
+            Nt_RETURNSTATUS, (Nd_Int *) &returnStatus, Nt_CMDSEP,
+            Nt_CMDEND);
 
         Ni_Walk_Tree(NULL, (Nd_Ptr)( extension.c_str() ), (Nd_Void *) NULL, walkTreeCallback,
-			Nt_RETURNSTATUS, (Nd_Int *) &returnStatus, Nt_CMDSEP,
-			// Make sure some internal state is set up for data export queries
-			Nt_SETUPFOREXPORTER, Nt_ENABLED, Nt_ON, Nt_CMDSEP,
-			// Specify a callback which will inform us when a new hierarchy level is started/ended
-			Nt_STARTENDHIERARCHYCB, (void *) changeLevelCallback, Nt_CMDSEP,
-			// This enables the internal pre-walk routines which determine the state and counts for the instancing
-			// helper detection variables found at the end of the Nd_Walk_Tree data structure (see ni.h). See above
-			// for a further explanation, or the Nd_Walk_Tree data structure for full variables explanations.
-			Nt_ENABLEINSTANCINGDETECTIONCOUNTS, Nt_ENABLED, ena_instancing_detection_counts, Nt_CMDSEP,
-			Nt_CMDEND);
-		}
-	catch( ... )
-	{
-		Ni_Report_Error_printf(Nc_ERR_ERROR, "OSG exporter raised an unknown exception while walking the geometry tree.");
-		*return_result = Nc_TRUE;
+            Nt_RETURNSTATUS, (Nd_Int *) &returnStatus, Nt_CMDSEP,
+            // Make sure some internal state is set up for data export queries
+            Nt_SETUPFOREXPORTER, Nt_ENABLED, Nt_ON, Nt_CMDSEP,
+            // Specify a callback which will inform us when a new hierarchy level is started/ended
+            Nt_STARTENDHIERARCHYCB, (void *) changeLevelCallback, Nt_CMDSEP,
+            // This enables the internal pre-walk routines which determine the state and counts for the instancing
+            // helper detection variables found at the end of the Nd_Walk_Tree data structure (see ni.h). See above
+            // for a further explanation, or the Nd_Walk_Tree data structure for full variables explanations.
+            Nt_ENABLEINSTANCINGDETECTIONCOUNTS, Nt_ENABLED, ena_instancing_detection_counts, Nt_CMDSEP,
+            Nt_CMDEND);
+        }
+    catch( ... )
+    {
+        Ni_Report_Error_printf(Nc_ERR_ERROR, "OSG exporter raised an unknown exception while walking the geometry tree.");
+        *return_result = Nc_TRUE;
         return;
-	}
+    }
 
     // Matrices could scale normals, so normalize.
     if (export_options->osgNormalization)

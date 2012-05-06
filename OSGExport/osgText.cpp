@@ -13,9 +13,9 @@ osgProcessText( Nd_Walk_Tree_Info* Nv_Walk_Tree_Info_Ptr,
                char* Nv_Master_Object, Nd_Int Nv_Primitive_Number,
                char* instance_name, osg::Geode* geode )
 {
-    Nd_Token	primitive_type;
-    wchar_t 	*Nv_Text_String;
-    wchar_t 	*Nv_Font_Name;
+    Nd_Token    primitive_type;
+    wchar_t     *Nv_Text_String;
+    wchar_t     *Nv_Font_Name;
 
     /* Email from R. Lansdale, 3/4/2011:
     Me: Of those parameters, which are useful?
@@ -50,12 +50,12 @@ osgProcessText( Nd_Walk_Tree_Info* Nv_Walk_Tree_Info_Ptr,
     newText->setFont( fontFile );
 
 
-	// Compute character height from BB z extent.
-	Nd_Vector Nv_Text_BBox_Min, Nv_Text_BBox_Max;
-	Ni_Inquire_Object( Nv_Master_Object, Nt_BOUNDINGBOX, Nv_Text_BBox_Min, Nv_Text_BBox_Max, Nt_CMDEND );
-	float height = Nv_Text_BBox_Max[2] - Nv_Text_BBox_Min[2];
-	if( fabs( height ) < 1e-5 )
-		height = 1e-5;
+    // Compute character height from BB z extent.
+    Nd_Vector Nv_Text_BBox_Min, Nv_Text_BBox_Max;
+    Ni_Inquire_Object( Nv_Master_Object, Nt_BOUNDINGBOX, Nv_Text_BBox_Min, Nv_Text_BBox_Max, Nt_CMDEND );
+    float height = Nv_Text_BBox_Max[2] - Nv_Text_BBox_Min[2];
+    if( fabs( height ) < 1e-5 )
+        height = 1e-5;
     newText->setCharacterSize( height );
 
     osgText::TextBase::AxisAlignment alignment = osgText::TextBase::XZ_PLANE;
