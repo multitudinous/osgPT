@@ -65,4 +65,4 @@
 #define IDC_SERVERFAULT_CANCEL_OPERATION	1002
 #define IDC_SERVERFAULT_HELP			1003
 #define IDC_SERVERFAULT_ERROR_MSG		1004
-
+

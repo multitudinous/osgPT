@@ -7,7 +7,7 @@
          Use this source code as a basis to form your own COM client
 		 to the PolyTrans/NuGraf Software. It's Simple!
 
-  Copyright (c) 1988, 2002 Okino Computer Graphics, Inc. All Rights Reserved.
+  Copyright (c) 1988, 2012 Okino Computer Graphics, Inc. All Rights Reserved.
 
 This file is proprietary source code of Okino Computer Graphics, Inc. and it 
 is not to be disclosed to third parties, published, adopted, distributed,
@@ -42,14 +42,35 @@ SOFTWARE AND ITS ACCOMPANYING DOCUMENTATION, EVEN IF OKINO COMPUTER GRAPHICS,
 INC., OR ANY AGENT OF OKINO COMPUTER GRAPHICS, INC. HAS BEEN ADVISED OF THE   
 POSSIBILITY OF SUCH DAMAGES.
 
-	Last change:  RCL  12 Nov 2001    5:18 am
 *****************************************************************************/
+
+// COM+ATL overview: http://www.microsoft.com/msj/0697/atl.aspx, "The Active Template Library Makes Building Compact COM Objects a Joy"
+
+// ----------------
+
+// !!
+// !! NOTE: make sure your DLL's "DllMain" makes calls to OkinoCommonComSource___Init_ATL_COM_Module()
+// !!       and OkinoCommonComSource___Terminate_ATL_COM_Module(), as noted in the example code below. 
+// !!
+// !! 	    For .exe COM clients, only call OkinoCommonComSource___Init_ATL_COM_Module() and
+// !!       OkinoCommonComSource___Terminate_ATL_COM_Module() once, during start-up and termination 
+// !! 	    of the .exe prorgam, and not every time the COM interface is started/stopped.
+// !! 
+//	BOOL WINAPI 
+// DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpReserved*/)
+// {
+//	if (dwReason == DLL_PROCESS_ATTACH) {
+//		OkinoCommonComSource___Init_ATL_COM_Module( hInstance );
+//	} else if (dwReason == DLL_PROCESS_DETACH)
+//		OkinoCommonComSource___Terminate_ATL_COM_Module();
+//	return TRUE;
+//}
 
 /* ----------------------->>>>  Includes  <<<<--------------------------- */
 
 // The main include file for this .cpp file which you are reading
-#include 	"COMHelper/shared_okino_com_src.h"
-#include 	"COMHelper/shared_okino_com_src_resources.h"
+#include 	"shared_okino_com_src.h"
+#include 	"shared_okino_com_src_resources.h"
 
 // ATL related functions
 #include 	<atlbase.h>
@@ -94,8 +115,16 @@ HWND	curr_Status_Msg_Text_Line_hwnd = NULL;
 
 /* ----------------->>>>  Object and Message Maps  <<<<-------------------- */
 
-// This is the main instance of the COM module, as defined by ATL
+// This is the main instance of the COM module, as defined by ATL.
+//
+// RCL, note: this COM module is statically defined, and its constructor is called
+// 	only once during start-up of a DLL or EXE program. Do NOT call '_Module.Term()'
+//	unless you are never to use the ATL COM interfaces again, as there are special internal 
+//	ATL tables and lists which only become valid after the static constructor is called
+//	and which become free'd up after the call to '_Module.Term()'.
+//
 CComModule _Module;
+static	bool _Module_is_initialized = FALSE;
 
 BEGIN_OBJECT_MAP(ObjectMap)
 END_OBJECT_MAP()
@@ -142,13 +171,41 @@ class CTestClientSinkEvents: public IDispatchImpl<_INuGrafIOEvents, &IID__INuGra
 
 /* ------------------->>>>  Function Prototypes  <<<<--------------------- */
 
-BOOL WINAPI OkinoCommonComSource___GeometryImportStatusDlgProc(HWND hDlg, WORD wMsg, WORD wParam, LONG lParam);
-BOOL WINAPI OkinoCommonComSource___GeometryExportStatusDlgProc(HWND hDlg, WORD wMsg, WORD wParam, LONG lParam);
+INT_PTR CALLBACK OkinoCommonComSource___GeometryImportStatusDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK OkinoCommonComSource___GeometryExportStatusDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
 
-static BOOL WINAPI OkinoCommonComSource___RemoteHostDlgProc(HWND hwnd, UINT msg, UINT wparam, LONG lparam);
-static BOOL WINAPI OkinoCommonComSource___ServerFaultDlgProc(HWND hDlg, WORD wMsg, WORD wParam, LONG lParam);
+static INT_PTR CALLBACK OkinoCommonComSource___RemoteHostDlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+static INT_PTR CALLBACK OkinoCommonComSource___ServerFaultDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
 
 //-----------------------------------------------------------------------------
+
+// This must be called once, and only once, during start-up of the host application's EXE or DLL module.
+// (RCL, Added Oct 12 2009)
+
+	void
+OkinoCommonComSource___Init_ATL_COM_Module( HINSTANCE hInstance )
+{
+	if (_Module_is_initialized)
+		return;	// We only do this once per DLL/exe start-up
+
+	_Module.Init( ObjectMap, hInstance );
+	_Module_is_initialized = TRUE;
+}
+
+// This must be called once, and only once, during termination of the host application's EXE or DLL module.
+// If you were to call it multiple times then you'd find that the Okino "event sinks" would
+// no longer work: this is because the '_Module.Term()' function destroys internal ATL tables and
+// lists which are only initialized in the static constructor of '_Module()'.   
+// (RCL, Added Oct 12 2009)
+
+	void
+OkinoCommonComSource___Terminate_ATL_COM_Module()
+{
+	if ( _Module_is_initialized )
+		_Module.Term();
+
+	_Module_is_initialized = FALSE;
+}
 
 	void
 OkinoCommonComSource___Initialization()
@@ -182,19 +239,21 @@ OkinoCommonComSource___AttachToCOMInterface(HWND parent_hwnd,
 		return FALSE;
 	}
 
-	// Initialize the COM client module, as defined and used by ATL
-	_Module.Init(ObjectMap, hInstance);
+	// Initialize the COM client module, as defined and used by ATL 
+	// (this is only to be done once per DLL/EXE excution)
+	OkinoCommonComSource___Init_ATL_COM_Module( hInstance );
+
 	gInstance = hInstance;		// Make available to our event sink callbacks
 	
 	// Make sure Okino's PolyTrans/NuGraf type-lib has been registered.
 	// This is TRUE if either of these programs have been run and their
 	// COM server's have been registered (which is done automatically)
 	if (!OkinoCommonComSource___IsTypeLibRegistered()) {
-		//This is commented out because it a user does not have polytrans installed
-        //the dialog appears every time the osgPoltrans plugin is loaded which 
-        //can be annoying. If there is a way to tell at runtime other than this 
-        //method if polytrans is installed we could uncomment this dialog code.
-        //MessageBox(parent_hwnd, "The NuGraf or PolyTrans host programs have not been registered as COM/DCOM servers yet.\n\nPlease execute nugraf32.exe or pt32.exe at least once before executing this program.", "Fatal Error", MB_OK | MB_APPLMODAL);
+#ifdef _WIN64
+		MessageBox(parent_hwnd, "The NuGraf or PolyTrans host programs have not been registered as COM/DCOM servers yet.\n\nPlease execute nugraf64.exe or pt64.exe at least once before executing this program.", "Fatal Error", MB_OK | MB_APPLMODAL);
+#else
+		MessageBox(parent_hwnd, "The NuGraf or PolyTrans host programs have not been registered as COM/DCOM servers yet.\n\nPlease execute nugraf32.exe or pt32.exe at least once before executing this program.", "Fatal Error", MB_OK | MB_APPLMODAL);
+#endif
 		CoUninitialize();
 		return FALSE;
 	}
@@ -228,8 +287,10 @@ OkinoCommonComSource___DetachFromCOMInterface()
 	if (pRenderIO)
 		pRenderIO->Release();
 
-	// Terminate ATL
-	_Module.Term();
+	// Terminate ATL -- we longer do this here. Instead, the host DLL/EXE should do it ONLY 
+	// when the DLL/EXE is exiting and will not be using the COM interface again. RCL, Oct 12 2009.
+	//
+	// 	OkinoCommonComSource___Terminate_ATL_COM_Module();
 
 	// Shutdown COM/OLE
 	CoUninitialize();
@@ -272,14 +333,24 @@ OkinoCommonComSource___CreateObjectInstance(REFCLSID rclsid, REFIID riid, LPVOID
 	HRESULT hr;
 	short	use_local_server = TRUE;	// Must always be true
 
+// RCL: Note, if you get a CO_E_SERVER_EXEC_FAILURE (0x80080005L) then this is because
+// our COM server is taking too long to start up. 
+
 	if (use_local_server) {
 		// Start up the local COM server (if it is not already running),
 		// instantiate a class of the exported interface, and return a 
 		// pointer to the class.
+		//
+		// CLSCTX_ACTIVATE_32_BIT_SERVER and CLSCTX_ACTIVATE_64_BIT_SERVER tell COM to 
+		// prefer the LocalServer32 registration in the 32-bit or 64-bit side of the registry.
 		hr = CoCreateInstance(rclsid, NULL, CLSCTX_LOCAL_SERVER, riid, ppv);
 
 		if (FAILED(hr)) {
-			MessageBox(NULL, "Could not connect to the NuGraf or PolyTrans COM server.\n\nIf NuGraf (nugraf32.exe) or PolyTrans (pt32.exe) are not currently running, then execute them now and try again.", "Fatal Error", MB_OK | MB_APPLMODAL);
+#ifdef _WIN64
+			MessageBox(NULL, "Could not connect to the NuGraf or PolyTrans COM server (or it is too slow in starting up).\n\nIf NuGraf (nugraf64.exe) or PolyTrans (pt64.exe) are not currently running, then execute them now and try again.", "Fatal Error", MB_OK | MB_APPLMODAL);
+#else
+			MessageBox(NULL, "Could not connect to the NuGraf or PolyTrans COM server (or it is too slow in starting up).\n\nIf NuGraf (nugraf32.exe) or PolyTrans (pt32.exe) are not currently running, then execute them now and try again.", "Fatal Error", MB_OK | MB_APPLMODAL);
+#endif
 			return FALSE;
 		}
 	} 
@@ -303,7 +374,11 @@ OkinoCommonComSource___CreateObjectInstance(REFCLSID rclsid, REFIID riid, LPVOID
 		hr = CoCreateInstanceEx(rclsid, NULL, CLSCTX_REMOTE_SERVER | CLSCTX_LOCAL_SERVER, &server, 1, &mq);
 
 		if (FAILED(hr) || FAILED(mq.hr)) {
+#ifdef _WIN64
+			MessageBox(NULL, "Could not connect to the remote NuGraf or PolyTrans DCOM server.\n\nIf NuGraf (nugraf64.exe) or PolyTrans (pt64.exe) are not currently running, then execute them now and try again.", "Fatal Error", MB_OK | MB_APPLMODAL);
+#else
 			MessageBox(NULL, "Could not connect to the remote NuGraf or PolyTrans DCOM server.\n\nIf NuGraf (nugraf32.exe) or PolyTrans (pt32.exe) are not currently running, then execute them now and try again.", "Fatal Error", MB_OK | MB_APPLMODAL);
+#endif
 			return false;
 		} else
 			*ppv = mq.pItf;
@@ -504,14 +579,14 @@ loop:		hresult = pNuGrafIO->get_ProgramVersionInfo(&out_params_variant);
 
 		SafeArrayDestroy(out_params);
 	}
-
+#if 00
 { char buf[128];
 
 sprintf(buf, "Version = %d %d %d", *major_version, *minor_version, *sub_minor_version);
 
 MessageBox(NULL, buf, "Error", MB_OK);
 }
-
+#endif
 
 	return TRUE;
 }
@@ -526,7 +601,7 @@ OkinoCommonComSource___IsHostProgramVersionGreaterThanOrEqualTo(short major_vers
 	if (!OkinoCommonComSource___get_ProgramVersionInfo(&major, &minor, &sub_minor))
 		return FALSE;
 
-	if (major_version > major || (major_version == major && minor_version > minor) || (major_version == major && minor_version == minor && sub_minor_version >= sub_minor))
+	if (major > major_version || (major_version == major && minor > minor_version) || (major_version == major && minor_version == minor && sub_minor >= sub_minor_version))
 		return TRUE;
 	else
 		return FALSE;
@@ -566,6 +641,7 @@ OkinoCommonComSource___StartEventSink()
 		pTestClientSinkEvents = new CComObject<CTestClientSinkEvents>;
 		ptrTestClientSinkEventsUnk = pTestClientSinkEvents;
 
+		event_sink_cookie = 0;
 		HRESULT hr = AtlAdvise(pNuGrafIO, ptrTestClientSinkEventsUnk, IID__INuGrafIOEvents, &event_sink_cookie);
 		if (FAILED(hr)) {
 			pTestClientSinkEvents = 0;
@@ -631,11 +707,9 @@ CTestClientSinkEvents::OnGeometryImportProgress(
 			MessageBox(parent_hwnd, "CTestClientSinkEvents::OnGeometryImportProgress(), the global 'parent_hwnd' has not been initialized yet. Please initialize this global variable in your code to the parent window of the geometry import status dialog box.", "Programming Error", MB_OK | MB_APPLMODAL);
 		hDlgGeomImportStatus = CreateDialog(gInstance, "GeometryImportStatusDialog", parent_hwnd, (DLGPROC) OkinoCommonComSource___GeometryImportStatusDlgProc);
 		if (!hDlgGeomImportStatus)
-		{
 			// Warn the programmer that the import status dialog box could not be created. 
 			// Either the .rc file was not included or maybe the hInstance handle is wrong.
 			MessageBox(parent_hwnd, "CTestClientSinkEvents::OnGeometryImportProgress(), could not create the import status dialog box.", "Programming Error", MB_OK | MB_APPLMODAL);
-		}
 		SetDlgItemText(hDlgGeomImportStatus, IDD_GEOMIMPORT_LINE_NUM, "0");
 		SetDlgItemText(hDlgGeomImportStatus, IDD_GEOMIMPORT_TOTAL_OBJECTS, "0");
 		SetDlgItemText(hDlgGeomImportStatus, IDD_GEOMIMPORT_TOTAL_POLYS, "0");
@@ -699,8 +773,8 @@ CTestClientSinkEvents::OnGeometryImportProgress(
 
 // This is the dialog box handler for the geometry import status dialog
 
-	BOOL WINAPI
-OkinoCommonComSource___GeometryImportStatusDlgProc(HWND hDlg, WORD wMsg, WORD wParam, LONG lParam)
+	INT_PTR CALLBACK
+OkinoCommonComSource___GeometryImportStatusDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
 	lParam = lParam;
 
@@ -811,8 +885,8 @@ CTestClientSinkEvents::OnGeometryExportProgress(
 
 // This is the dialog box handler for the geometry export status dialog
 
-	BOOL WINAPI
-OkinoCommonComSource___GeometryExportStatusDlgProc(HWND hDlg, WORD wMsg, WORD wParam, LONG lParam)
+	INT_PTR CALLBACK
+OkinoCommonComSource___GeometryExportStatusDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
 	short	cmd_id;
 
@@ -883,7 +957,7 @@ OkinoCommonComSource___OutputInfoTextToGeomExportAbortStatusDlg(char *text)
 		/* The first part of the string is the handle name which we */
 		/* are currently processing. Strip it off and display on the */
 		/* dialog box separately. */
-		count = strlen(text);
+		count = (short) strlen(text);
 		count2 = '\0';
 		while (count && *text != '\"') {
 			buf2[count2++] = *(text++);
@@ -1022,12 +1096,12 @@ CTestClientSinkEvents::OnMessageWindowTextOutput(BSTR Nv_Formatted_Message )
 
 	if (curr_Error_Msg_Listbox_hwnd && strlen(final_string)) {
 		/* Send the string to the list box */
-		if (SendMessage(curr_Error_Msg_Listbox_hwnd, LB_ADDSTRING, NULL, (LONG)(LPSTR) final_string) == LB_ERRSPACE) {
+		if (SendMessage(curr_Error_Msg_Listbox_hwnd, LB_ADDSTRING, NULL, (LPARAM)(LPSTR) final_string) == LB_ERRSPACE) {
 			SendMessage(curr_Error_Msg_Listbox_hwnd, LB_RESETCONTENT, 0, 0);
-			SendMessage(curr_Error_Msg_Listbox_hwnd, LB_ADDSTRING, NULL, (LONG)(LPSTR) final_string);
+			SendMessage(curr_Error_Msg_Listbox_hwnd, LB_ADDSTRING, NULL, (LPARAM)(LPSTR) final_string);
 		}
 	} else if (curr_Error_Msg_Listbox_hwnd && !strlen(final_string))
-		SendMessage(curr_Error_Msg_Listbox_hwnd, LB_ADDSTRING, NULL, (LONG)(LPSTR) "");
+		SendMessage(curr_Error_Msg_Listbox_hwnd, LB_ADDSTRING, NULL, (LPARAM)(LPSTR) "");
 
 	return S_OK;
 }
@@ -1054,22 +1128,22 @@ CTestClientSinkEvents::OnBatchJobDone(
 	BSTR time_string_bstr, 		// Time completion string
 	BSTR windows_temp_dir_bstr)	// Windows TEMP directory we are using to store the queue files
 {
-	//USES_CONVERSION;
-	//LPTSTR job_guid = OLE2T(job_guid_bstr);
-	//LPTSTR status_text = OLE2T(status_text_bstr);
-	//LPTSTR time_string = OLE2T(time_string_bstr);
-	//LPTSTR windows_temp_dir = OLE2T(windows_temp_dir_bstr);
+	USES_CONVERSION;
+	LPTSTR job_guid = OLE2T(job_guid_bstr);
+	LPTSTR status_text = OLE2T(status_text_bstr);
+	LPTSTR time_string = OLE2T(time_string_bstr);
+	LPTSTR windows_temp_dir = OLE2T(windows_temp_dir_bstr);
 
-	//// Go remove the job from the job list
-	//OkinoCommonComSource___HandleJobCompletedNotificationFromCOMServer(job_guid, status_text, time_string, windows_temp_dir);
+	// Go remove the job from the job list
+	OkinoCommonComSource___HandleJobCompletedNotificationFromCOMServer(job_guid, status_text, time_string, windows_temp_dir);
 
-	//// Give the programmer's COM client code a chance to see this event
-	//// message and handle it inside their own local code. 
-	//if (event_sinks_override_fns.OnBatchJobDone_Override) {
-	//	// If the override returns TRUE, then return immediately
-	//	if ((*event_sinks_override_fns.OnBatchJobDone_Override)(job_guid, status_text, time_string, windows_temp_dir))
-	//		return S_OK;
-	//}
+	// Give the programmer's COM client code a chance to see this event
+	// message and handle it inside their own local code. 
+	if (event_sinks_override_fns.OnBatchJobDone_Override) {
+		// If the override returns TRUE, then return immediately
+		if ((*event_sinks_override_fns.OnBatchJobDone_Override)(job_guid, status_text, time_string, windows_temp_dir))
+			return S_OK;
+	}
 
 	return S_OK;
 }
@@ -2193,7 +2267,7 @@ OkinoCommonComSource___Check_COM_HRESULT_Error_CODE(HRESULT hr, char *com_func_n
 			(LPSTR) &MessageBuffer, 0, NULL)) {
 				sprintf(err_msg, "%s\n\nSystem level error code (%lx):\n%s", com_func_name, hr, MessageBuffer);
 				// MessageBox(parent_hwnd, err_msg, "Error Accessing COM Server", MB_OK | MB_APPLMODAL);
-				status = DialogBoxParam(gInstance, "ServerProblemDialogBox", parent_hwnd, (DLGPROC) OkinoCommonComSource___ServerFaultDlgProc, (LPARAM) err_msg);
+				status = (short) DialogBoxParam(gInstance, "ServerProblemDialogBox", parent_hwnd, (DLGPROC) OkinoCommonComSource___ServerFaultDlgProc, (LPARAM) err_msg);
 				LocalFree(MessageBuffer);
 		}
 		return(status);
@@ -2203,8 +2277,8 @@ OkinoCommonComSource___Check_COM_HRESULT_Error_CODE(HRESULT hr, char *com_func_n
 
 // This is the dialog box handler for the geometry import status dialog
 
-	static BOOL WINAPI
-OkinoCommonComSource___ServerFaultDlgProc(HWND hDlg, WORD wMsg, WORD wParam, LONG lParam)
+	static INT_PTR CALLBACK
+OkinoCommonComSource___ServerFaultDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
 	lParam = lParam;
 
@@ -2270,7 +2344,11 @@ OkinoCommonComSource___RestartStandAloneNuGraforPolyTrans(HWND hWnd)
 	// Get the process ID that created the main window
 	GetWindowThreadProcessId(FirsthWnd, &process_ID);
 	if (!process_ID) {
+#ifdef _WIN64
+		MessageBox(hWnd, "Could not get the process ID of nugraf64.exe or pt64.exe.", "Process Termination Failure", MB_OK | MB_APPLMODAL);
+#else
 		MessageBox(hWnd, "Could not get the process ID of nugraf32.exe or pt32.exe.", "Process Termination Failure", MB_OK | MB_APPLMODAL);
+#endif
 	}
                                 
 	// Open up the process object
@@ -2279,10 +2357,17 @@ OkinoCommonComSource___RestartStandAloneNuGraforPolyTrans(HWND hWnd)
 		kill_result = TerminateProcess(hProcess, 0);
 		CloseHandle(hProcess);
 		if (!kill_result) {
+#ifdef _WIN64
+			if (running_polytrans)
+                                MessageBox(hWnd, "Could not terminate the process named 'pt64.exe'.\n\nPlease terminate this process yourself using Task Manager, then try again.", "Process Termination Failure", MB_OK | MB_APPLMODAL);
+			else
+                                MessageBox(hWnd, "Could not terminate the process named 'nugraf64.exe'.\n\nPlease terminate this process yourself using Task Manager, then try again.", "Process Termination Failure", MB_OK | MB_APPLMODAL);
+#else
 			if (running_polytrans)
                                 MessageBox(hWnd, "Could not terminate the process named 'pt32.exe'.\n\nPlease terminate this process yourself using Task Manager, then try again.", "Process Termination Failure", MB_OK | MB_APPLMODAL);
 			else
                                 MessageBox(hWnd, "Could not terminate the process named 'nugraf32.exe'.\n\nPlease terminate this process yourself using Task Manager, then try again.", "Process Termination Failure", MB_OK | MB_APPLMODAL);
+#endif
 			return(FALSE);
 		}
 	}
@@ -2360,7 +2445,7 @@ OkinoCommonComSource___WGetListboxStringExtent(HWND hList, char *psz)
 
 	/* Add one average text width to insure that we see the end of the */
 	/* string when scrolled horizontally. */
-	GetTextExtentPoint(hDC, psz, strlen(psz), &SizeRect);
+	GetTextExtentPoint(hDC, psz, (short) strlen(psz), &SizeRect);
 	wExtent = (WORD) (SizeRect.cx + tm.tmAveCharWidth);
 	ReleaseDC(hList, hDC);
 
@@ -2633,7 +2718,7 @@ OkinoCommonComSource___GetLoadSaveFileName(short loading, HWND hDlg, HINSTANCE h
 	/* Add these so that the user can create a new directory by typing its name */
 	/* Always use the NT version since we can't modify the Win95 dialog box very much */
 	if (!OkinoCommonComSource___Setup_Select_Geometry_File(&of, loading, hDlg, NULL, FileOpen_Filter_Spec, window_title, 
-			selected_filename, strlen(selected_filename), 
+			selected_filename, (short) strlen(selected_filename), 
 			Flags, NULL, NULL, hInstance, selected_filename, sizeof_selected_filename_buffer))
 		return(FALSE);
 	else
@@ -2666,7 +2751,8 @@ OkinoCommonComSource___Setup_Select_Geometry_File(OPENFILENAME *of, short load_s
 		/* Extract the filepath and filename then put them into */
 		/* the appropriate arrays. */
 		if (ok_to_extract_filename) {
-			i = strlen(selected_filename)-1;
+			// i = strlen(selected_filename)-1;
+                       	i = strlen(selected_filename);	// RCL, Sept 30 2009: we need this method for cases like "c:\test\" with no trailing filename
 			while (i >= 1 && selected_filename[i-1] != ':'
 					&& selected_filename[i-1] != '/'
 					&& selected_filename[i-1] != '\\')
@@ -2932,8 +3018,8 @@ OkinoCommonComSource___Check_For_File_Extension(char *in_file, char *extension)
 // user also has to type in a DNS name for the remote machine.
 
 #if 0
-	BOOL WINAPI 
-OkinoCommonComSource___RemoteHostDlgProc(HWND hwnd, UINT msg, UINT wparam, LONG lparam)
+	INT_PTR CALLBACK
+OkinoCommonComSource___RemoteHostDlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	switch (msg) {
 	case WM_INITDIALOG:
@@ -2973,4 +3059,4 @@ OkinoCommonComSource___RemoteHostDlgProc(HWND hwnd, UINT msg, UINT wparam, LONG 
 	return (FALSE);
 }
 #endif
-
+

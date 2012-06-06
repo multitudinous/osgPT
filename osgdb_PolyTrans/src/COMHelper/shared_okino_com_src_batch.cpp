@@ -8,7 +8,7 @@
      This file implements the 3D batch conversion job handling functions.
 
 
-  Copyright (c) 1988, 2002 Okino Computer Graphics, Inc. All Rights Reserved.
+  Copyright (c) 1988, 2012 Okino Computer Graphics, Inc. All Rights Reserved.
 
 This file is proprietary source code of Okino Computer Graphics, Inc. and it 
 is not to be disclosed to third parties, published, adopted, distributed,
@@ -43,11 +43,10 @@ SOFTWARE AND ITS ACCOMPANYING DOCUMENTATION, EVEN IF OKINO COMPUTER GRAPHICS,
 INC., OR ANY AGENT OF OKINO COMPUTER GRAPHICS, INC. HAS BEEN ADVISED OF THE   
 POSSIBILITY OF SUCH DAMAGES.
 
-	Last change:  RCL  12 Nov 2001    5:18 am
 *****************************************************************************/
 
-#include "COMHelper/shared_okino_com_src.h"
-#include "COMHelper/shared_okino_com_src_resources.h"
+#include	"shared_okino_com_src.h"
+#include 	"shared_okino_com_src_resources.h"
 
 // These are only defined for the 'testclient' example program. 'COMPILING_TEST_CLIENT' 
 // is defined in the VC++ project settins, under compiler options. 
@@ -139,8 +138,8 @@ static HRESULT		hresult;
 // This is the dialog box handler which allows the end-user to select an
 // import file, and export file + format, and batch conversion options.
 
-	BOOL WINAPI
-OkinoCommonComSource___SelectAndAddNewBatchConversionJobDialogProc(HWND hDlg, UINT msg, UINT wparam, LONG lparam)
+	INT_PTR CALLBACK
+OkinoCommonComSource___SelectAndAddNewBatchConversionJobDialogProc(HWND hDlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	USES_CONVERSION;
 	static BSTR	return_importer_guid;
@@ -240,7 +239,7 @@ OkinoCommonComSource___SelectAndAddNewBatchConversionJobDialogProc(HWND hDlg, UI
 #else
 				strcpy(temp_buffer, "c:\\");
 #endif
-			SendDlgItemMessage(hDlg, IDD_BATCHCONVERT_EXPORT_DIRECTORY_EDIT, WM_SETTEXT, 0, (LONG)(LPSTR) temp_buffer);
+			SendDlgItemMessage(hDlg, IDD_BATCHCONVERT_EXPORT_DIRECTORY_EDIT, WM_SETTEXT, 0, (LPARAM)(LPSTR) temp_buffer);
 			OkinoCommonComSource___Copy_String(&curr_export_dir, temp_buffer);
 
 			CheckDlgButton(hDlg, IDD_BATCHCONVERT_LOCK_IMPORT_EXPORT_DIRS, batch_convert_options.lock_import_and_export_directories);
@@ -476,7 +475,9 @@ loop:						hresult = pNuGrafIO->ShowInternalDialogBox(dialog_box_name_bstr, (lon
 					try {
 						short		com_error_result;
 
-loop2:						hresult = pNuGrafIO->ShowInternalDialogBox(dialog_box_name_bstr, (long) hDlg, bstr_guid, NULL, 0, 0);
+						_bstr_t		FilenameAndPath = selected_input_filename;	// Need by Kostya's CAD importers, Sept 30 2009
+
+loop2:						hresult = pNuGrafIO->ShowInternalDialogBox(dialog_box_name_bstr, (long) hDlg, bstr_guid, FilenameAndPath, 0, 0);
 						// E_FAIL means that S_FALSE is being returned from the dialog box
 						if (hresult == E_FAIL)
 							hresult = S_FALSE;
@@ -499,7 +500,7 @@ loop2:						hresult = pNuGrafIO->ShowInternalDialogBox(dialog_box_name_bstr, (lo
 
 					if (batch_convert_options.lock_import_and_export_directories) {
 						OkinoCommonComSource___ExtractBaseFilePath(selected_input_filename, temp_buffer);
-						SendDlgItemMessage(hDlg, IDD_BATCHCONVERT_EXPORT_DIRECTORY_EDIT, WM_SETTEXT, 0, (LONG)(LPSTR) temp_buffer);
+						SendDlgItemMessage(hDlg, IDD_BATCHCONVERT_EXPORT_DIRECTORY_EDIT, WM_SETTEXT, 0, (LPARAM)(LPSTR) temp_buffer);
 						OkinoCommonComSource___Copy_String(&curr_export_dir, temp_buffer);
 					}
 					return (TRUE);
@@ -540,7 +541,7 @@ loop2:						hresult = pNuGrafIO->ShowInternalDialogBox(dialog_box_name_bstr, (lo
 #ifdef COMPILING_TEST_CLIENT
 						WritePrivateProfileString("DefaultDirectories", "Default-Export-Directory", curr_export_dir, PROGRAM_INI_FILENAME);
 #endif
-						SendDlgItemMessage(hDlg, IDD_BATCHCONVERT_EXPORT_DIRECTORY_EDIT, WM_SETTEXT, 0, (LONG)(LPSTR) curr_export_dir);
+						SendDlgItemMessage(hDlg, IDD_BATCHCONVERT_EXPORT_DIRECTORY_EDIT, WM_SETTEXT, 0, (LPARAM)(LPSTR) curr_export_dir);
 					}
 					return (TRUE);
 				case IDD_BATCHCONVERT_SHOW_COMPRESS_CHILDREN_OPTIONS:
@@ -679,14 +680,14 @@ OkinoCommonComSource___Clear_Done_Jobs_From_List()
 	while (ptr) {
 		if (ptr->job_completed.done) {
 			struct _finddata_t fileinfo;
-			long		handle;
-			long	 	rc;
+			INT_PTR	 	handle;
+			INT_PTR	 	rc;
 			char		temp_path_buffer[512], filespec[512], buf[512];
 			short		len;
 
 			if (ptr && strlen(ptr->job_completed.job_temp_directory) && ptr->job_id && strlen(ptr->job_id)) {
 				strcpy(temp_path_buffer, ptr->job_completed.job_temp_directory);
-				len = strlen(temp_path_buffer);
+				len = (short) strlen(temp_path_buffer);
 				if (temp_path_buffer[len-1] != '/' && temp_path_buffer[len-1] != '\\')
 					strcat(temp_path_buffer, "\\");
 				strcpy(filespec, temp_path_buffer);
@@ -1055,4 +1056,4 @@ OkinoCommonComSource___ExitJobListCriticalSection()
 {
 	LeaveCriticalSection(&job_list_critical_section);
 }
-
+

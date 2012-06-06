@@ -4,7 +4,7 @@
 	Okino COM client applications. See the "Okino Plug-Ins SDK",
 	 COM Interface section, for explanations about this file.
 
-  Copyright (c) 1988, 2004 Okino Computer Graphics, Inc. All Rights Reserved.
+  Copyright (c) 1988, 2012 Okino Computer Graphics, Inc. All Rights Reserved.
 
 This file is proprietary source code of Okino Computer Graphics, Inc. and it 
 is not to be disclosed to third parties, published, adopted, distributed,
@@ -39,7 +39,6 @@ SOFTWARE AND ITS ACCOMPANYING DOCUMENTATION, EVEN IF OKINO COMPUTER GRAPHICS,
 INC., OR ANY AGENT OF OKINO COMPUTER GRAPHICS, INC. HAS BEEN ADVISED OF THE   
 POSSIBILITY OF SUCH DAMAGES.
 
-	Last change:  RCL  12 Jul 2004    3:56 am
 *****************************************************************************/
 
 #if _MSC_VER > 1000
@@ -81,9 +80,19 @@ extern 	CComModule _Module;	// Handle to our local defined ATL module
 // uncomment the #include line. Also, in your compilation project you will
 // have to include the file "comsrv_i.c". The files comsrv.h and comsrv_i.c
 // have to be obtained from Okino. Please send email to support@okino.com.
-//#import "d:\\nugraf\\win\\vcplugin\\ui_dcom.dll" no_namespace named_guids raw_interfaces_only
-#import "c:\\Program Files\\polytrans\\vcplugin\\ui_dcom.dll" no_namespace named_guids raw_interfaces_only
-
+//
+// NOTE: Microsoft has chosen to not allow both 32-bit and 64-bit versions
+//       of a COM server on the same machine. Only one will be registered
+//	 and run. "InProcHandl32" and "LocalServer32" now both refer to 32-bit
+//	 and 64-bit COM servers. If you have both a 32-bit and 64-bit version
+//	 of Okino software on the same machine then the program which was last
+//	 executed will become the default COM server.
+//
+#ifdef _WIN64
+#import "d:\\nugraf\\win64\\vcplugin64\\ui_dcom.dll" no_namespace named_guids raw_interfaces_only
+#else
+#import "C:\\Program Files (x86)\\polytrans\\vcplugin\\ui_dcom.dll" no_namespace named_guids raw_interfaces_only 
+#endif
 // #include "..\..\comsrv.h"
 
 /* ------------------->>>>  Macro Definitions  <<<<--------------------- */
@@ -297,6 +306,8 @@ extern FNS test_functions[];
 
 // ------------------>>>>  Function Prototypes <<<<--------------------------
 
+extern	void	OkinoCommonComSource___Init_ATL_COM_Module( HINSTANCE hInstance );
+extern	void	OkinoCommonComSource___Terminate_ATL_COM_Module();
 extern	void	OkinoCommonComSource___Initialization();
 extern	BOOL	OkinoCommonComSource___AttachToCOMInterface(HWND parent_hwnd, HINSTANCE hInstance);
 extern	void	OkinoCommonComSource___DetachFromCOMInterface();
@@ -351,12 +362,13 @@ void		OkinoCommonComSource___Free_Com_Batch_Converter_JobInfo_LinkedList(Nd_Com_
 void		OkinoCommonComSource___EnterJobListCriticalSection();
 void		OkinoCommonComSource___ExitJobListCriticalSection();
 void		OkinoCommonComSource___Clear_Done_Jobs_From_List();
-BOOL WINAPI	OkinoCommonComSource___SelectAndAddNewBatchConversionJobDialogProc(HWND hDlg, UINT msg, UINT wparam, LONG lparam);
+INT_PTR CALLBACK OkinoCommonComSource___SelectAndAddNewBatchConversionJobDialogProc(HWND hDlg, UINT msg, WPARAM wparam, LPARAM lparam);
 
-BOOL WINAPI OkinoCommonComSource___GeometryImportStatusDlgProc(HWND hDlg, WORD wMsg, WORD wParam, LONG lParam);
-BOOL WINAPI OkinoCommonComSource___GeometryExportStatusDlgProc(HWND hDlg, WORD wMsg, WORD wParam, LONG lParam);
+INT_PTR CALLBACK OkinoCommonComSource___GeometryImportStatusDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK OkinoCommonComSource___GeometryExportStatusDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
 
 /////////////////////////////////////////////////////////////////////////////
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
+

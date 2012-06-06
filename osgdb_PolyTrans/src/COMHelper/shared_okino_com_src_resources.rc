@@ -108,4 +108,4 @@ FONT 8, "Helv"
  LTEXT "Select desired export file format:", -1, 20, 73, 101, 8
  AUTOCHECKBOX "Show conversion process in view ports (else, hide like in batch conversions)", IDD_BATCHCONVERT_PERFORM_CONVERSION_VISIBLE_IN_VIEWPORTS, 23, 148, 255, 12
 }
-
+
