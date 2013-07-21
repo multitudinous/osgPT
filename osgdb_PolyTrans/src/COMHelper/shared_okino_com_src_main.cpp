@@ -75,7 +75,7 @@ POSSIBILITY OF SUCH DAMAGES.
 // ATL related functions
 #include 	<atlbase.h>
 #include 	<atlcom.h>
-#include 	<atlimpl.cpp>
+//#include 	<atlimpl.cpp>
 
 #if defined(_DEBUG) && defined (_AFXDLL)
 #define new DEBUG_NEW
