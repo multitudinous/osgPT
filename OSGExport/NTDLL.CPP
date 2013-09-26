@@ -483,6 +483,7 @@ OSG1_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
         CheckDlgButton(hDlg, IDD_OSG_DEBUG_TEXT_FILE, export_options->osgDebugTextFile);
         CheckDlgButton(hDlg, IDD_OSG_WRITE_HIDDEN_NODES, export_options->osgWriteHiddenNodes);
         CheckDlgButton(hDlg, IDD_OSG_DIFF_AMB_WHITE, export_options->osgDiffAmbWhite);
+		CheckDlgButton(hDlg, IDD_EXPORTER_ENA_POLYGON_REDUCTION, export_options->polygon_reduction_ena);
 
         /* Update the enable state of the controls */
         SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
@@ -595,6 +596,26 @@ OSG1_DlgProc(HWND hDlg, UINT msg, UINT wParam, LONG lParam)
                 /* Update the enable state of the controls */
                 SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
                 return(TRUE);
+			case IDD_EXPORTER_ENA_POLYGON_REDUCTION:
+				export_options->polygon_reduction_ena = !export_options->polygon_reduction_ena;
+				CheckDlgButton(hDlg, IDD_EXPORTER_ENA_POLYGON_REDUCTION, export_options->polygon_reduction_ena);
+				SendMessage(hDlg, WM_UPDATE_DIALOG_ENABLES, 0, 0L);
+				return(TRUE);
+			case IDD_EXPORTER_ENA_POLYGON_REDUCTION_OPTIONS:
+				// Show the polygon reduction options dialog box
+				{ char *ptr, ini_filepath[1024];
+
+				// Create our own .ini file for the reduction options. This is
+				// because our exporter overwrites its .ini file and hence we cannot store the reduction options in it.
+				strcpy(ini_filepath, plugin_directory);
+				strcat(ini_filepath, INI_FILENAME);
+				ptr = strstr(ini_filepath, ".ini");
+				if (ptr) *ptr = '\0';
+				strcat(ini_filepath, "_reduction.ini");
+
+				Import_IO_ShowPolygonReductionOptionsDialogBox(hDlg, NULL, NULL, NULL, ini_filepath);
+				}
+				return(TRUE);
 
             default:
                 break;
