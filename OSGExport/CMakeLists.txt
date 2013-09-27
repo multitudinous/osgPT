@@ -85,6 +85,8 @@ add_library(exp_isu_osg SHARED ${osgpt_srcs} )
 
 set_target_properties( exp_isu_osg PROPERTIES PROJECT_LABEL "Lib exp_isu_osg" )
 
+set_source_files_properties(EXP_ISU_OSG.RC PROPERTIES LANGUAGE RC)
+
 target_link_libraries( exp_isu_osg  ${OSG_LIBRARIES} comctl32.lib )
 if( ${CMAKE_GENERATOR} STREQUAL "Visual Studio 11 Win64" )
     target_link_libraries( exp_isu_osg  ${OKINO_SDK_ROOT}/libs/vc8_x64/vc64_imp.lib )
