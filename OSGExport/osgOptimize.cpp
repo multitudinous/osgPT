@@ -290,9 +290,14 @@ performSceneGraphOptimizations( osg::Node* model )
 // do another round of forcible optimizationg to lean down the structure
 // as much as possible
 #ifdef POLYTRANS_OSG_EXPORTER_FORCIBLY_OPTIMIZE
-    osgUtil::Optimizer fOpt;
+    //osgUtil::Optimizer fOpt;
+    uOpt.reset();
     unsigned int flags = osgUtil::Optimizer::DEFAULT_OPTIMIZATIONS;
-    uOpt.optimize( newRoot, flags );
+    if (!export_options->osgRunOptimizer)
+    {
+        uOpt.optimize( newRoot, flags );
+        uOpt.reset();
+    }
     // now spatialize any remaining groups
     flags = osgUtil::Optimizer::SPATIALIZE_GROUPS;
     uOpt.optimize( newRoot, flags );
