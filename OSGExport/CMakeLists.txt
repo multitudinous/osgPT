@@ -108,6 +108,11 @@ install(TARGETS exp_isu_osg
     LIBRARY DESTINATION ${osgpt_INSTALL_LIBDIR} COMPONENT runtime
     ARCHIVE DESTINATION ${osgpt_INSTALL_ARCHIVEDIR} COMPONENT development)
 
+install(FILES ${PROJECT_SOURCE_DIR}/EXP_ISU_OSG.HLP 
+              ${PROJECT_SOURCE_DIR}/EXP_ISU_OSG.RTI
+        DESTINATION ${osgpt_INSTALL_BINDIR}
+        COMPONENT runtime)
+
 ############################################################
 
 ############################################################

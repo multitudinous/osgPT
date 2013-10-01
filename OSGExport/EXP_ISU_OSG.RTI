@@ -39,5 +39,4 @@ Plugin_Descriptive_Name		= "OpenSceneGraph export plugin, funded by ISU and deve
 Menu_Description		= "OpenSceneGraph IVE or OSG"
 
 # The filter specification used for the Windows File-Save dialog box
-#FileOpen_Filter_Spec		= "OpenSceneGraph Files (*.ive;*.osg)|*.ive;*.osg"
 FileOpen_Filter_Spec        = "OpenSceneGraph Binary Files (*.ive)|*.ive|OpenSceneGraph Text Files (*.osg)|*.osg|"
