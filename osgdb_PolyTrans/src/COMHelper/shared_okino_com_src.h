@@ -89,7 +89,7 @@ extern 	CComModule _Module;	// Handle to our local defined ATL module
 //	 executed will become the default COM server.
 //
 #ifdef _WIN64
-#import "d:\\nugraf\\win64\\vcplugin64\\ui_dcom.dll" no_namespace named_guids raw_interfaces_only
+#import "C:\\dev\\skewmatrix-redmine-svn\\skewmatrix\\osgPT\\trunk\\osgdb_PolyTrans\\com_lib_x64\\ui_dcom.dll" no_namespace named_guids raw_interfaces_only
 #else
 #import "C:\\Program Files (x86)\\polytrans\\vcplugin\\ui_dcom.dll" no_namespace named_guids raw_interfaces_only 
 #endif
