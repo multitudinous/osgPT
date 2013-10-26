@@ -9,7 +9,6 @@
 #include <sstream>
 
 
-
 class ReaderWriterPolyTrans : public osgDB::ReaderWriter
 {
 public:
@@ -40,15 +39,16 @@ public:
         //   An example config file with documentation is
         //   located in the sibling data directory.
 		std::string envStr( "OSG_POLYTRANS_CONFIG_FILE" );
-        char* charPtr = getenv( envStr.c_str() );
+        const char* charPtr = getenv( envStr.c_str() );
         std::string osgPolytransConfigName;
         if( charPtr != NULL )
             osgPolytransConfigName = std::string( charPtr );
         else
             osgPolytransConfigName = std::string( "ptconfigfile.txt" );
-        
+
 		{
 			std::string fullName = osgDB::findDataFile( osgPolytransConfigName );
+            
 			if (!fullName.empty())
             {
 				osg::notify( osg::INFO ) << "osgdb_PolyTrans: Loading " << envStr << ": \"" << fullName << "\"." << std::endl;
